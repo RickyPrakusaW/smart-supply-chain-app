@@ -44,6 +44,8 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.agroSystem.app.R
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 // Color Tokens from Note.md
 private val OnboardBgWarm = Color(0xFFF5F3EE)
@@ -108,6 +110,7 @@ data class Recipe(
 @Composable
 fun HomeScreen(onResetOnboarding: () -> Unit) {
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
 
     // Navigation Tab state: "home", "catalog", "favorites", "profile"
     var currentTab by remember { mutableStateOf("home") }
@@ -128,9 +131,15 @@ fun HomeScreen(onResetOnboarding: () -> Unit) {
     // Selected category for filtering products
     var selectedCategory by remember { mutableStateOf("Semua") }
 
-    // --- Navigation stack states for detail views ---
+    // --- Navigation stack states for detail views & Cart screen ---
     var selectedProductForDetail by remember { mutableStateOf<Product?>(null) }
     var selectedFarmerForDetail by remember { mutableStateOf<Farmer?>(null) }
+    var isCartScreenOpen by remember { mutableStateOf(false) }
+
+    // --- Undo delete product state (brown undo notification bar) ---
+    var recentlyRemovedProduct by remember { mutableStateOf<Product?>(null) }
+    var recentlyRemovedQty by remember { mutableIntStateOf(0) }
+    var isUndoVisible by remember { mutableStateOf(false) }
 
     // --- Filter States (Mocking Image 4 filters) ---
     var isFilterSheetOpen by remember { mutableStateOf(false) }
@@ -230,7 +239,7 @@ fun HomeScreen(onResetOnboarding: () -> Unit) {
 
     Scaffold(
         bottomBar = {
-            if (selectedProductForDetail == null && selectedFarmerForDetail == null) {
+            if (selectedProductForDetail == null && selectedFarmerForDetail == null && !isCartScreenOpen) {
                 BottomNavigationBar(
                     currentTab = currentTab,
                     onTabSelected = {
@@ -283,7 +292,15 @@ fun HomeScreen(onResetOnboarding: () -> Unit) {
                             if (currentQty > 1) {
                                 cartItems[product] = currentQty - 1
                             } else {
+                                // Trigger undo notification bar
+                                recentlyRemovedProduct = product
+                                recentlyRemovedQty = currentQty
                                 cartItems.remove(product)
+                                isUndoVisible = true
+                                coroutineScope.launch {
+                                    delay(4000)
+                                    isUndoVisible = false
+                                }
                             }
                         },
                         onToggleFavorite = { id ->
@@ -314,7 +331,14 @@ fun HomeScreen(onResetOnboarding: () -> Unit) {
                                     if (currentQty > 1) {
                                         cartItems[product] = currentQty - 1
                                     } else {
+                                        recentlyRemovedProduct = product
+                                        recentlyRemovedQty = currentQty
                                         cartItems.remove(product)
+                                        isUndoVisible = true
+                                        coroutineScope.launch {
+                                            delay(4000)
+                                            isUndoVisible = false
+                                        }
                                     }
                                 },
                                 onToggleFavorite = { id ->
@@ -354,7 +378,14 @@ fun HomeScreen(onResetOnboarding: () -> Unit) {
                                     if (currentQty > 1) {
                                         cartItems[product] = currentQty - 1
                                     } else {
+                                        recentlyRemovedProduct = product
+                                        recentlyRemovedQty = currentQty
                                         cartItems.remove(product)
+                                        isUndoVisible = true
+                                        coroutineScope.launch {
+                                            delay(4000)
+                                            isUndoVisible = false
+                                        }
                                     }
                                 },
                                 onToggleFavorite = { id ->
@@ -394,7 +425,14 @@ fun HomeScreen(onResetOnboarding: () -> Unit) {
                                     if (currentQty > 1) {
                                         cartItems[product] = currentQty - 1
                                     } else {
+                                        recentlyRemovedProduct = product
+                                        recentlyRemovedQty = currentQty
                                         cartItems.remove(product)
+                                        isUndoVisible = true
+                                        coroutineScope.launch {
+                                            delay(4000)
+                                            isUndoVisible = false
+                                        }
                                     }
                                 },
                                 onToggleFavorite = { id ->
@@ -419,7 +457,7 @@ fun HomeScreen(onResetOnboarding: () -> Unit) {
             val totalPrice = cartItems.entries.sumOf { it.key.price * it.value }
 
             AnimatedVisibility(
-                visible = totalItemCount > 0 && selectedProductForDetail == null && selectedFarmerForDetail == null,
+                visible = totalItemCount > 0 && selectedProductForDetail == null && selectedFarmerForDetail == null && !isCartScreenOpen,
                 enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
                 exit = slideOutVertically(targetOffsetY = { it }) + fadeOut(),
                 modifier = Modifier.align(Alignment.BottomCenter)
@@ -428,8 +466,7 @@ fun HomeScreen(onResetOnboarding: () -> Unit) {
                     itemCount = totalItemCount,
                     totalPrice = totalPrice,
                     onCheckout = {
-                        cartItems.clear()
-                        Toast.makeText(context, "Pesanan Anda berhasil dikirim ke mitra tani!", Toast.LENGTH_LONG).show()
+                        isCartScreenOpen = true
                     }
                 )
             }
@@ -495,7 +532,14 @@ fun HomeScreen(onResetOnboarding: () -> Unit) {
                             if (qty > 1) {
                                 cartItems[product] = qty - 1
                             } else {
+                                recentlyRemovedProduct = product
+                                recentlyRemovedQty = qty
                                 cartItems.remove(product)
+                                isUndoVisible = true
+                                coroutineScope.launch {
+                                    delay(4000)
+                                    isUndoVisible = false
+                                }
                             }
                         },
                         onFarmerClick = { farmer ->
@@ -534,7 +578,14 @@ fun HomeScreen(onResetOnboarding: () -> Unit) {
                             if (qty > 1) {
                                 cartItems[prod] = qty - 1
                             } else {
+                                recentlyRemovedProduct = prod
+                                recentlyRemovedQty = qty
                                 cartItems.remove(prod)
+                                isUndoVisible = true
+                                coroutineScope.launch {
+                                    delay(4000)
+                                    isUndoVisible = false
+                                }
                             }
                         },
                         onToggleFavorite = { id ->
@@ -544,6 +595,93 @@ fun HomeScreen(onResetOnboarding: () -> Unit) {
                             selectedProductForDetail = prod
                         }
                     )
+                }
+            }
+
+            // --- 16. Fullscreen Cart Screen (Mocking Image 6) ---
+            AnimatedVisibility(
+                visible = isCartScreenOpen,
+                enter = slideInHorizontally(initialOffsetX = { it }) + fadeIn(),
+                exit = slideOutHorizontally(targetOffsetX = { it }) + fadeOut(),
+                modifier = Modifier.fillMaxSize()
+            ) {
+                CartScreenView(
+                    cartItems = cartItems,
+                    onBack = { isCartScreenOpen = false },
+                    onAddToCart = { prod -> cartItems[prod] = (cartItems[prod] ?: 0) + 1 },
+                    onRemoveFromCart = { prod ->
+                        val qty = cartItems[prod] ?: 0
+                        if (qty > 1) {
+                            cartItems[prod] = qty - 1
+                        } else {
+                            recentlyRemovedProduct = prod
+                            recentlyRemovedQty = qty
+                            cartItems.remove(prod)
+                            isUndoVisible = true
+                            coroutineScope.launch {
+                                delay(4000)
+                                isUndoVisible = false
+                            }
+                        }
+                    },
+                    onClearCart = {
+                        cartItems.clear()
+                        Toast.makeText(context, "Keranjang dibersihkan", Toast.LENGTH_SHORT).show()
+                    },
+                    onStartShopping = {
+                        isCartScreenOpen = false
+                        currentTab = "catalog"
+                    },
+                    onOrderPlaced = {
+                        cartItems.clear()
+                        isCartScreenOpen = false
+                        Toast.makeText(context, "Pesanan Anda berhasil dikirim ke mitra tani!", Toast.LENGTH_LONG).show()
+                    }
+                )
+            }
+
+            // --- Brown Undo Notification Bar (Mocking Image 6 middle) ---
+            AnimatedVisibility(
+                visible = isUndoVisible && recentlyRemovedProduct != null,
+                enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
+                exit = slideOutVertically(targetOffsetY = { it }) + fadeOut(),
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = if (isCartScreenOpen) 80.dp else 24.dp)
+                    .padding(horizontal = 24.dp)
+            ) {
+                recentlyRemovedProduct?.let { product ->
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = OnboardAccentTerracotta),
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Menghapus ${product.name.take(16)}...",
+                                color = Color.White,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+
+                            Text(
+                                text = "BATAL (UNDO)",
+                                color = OnboardBgWarm,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Black,
+                                modifier = Modifier
+                                    .clickable {
+                                        cartItems[product] = recentlyRemovedQty
+                                        isUndoVisible = false
+                                    }
+                                    .padding(vertical = 4.dp, horizontal = 8.dp)
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -2256,7 +2394,7 @@ fun ParameterChip(
     }
 }
 
-// --- 14. Fullscreen Product Detail View (Mocking Image 5) ---
+// --- 14. Fullscreen Product Detail View ---
 @Composable
 fun ProductDetailView(
     product: Product,
@@ -2285,7 +2423,6 @@ fun ProductDetailView(
             .statusBarsPadding()
             .navigationBarsPadding()
     ) {
-        // Custom Header Bar
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -2774,7 +2911,7 @@ fun FlowRow(
     }
 }
 
-// --- 15. Fullscreen Farmer Detail View (Mocking Image 5 Left) ---
+// --- 15. Fullscreen Farmer Detail View ---
 @Composable
 fun FarmerDetailView(
     farmer: Farmer,
@@ -3033,5 +3170,468 @@ fun FarmerDetailView(
                 Spacer(modifier = Modifier.height(40.dp))
             }
         }
+    }
+}
+
+// --- 16. Fullscreen Cart Screen View (Mocking Image 6) ---
+@Composable
+fun CartScreenView(
+    cartItems: MutableMap<Product, Int>,
+    onBack: () -> Unit,
+    onAddToCart: (Product) -> Unit,
+    onRemoveFromCart: (Product) -> Unit,
+    onClearCart: () -> Unit,
+    onStartShopping: () -> Unit,
+    onOrderPlaced: () -> Unit
+) {
+    var selectedPackagingOption by remember { mutableIntStateOf(0) } // 0 = Kantong Kertas (Rp 2000), 1 = Kantong Plastik (Rp 1000)
+    var isPlasticReturnEnabled by remember { mutableStateOf(false) }
+
+    val totalItemCount = cartItems.values.sum()
+    val rawSubtotal = cartItems.entries.sumOf { it.key.price * it.value }
+
+    val packagingCost = if (selectedPackagingOption == 0) 2000 else 1000
+    val discount = if (rawSubtotal > 30000) 5000 else 0
+    val deliveryCost = 0 // Gratis
+    val finalTotal = rawSubtotal + packagingCost - discount + deliveryCost
+
+    // Group items by Farmer (Seller Grouping matching Image 6 layout)
+    val groupedItems = remember(cartItems.size, cartItems.values.sum()) {
+        cartItems.entries.groupBy { it.key.farmer.split(",").first().trim() }
+    }
+
+    if (totalItemCount == 0) {
+        // Empty Cart Screen (Image 6 Rightmost)
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(OnboardBgWarm)
+                .statusBarsPadding()
+                .navigationBarsPadding(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(onClick = onBack) {
+                    Icon(Icons.Default.ArrowBack, contentDescription = "Kembali", tint = OnboardTextDark)
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Keranjang",
+                    color = OnboardTextDark,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            Box(
+                modifier = Modifier
+                    .size(120.dp)
+                    .clip(CircleShape)
+                    .background(OnboardSurfaceWarm),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.ShoppingCart,
+                    contentDescription = "Empty Basket",
+                    tint = OnboardPrimaryGreen,
+                    modifier = Modifier.size(56.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
+                text = "Keranjang belanja kosong",
+                color = OnboardTextDark,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold
+            )
+
+            Text(
+                text = "Kembali ke katalog untuk mengisi bahan makanan segar Anda.",
+                color = OnboardTextMuted,
+                fontSize = 12.sp,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .padding(horizontal = 40.dp)
+                    .padding(top = 8.dp)
+            )
+
+            Spacer(modifier = Modifier.weight(1.2f))
+
+            Button(
+                onClick = onStartShopping,
+                colors = ButtonDefaults.buttonColors(containerColor = OnboardPrimaryGreen),
+                shape = RoundedCornerShape(14.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp)
+                    .height(54.dp)
+            ) {
+                Text("Mulai Belanja", color = Color.White, fontWeight = FontWeight.Bold)
+            }
+        }
+    } else {
+        // Active Cart Screen (Image 6 Leftmost)
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(OnboardBgWarm)
+                .statusBarsPadding()
+                .navigationBarsPadding()
+        ) {
+            // Header Bar
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp, vertical = 12.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Kembali", tint = OnboardTextDark)
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Keranjang",
+                        color = OnboardTextDark,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    IconButton(onClick = { /* share link mock */ }) {
+                        Icon(Icons.Outlined.Share, contentDescription = "Bagikan", tint = OnboardTextDark)
+                    }
+                    IconButton(onClick = onClearCart) {
+                        Icon(Icons.Default.Delete, contentDescription = "Kosongkan", tint = OnboardTextDark)
+                    }
+                }
+            }
+
+            // Location Bar
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(OnboardSurfaceWarm)
+                    .clickable { /* edit address mock */ }
+                    .padding(horizontal = 24.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(Icons.Default.LocationOn, contentDescription = null, tint = OnboardAccentTerracotta, modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Kirim ke: Jalan Sawah Indah No. 12",
+                    color = OnboardTextDark,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.weight(1f)
+                )
+                Icon(Icons.Default.KeyboardArrowRight, contentDescription = null, tint = OnboardTextMuted, modifier = Modifier.size(16.dp))
+            }
+
+            // Scrollable Items & checkout specs
+            LazyColumn(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(horizontal = 24.dp),
+                verticalArrangement = Arrangement.spacedBy(20.dp)
+            ) {
+                item { Spacer(modifier = Modifier.height(10.dp)) }
+
+                // Grouped items
+                groupedItems.forEach { (farmerName, entries) ->
+                    item {
+                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            // Farmer Group Header Label
+                            Text(
+                                text = farmerName,
+                                color = OnboardTextDark,
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(bottom = 4.dp)
+                            )
+
+                            // List of items under this farmer
+                            entries.forEach { (product, quantity) ->
+                                Card(
+                                    colors = CardDefaults.cardColors(containerColor = OnboardSurfaceWarm),
+                                    border = BorderStroke(1.dp, OnboardBorderGrey),
+                                    shape = RoundedCornerShape(12.dp),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Row(
+                                        modifier = Modifier.padding(12.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Image(
+                                            painter = painterResource(id = product.imageResId),
+                                            contentDescription = product.name,
+                                            contentScale = ContentScale.Crop,
+                                            modifier = Modifier
+                                                .size(50.dp)
+                                                .clip(RoundedCornerShape(8.dp))
+                                        )
+
+                                        Spacer(modifier = Modifier.width(12.dp))
+
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(
+                                                text = product.name,
+                                                color = OnboardTextDark,
+                                                fontSize = 13.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                maxLines = 1
+                                            )
+                                            Text(
+                                                text = "Rp ${product.price} / ${product.unit}",
+                                                color = OnboardTextMuted,
+                                                fontSize = 11.sp
+                                            )
+                                            Spacer(modifier = Modifier.height(6.dp))
+
+                                            // Small quantity selector
+                                            Row(
+                                                modifier = Modifier
+                                                    .clip(RoundedCornerShape(8.dp))
+                                                    .background(OnboardOliveLight)
+                                                    .padding(horizontal = 4.dp, vertical = 2.dp),
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                            ) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .size(20.dp)
+                                                        .clip(CircleShape)
+                                                        .background(Color.White)
+                                                        .clickable { onRemoveFromCart(product) },
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    Icon(Icons.Default.Remove, contentDescription = null, tint = OnboardTextDark, modifier = Modifier.size(10.dp))
+                                                }
+
+                                                Text(text = "$quantity pcs", color = OnboardTextDark, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+
+                                                Box(
+                                                    modifier = Modifier
+                                                        .size(20.dp)
+                                                        .clip(CircleShape)
+                                                        .background(Color.White)
+                                                        .clickable { onAddToCart(product) },
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    Icon(Icons.Default.Add, contentDescription = null, tint = OnboardTextDark, modifier = Modifier.size(10.dp))
+                                                }
+                                            }
+                                        }
+
+                                        // Total cost for this product entry
+                                        Text(
+                                            text = "Rp ${product.price * quantity}",
+                                            color = OnboardAccentTerracotta,
+                                            fontSize = 14.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // 2. Order Packaging Options (Kantong) - Mocking Image 6 left
+                item {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(OnboardSurfaceWarm)
+                            .border(1.dp, OnboardBorderGrey, RoundedCornerShape(16.dp))
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Text(
+                            text = "Kemasan Pesanan",
+                            color = OnboardTextDark,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+
+                        // Option 0: Paperbag (Eco-friendly)
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { selectedPackagingOption = 0 },
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                RadioButton(
+                                    selected = selectedPackagingOption == 0,
+                                    onClick = { selectedPackagingOption = 0 },
+                                    colors = RadioButtonDefaults.colors(selectedColor = OnboardPrimaryGreen)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Column {
+                                    Text("Kantong Kertas (Paperbag)", color = OnboardTextDark, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                    Text("Ramah lingkungan & biodegradable", color = OnboardTextMuted, fontSize = 10.sp)
+                                }
+                            }
+                            Text("Rp 2.000", color = OnboardTextDark, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        }
+
+                        // Option 1: Plastic bag
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { selectedPackagingOption = 1 },
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                RadioButton(
+                                    selected = selectedPackagingOption == 1,
+                                    onClick = { selectedPackagingOption = 1 },
+                                    colors = RadioButtonDefaults.colors(selectedColor = OnboardPrimaryGreen)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Column {
+                                    Text("Kantong Plastik Standard", color = OnboardTextDark, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                    Text("Tahan air & kuat", color = OnboardTextMuted, fontSize = 10.sp)
+                                }
+                            }
+                            Text("Rp 1.000", color = OnboardTextDark, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        }
+
+                        // Switch to return plastic bag and get bonus coins (Image 6 left)
+                        if (selectedPackagingOption == 1) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 8.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text("Kembalikan plastik ke kurir", color = OnboardTextDark, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                    Text("Dapatkan +10 Koin Hijau untuk mendukung kelestarian alam", color = OnboardTextMuted, fontSize = 10.sp)
+                                }
+                                Switch(
+                                    checked = isPlasticReturnEnabled,
+                                    onCheckedChange = { isPlasticReturnEnabled = it },
+                                    colors = SwitchDefaults.colors(
+                                        checkedThumbColor = Color.White,
+                                        checkedTrackColor = OnboardPrimaryGreen
+                                    )
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // 3. Payment Pricing breakdown
+                item {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(OnboardSurfaceWarm)
+                            .border(1.dp, OnboardBorderGrey, RoundedCornerShape(16.dp))
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = "Rincian Pembayaran",
+                            color = OnboardTextDark,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(bottom = 4.dp)
+                        )
+
+                        PriceSummaryRow("Subtotal ($totalItemCount Barang)", "Rp $rawSubtotal")
+                        if (discount > 0) {
+                            PriceSummaryRow("Diskon Belanja", "-Rp $discount", isHighlightRed = true)
+                        }
+                        PriceSummaryRow("Biaya Kemasan", "Rp $packagingCost")
+                        PriceSummaryRow("Biaya Pengiriman", "Gratis")
+
+                        HorizontalDivider(color = OnboardBorderGrey, modifier = Modifier.padding(vertical = 4.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text("Total Pembayaran", color = OnboardTextDark, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                            Text("Rp $finalTotal", color = OnboardAccentTerracotta, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+
+                item { Spacer(modifier = Modifier.height(20.dp)) }
+            }
+
+            // Pay checkout bottom panel (Image 6 left)
+            Card(
+                colors = CardDefaults.cardColors(containerColor = OnboardSurfaceWarm),
+                elevation = CardDefaults.cardElevation(8.dp),
+                shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(24.dp)) {
+                    Text(
+                        text = "Yay, Pengiriman Gratis Ongkir Hari Ini! 🎉",
+                        color = OnboardPrimaryGreen,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(bottom = 12.dp)
+                    )
+
+                    Button(
+                        onClick = onOrderPlaced,
+                        colors = ButtonDefaults.buttonColors(containerColor = OnboardPrimaryGreen),
+                        shape = RoundedCornerShape(14.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(54.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("Pesan Sekarang", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                            Text("Rp $finalTotal", color = Color.White, fontWeight = FontWeight.Black, fontSize = 16.sp)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Helper Row component for pricing summaries
+@Composable
+fun PriceSummaryRow(label: String, value: String, isHighlightRed: Boolean = false) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(text = label, color = OnboardTextMuted, fontSize = 12.sp)
+        Text(
+            text = value,
+            color = if (isHighlightRed) Color.Red else OnboardTextDark,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Bold
+        )
     }
 }
