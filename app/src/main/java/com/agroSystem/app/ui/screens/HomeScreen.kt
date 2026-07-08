@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -67,7 +68,18 @@ data class Product(
     val isDiscounted: Boolean = false,
     val originalPrice: Int = 0,
     val isEcoFriendly: Boolean = false,
-    val deliveryDays: Int = 1 // 1 for today, 2 for tomorrow, 3 for 3 days, etc.
+    val deliveryDays: Int = 1, // 1 for today, 2 for tomorrow, etc.
+    val protein: String = "3g",
+    val fat: String = "5g",
+    val carbs: String = "4.7g",
+    val calories: String = "64 Kcal",
+    val ingredients: String = "Susu sapi perah segar pasteurisasi pilihan dari lereng Gunung Panderman. Diproses higienis tanpa zat pengawet tambahan.",
+    val shelfLife: String = "5 Hari",
+    val storage: String = "Suhu Dingin (+2°C s.d +6°C)",
+    val packaging: String = "Botol Kaca steril 1 Liter (Ramah Lingkungan)",
+    val diets: List<String> = listOf("Vegetarian", "Keto"),
+    val allergens: List<String> = listOf("Bebas Laktosa", "Bebas Gluten"),
+    val nutrients: List<String> = listOf("Tinggi Kalsium", "Kaya Protein", "Vitamin B2", "Vitamin B12")
 )
 
 data class Farmer(
@@ -77,7 +89,9 @@ data class Farmer(
     val distance: String,
     val productsList: String,
     val imageResId: Int,
-    val location: String
+    val location: String,
+    val description: String = "Koperasi susu terpercaya di wilayah Pujon. Kami mengelola ratusan sapi perah lokal secara berkelanjutan dan memproduksi produk susu segar organik harian dengan pengawasan kesehatan yang ketat untuk menjamin cita rasa susu alami asli Indonesia.",
+    val certs: List<String> = listOf("Sertifikasi Organik Kementan", "Sertifikasi Halal MUI", "Sertifikasi Uji Lab Dinkes")
 )
 
 data class Recipe(
@@ -114,9 +128,13 @@ fun HomeScreen(onResetOnboarding: () -> Unit) {
     // Selected category for filtering products
     var selectedCategory by remember { mutableStateOf("Semua") }
 
+    // --- Navigation stack states for detail views ---
+    var selectedProductForDetail by remember { mutableStateOf<Product?>(null) }
+    var selectedFarmerForDetail by remember { mutableStateOf<Farmer?>(null) }
+
     // --- Filter States (Mocking Image 4 filters) ---
     var isFilterSheetOpen by remember { mutableStateOf(false) }
-    var filterDeliveryDays by remember { mutableIntStateOf(0) } // 0 = Semua, 1 = Hari Ini, 2 = Besok, 3 = s.d 3 Hari, 5 = s.d 5 Hari, 7 = s.d 7 Hari
+    var filterDeliveryDays by remember { mutableIntStateOf(0) } // 0 = Semua, 1 = Hari Ini, 2 = Besok, etc.
     var filterRegion by remember { mutableStateOf("Semua") } // "Semua", "Malang Raya", "Terdekat"
     var filterEcoFriendly by remember { mutableStateOf(false) }
     var filterDiscountedOnly by remember { mutableStateOf(false) }
@@ -129,24 +147,24 @@ fun HomeScreen(onResetOnboarding: () -> Unit) {
     // Raw mock product list
     val allProducts = remember {
         listOf(
-            Product(1, "Telur Ayam Kampung Segar", "Peternakan Tani Jaya, Malang", "5.0", 24000, "10 pcs", R.drawable.padi, "Telur", isEcoFriendly = true, deliveryDays = 1),
-            Product(2, "Keju Kambing Organik", "Koperasi Susu Pujon, Batu", "4.9", 45000, "200 g", R.drawable.sapi, "Susu", isDiscounted = true, originalPrice = 50000, isEcoFriendly = false, deliveryDays = 2),
-            Product(3, "Bayam Hidroponik Bersih", "Agro Makmur, Batu", "4.8", 12000, "250 g", R.drawable.sayuran, "Sayuran", isEcoFriendly = true, deliveryDays = 1),
-            Product(4, "Daging Sapi Potong Premium", "Peternakan Singosari, Malang", "5.0", 95000, "500 g", R.drawable.sapi, "Daging", isEcoFriendly = false, deliveryDays = 3),
-            Product(5, "Beras Merah Organik Cianjur", "Mitra Tani Sejahtera", "4.9", 35000, "1 kg", R.drawable.padi, "Bahan Sup", isEcoFriendly = true, deliveryDays = 5),
-            Product(6, "Tomat Beef Hidroponik", "Agro Makmur, Batu", "4.7", 15000, "500 g", R.drawable.sayuran, "Sayuran", isDiscounted = true, originalPrice = 18000, isEcoFriendly = true, deliveryDays = 2),
-            Product(7, "Susu Sapi Murni Pasteurisasi", "Peternakan Pujon, Batu", "4.9", 18000, "1 L", R.drawable.sapi, "Susu", isEcoFriendly = false, deliveryDays = 1),
-            Product(8, "Wortel Manis Organik", "Kaki Gunung Panderman", "4.8", 14000, "500 g", R.drawable.sayuran, "Sayuran", isEcoFriendly = true, deliveryDays = 3)
+            Product(1, "Telur Ayam Kampung Segar", "Peternakan Tani Jaya, Malang", "5.0", 24000, "10 pcs", R.drawable.padi, "Telur", isEcoFriendly = true, deliveryDays = 1, protein = "13g", fat = "11g", carbs = "1.1g", calories = "155 Kcal", ingredients = "Telur ayam kampung organik segar hasil pakan jagung alami bebas antibiotik."),
+            Product(2, "Keju Kambing Organik", "Koperasi Susu Pujon, Batu", "4.9", 45000, "200 g", R.drawable.sapi, "Susu", isDiscounted = true, originalPrice = 50000, isEcoFriendly = false, deliveryDays = 2, protein = "22g", fat = "24g", carbs = "3g", calories = "360 Kcal", ingredients = "Keju artisan semi-hard buatan tangan dari 100% susu kambing murni berkualitas tinggi."),
+            Product(3, "Bayam Hidroponik Bersih", "Agro Makmur, Batu", "4.8", 12000, "250 g", R.drawable.sayuran, "Sayuran", isEcoFriendly = true, deliveryDays = 1, protein = "2.9g", fat = "0.4g", carbs = "3.6g", calories = "23 Kcal", ingredients = "Sayur bayam hijau segar hidroponik bebas pestisida kimia. Dikemas steril."),
+            Product(4, "Daging Sapi Potong Premium", "Peternakan Singosari, Malang", "5.0", 95000, "500 g", R.drawable.sapi, "Daging", isEcoFriendly = false, deliveryDays = 3, protein = "26g", fat = "15g", carbs = "0g", calories = "250 Kcal", ingredients = "Daging sapi bagian tenderloin segar lokal berkualitas, tanpa hormon pertumbuhan."),
+            Product(5, "Beras Merah Organik Cianjur", "Mitra Tani Sejahtera", "4.9", 35000, "1 kg", R.drawable.padi, "Bahan Sup", isEcoFriendly = true, deliveryDays = 5, protein = "7g", fat = "2.5g", carbs = "76g", calories = "350 Kcal", ingredients = "Beras merah pecah kulit organik bermutu tinggi dengan serat pangan alami yang kaya."),
+            Product(6, "Tomat Beef Hidroponik", "Agro Makmur, Batu", "4.7", 15000, "500 g", R.drawable.sayuran, "Sayuran", isDiscounted = true, originalPrice = 18000, isEcoFriendly = true, deliveryDays = 2, protein = "0.9g", fat = "0.2g", carbs = "3.9g", calories = "18 Kcal", ingredients = "Tomat beef merah ukuran besar berdaging tebal, manis, dan berair tinggi."),
+            Product(7, "Susu Sapi Murni Pasteurisasi", "Peternakan Pujon, Batu", "4.9", 18000, "1 L", R.drawable.sapi, "Susu", isEcoFriendly = false, deliveryDays = 1, protein = "3.2g", fat = "3.6g", carbs = "4.7g", calories = "62 Kcal", ingredients = "Susu sapi segar hasil perahan pagi hari yang dipasteurisasi kilat untuk menjaga kealamian rasa."),
+            Product(8, "Wortel Manis Organik", "Kaki Gunung Panderman", "4.8", 14000, "500 g", R.drawable.sayuran, "Sayuran", isEcoFriendly = true, deliveryDays = 3, protein = "0.9g", fat = "0.2g", carbs = "9.6g", calories = "41 Kcal", ingredients = "Wortel lokal manis organik ditanam langsung di lahan tinggi bebas pencemaran udara.")
         )
     }
 
     // Mock farmers list
     val allFarmers = remember {
         listOf(
-            Farmer(1, "Koperasi Susu & Keju Pujon", "5.0", "12 km", "Keju, Susu, Mentega", R.drawable.sapi, "Pujon, Malang"),
-            Farmer(2, "Madu Hutan Batu & Herbal", "4.9", "24 km", "Madu, Jamu, Manisan", R.drawable.sayuran, "Bumiaji, Batu"),
-            Farmer(3, "Agro Makmur Sayur & Buah", "4.8", "15 km", "Sayur, Tomat, Wortel", R.drawable.sayuran, "Batu, Malang"),
-            Farmer(4, "Mitra Tani Padi Organik", "5.0", "32 km", "Beras Merah, Beras Putih", R.drawable.padi, "Cianjur, Jabar")
+            Farmer(1, "Koperasi Susu & Keju Pujon", "5.0", "12 km", "Keju, Susu, Mentega", R.drawable.sapi, "Pujon, Malang", description = "Koperasi susu terpercaya di wilayah Pujon. Kami mengelola ratusan sapi perah lokal secara berkelanjutan dan memproduksi produk susu segar organik harian."),
+            Farmer(2, "Madu Hutan Batu & Herbal", "4.9", "24 km", "Madu, Jamu, Manisan", R.drawable.sayuran, "Bumiaji, Batu", description = "Komunitas peternak lebah madu liar yang berfokus melestarikan hutan lindung Batu. Menghasilkan madu hutan liar murni berkualitas tinggi."),
+            Farmer(3, "Agro Makmur Sayur & Buah", "4.8", "15 km", "Sayur, Tomat, Wortel", R.drawable.sayuran, "Batu, Malang", description = "Pertanian hidroponik modern yang menyuplai berbagai sayur dan buah dataran tinggi segar organik bebas pestisida kimia."),
+            Farmer(4, "Mitra Tani Padi Organik", "5.0", "32 km", "Beras Merah, Beras Putih", R.drawable.padi, "Cianjur, Jabar", description = "Kelompok tani tradisional yang melestarikan penanaman padi organik khas Cianjur menggunakan mata air pegunungan murni.")
         )
     }
 
@@ -162,7 +180,7 @@ fun HomeScreen(onResetOnboarding: () -> Unit) {
 
     val categories = listOf("Semua", "Telur", "Susu", "Sayuran", "Daging", "Bahan Sup")
 
-    // Filtered products list applying both category, search, and dynamic filter parameters
+    // Filtered products list applying categories, search queries, and filter parameters
     val filteredProducts = remember(
         searchQuery, selectedCategory, currentTab, favoriteProductIds,
         filterDeliveryDays, filterRegion, filterEcoFriendly, filterDiscountedOnly,
@@ -174,12 +192,10 @@ fun HomeScreen(onResetOnboarding: () -> Unit) {
             val matchesCategory = selectedCategory == "Semua" || product.category == selectedCategory
             val matchesFavorites = currentTab != "favorites" || favoriteProductIds.contains(product.id)
 
-            // Filter logic matching the selected parameters
             val matchesDelivery = filterDeliveryDays == 0 || product.deliveryDays <= filterDeliveryDays
             val matchesEco = !filterEcoFriendly || product.isEcoFriendly
             val matchesDiscount = !filterDiscountedOnly || product.isDiscounted
 
-            // Diet filter logic (Vegetarian: Sayuran, Susu, Telur, Bahan Sup categories)
             val matchesDiet = filterSelectedDiets.isEmpty() || filterSelectedDiets.all { diet ->
                 when (diet) {
                     "Vegetarian" -> product.category in listOf("Sayuran", "Susu", "Telur", "Bahan Sup")
@@ -189,16 +205,14 @@ fun HomeScreen(onResetOnboarding: () -> Unit) {
                 }
             }
 
-            // Allergen filter logic (Lactose-free means category is not Susu)
             val matchesAllergen = filterSelectedAllergens.isEmpty() || filterSelectedAllergens.all { allergen ->
                 when (allergen) {
                     "Bebas Laktosa" -> product.category != "Susu"
-                    "Bebas Gluten" -> product.category != "Telur" // Mock gluten representation
+                    "Bebas Gluten" -> product.category != "Telur"
                     else -> true
                 }
             }
 
-            // Nutrients filter logic
             val matchesNutrients = filterSelectedNutrients.isEmpty() || filterSelectedNutrients.all { nutrient ->
                 when (nutrient) {
                     "Tinggi Kalsium" -> product.category == "Susu"
@@ -216,13 +230,15 @@ fun HomeScreen(onResetOnboarding: () -> Unit) {
 
     Scaffold(
         bottomBar = {
-            BottomNavigationBar(
-                currentTab = currentTab,
-                onTabSelected = {
-                    currentTab = it
-                    isSearchFocused = false
-                }
-            )
+            if (selectedProductForDetail == null && selectedFarmerForDetail == null) {
+                BottomNavigationBar(
+                    currentTab = currentTab,
+                    onTabSelected = {
+                        currentTab = it
+                        isSearchFocused = false
+                    }
+                )
+            }
         },
         containerColor = OnboardBgWarm
     ) { innerPadding ->
@@ -276,6 +292,10 @@ fun HomeScreen(onResetOnboarding: () -> Unit) {
                             } else {
                                 favoriteProductIds.add(id)
                             }
+                        },
+                        onProductClick = { product ->
+                            selectedProductForDetail = product
+                            isSearchFocused = false
                         }
                     )
                 } else {
@@ -308,6 +328,9 @@ fun HomeScreen(onResetOnboarding: () -> Unit) {
                                     currentTab = "catalog"
                                     catalogSubTab = 0
                                     selectedCategory = "Semua"
+                                },
+                                onProductClick = { product ->
+                                    selectedProductForDetail = product
                                 }
                             )
                         }
@@ -349,6 +372,12 @@ fun HomeScreen(onResetOnboarding: () -> Unit) {
                                         }
                                     }
                                     Toast.makeText(context, "Bahan-bahan resep ${recipe.name} ditambahkan!", Toast.LENGTH_SHORT).show()
+                                },
+                                onProductClick = { product ->
+                                    selectedProductForDetail = product
+                                },
+                                onFarmerClick = { farmer ->
+                                    selectedFarmerForDetail = farmer
                                 }
                             )
                         }
@@ -370,6 +399,9 @@ fun HomeScreen(onResetOnboarding: () -> Unit) {
                                 },
                                 onToggleFavorite = { id ->
                                     favoriteProductIds.remove(id)
+                                },
+                                onProductClick = { product ->
+                                    selectedProductForDetail = product
                                 }
                             )
                         }
@@ -387,7 +419,7 @@ fun HomeScreen(onResetOnboarding: () -> Unit) {
             val totalPrice = cartItems.entries.sumOf { it.key.price * it.value }
 
             AnimatedVisibility(
-                visible = totalItemCount > 0,
+                visible = totalItemCount > 0 && selectedProductForDetail == null && selectedFarmerForDetail == null,
                 enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
                 exit = slideOutVertically(targetOffsetY = { it }) + fadeOut(),
                 modifier = Modifier.align(Alignment.BottomCenter)
@@ -433,6 +465,86 @@ fun HomeScreen(onResetOnboarding: () -> Unit) {
                         filterSelectedNutrients.clear()
                     }
                 )
+            }
+
+            // --- 14. Fullscreen Product Detail View (Mocking Image 5) ---
+            AnimatedVisibility(
+                visible = selectedProductForDetail != null,
+                enter = slideInHorizontally(initialOffsetX = { it }) + fadeIn(),
+                exit = slideOutHorizontally(targetOffsetX = { it }) + fadeOut(),
+                modifier = Modifier.fillMaxSize()
+            ) {
+                selectedProductForDetail?.let { product ->
+                    ProductDetailView(
+                        product = product,
+                        cartQuantity = cartItems[product] ?: 0,
+                        isFavorite = favoriteProductIds.contains(product.id),
+                        farmersList = allFarmers,
+                        recipesList = allRecipes,
+                        onBack = { selectedProductForDetail = null },
+                        onToggleFavorite = {
+                            if (favoriteProductIds.contains(product.id)) {
+                                favoriteProductIds.remove(product.id)
+                            } else {
+                                favoriteProductIds.add(product.id)
+                            }
+                        },
+                        onAddToCart = { cartItems[product] = (cartItems[product] ?: 0) + 1 },
+                        onRemoveFromCart = {
+                            val qty = cartItems[product] ?: 0
+                            if (qty > 1) {
+                                cartItems[product] = qty - 1
+                            } else {
+                                cartItems.remove(product)
+                            }
+                        },
+                        onFarmerClick = { farmer ->
+                            selectedFarmerForDetail = farmer
+                        },
+                        onAddRecipeIngredients = { recipe ->
+                            recipe.ingredients.forEach { prodId ->
+                                val p = allProducts.firstOrNull { it.id == prodId }
+                                if (p != null) {
+                                    cartItems[p] = (cartItems[p] ?: 0) + 1
+                                }
+                            }
+                            Toast.makeText(context, "Bahan-bahan resep ${recipe.name} ditambahkan!", Toast.LENGTH_SHORT).show()
+                        }
+                    )
+                }
+            }
+
+            // --- 15. Fullscreen Farmer Detail View (Mocking Image 5 Left) ---
+            AnimatedVisibility(
+                visible = selectedFarmerForDetail != null,
+                enter = slideInHorizontally(initialOffsetX = { it }) + fadeIn(),
+                exit = slideOutHorizontally(targetOffsetX = { it }) + fadeOut(),
+                modifier = Modifier.fillMaxSize()
+            ) {
+                selectedFarmerForDetail?.let { farmer ->
+                    FarmerDetailView(
+                        farmer = farmer,
+                        productsList = allProducts.filter { it.farmer.contains(farmer.name.take(15)) || it.farmer.contains("Pujon") },
+                        cartItems = cartItems,
+                        favoriteProductIds = favoriteProductIds,
+                        onBack = { selectedFarmerForDetail = null },
+                        onAddToCart = { prod -> cartItems[prod] = (cartItems[prod] ?: 0) + 1 },
+                        onRemoveFromCart = { prod ->
+                            val qty = cartItems[prod] ?: 0
+                            if (qty > 1) {
+                                cartItems[prod] = qty - 1
+                            } else {
+                                cartItems.remove(prod)
+                            }
+                        },
+                        onToggleFavorite = { id ->
+                            if (favoriteProductIds.contains(id)) favoriteProductIds.remove(id) else favoriteProductIds.add(id)
+                        },
+                        onProductClick = { prod ->
+                            selectedProductForDetail = prod
+                        }
+                    )
+                }
             }
         }
     }
@@ -570,7 +682,6 @@ fun SearchBarComponent(
             }
         }
 
-        // Filter button matching style kit
         IconButton(
             onClick = onFilterClick,
             modifier = Modifier
@@ -589,7 +700,7 @@ fun SearchBarComponent(
     }
 }
 
-// 3. Home Dashboard Main View
+// 3. Home Dashboard Main View with Product click support
 @Composable
 fun HomeMainDashboard(
     products: List<Product>,
@@ -598,7 +709,8 @@ fun HomeMainDashboard(
     onAddToCart: (Product) -> Unit,
     onRemoveFromCart: (Product) -> Unit,
     onToggleFavorite: (Int) -> Unit,
-    onNavigateToCatalog: () -> Unit
+    onNavigateToCatalog: () -> Unit,
+    onProductClick: (Product) -> Unit
 ) {
     LazyColumn(
         modifier = Modifier
@@ -644,7 +756,11 @@ fun HomeMainDashboard(
                         horizontalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         for (product in chunk) {
-                            Box(modifier = Modifier.weight(1f)) {
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clickable { onProductClick(product) }
+                            ) {
                                 ProductGridCard(
                                     product = product,
                                     isFavorite = favoriteProductIds.contains(product.id),
@@ -676,7 +792,7 @@ fun HomeMainDashboard(
         }
 
         item {
-            Spacer(modifier = Modifier.height(80.dp)) // space for cart overlay
+            Spacer(modifier = Modifier.height(80.dp))
         }
     }
 }
@@ -689,7 +805,6 @@ fun GridCategoryCards(onNavigateToCatalog: () -> Unit) {
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Card 1: Beli Lagi (Terracotta)
             Column(
                 modifier = Modifier
                     .weight(0.45f)
@@ -728,7 +843,6 @@ fun GridCategoryCards(onNavigateToCatalog: () -> Unit) {
                 )
             }
 
-            // Card 2: Langsung dari Mitra Tani (Dark Green)
             Column(
                 modifier = Modifier
                     .weight(0.55f)
@@ -770,7 +884,6 @@ fun GridCategoryCards(onNavigateToCatalog: () -> Unit) {
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Card 3: Promo Hari Ini (Olive Green)
             Row(
                 modifier = Modifier
                     .weight(1f)
@@ -816,7 +929,7 @@ fun GridCategoryCards(onNavigateToCatalog: () -> Unit) {
     }
 }
 
-// 5. Product Grid Card Layout (Includes Add/Subtract quantity selector on card)
+// 5. Product Grid Card Layout
 @Composable
 fun ProductGridCard(
     product: Product,
@@ -833,7 +946,6 @@ fun ProductGridCard(
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
-            // Image frame container
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -849,7 +961,6 @@ fun ProductGridCard(
                     modifier = Modifier.fillMaxSize()
                 )
 
-                // Favorite (heart) button at top-right
                 Box(
                     modifier = Modifier
                         .align(Alignment.TopEnd)
@@ -868,7 +979,6 @@ fun ProductGridCard(
                     )
                 }
 
-                // Star rating at bottom-left
                 Row(
                     modifier = Modifier
                         .align(Alignment.BottomStart)
@@ -896,7 +1006,6 @@ fun ProductGridCard(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Title
             Text(
                 text = product.name,
                 color = OnboardTextDark,
@@ -905,7 +1014,6 @@ fun ProductGridCard(
                 maxLines = 1
             )
 
-            // Farmer provider label
             Text(
                 text = product.farmer,
                 color = OnboardTextMuted,
@@ -915,7 +1023,6 @@ fun ProductGridCard(
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            // Bottom row: price and selector or shopping bag button
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -943,7 +1050,6 @@ fun ProductGridCard(
                     )
                 }
 
-                // Quantity selector: if quantity > 0 show [ - 2 pcs + ], otherwise show shopping bag icon button
                 if (cartQuantity > 0) {
                     Row(
                         modifier = Modifier
@@ -954,7 +1060,6 @@ fun ProductGridCard(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        // Minus button
                         Box(
                             modifier = Modifier
                                 .size(24.dp)
@@ -971,7 +1076,6 @@ fun ProductGridCard(
                             )
                         }
 
-                        // Quantity count
                         Text(
                             text = "$cartQuantity pcs",
                             color = OnboardTextDark,
@@ -979,7 +1083,6 @@ fun ProductGridCard(
                             fontWeight = FontWeight.Bold
                         )
 
-                        // Plus button
                         Box(
                             modifier = Modifier
                                 .size(24.dp)
@@ -997,7 +1100,6 @@ fun ProductGridCard(
                         }
                     }
                 } else {
-                    // Small Shopping Bag Button to add first item
                     Box(
                         modifier = Modifier
                             .size(36.dp)
@@ -1062,7 +1164,7 @@ fun RecommendedCategoryScroll() {
     }
 }
 
-// 7. Search View Flow
+// 7. Search View Flow supporting product click
 @Composable
 fun SearchFlowView(
     categories: List<String>,
@@ -1073,14 +1175,14 @@ fun SearchFlowView(
     favoriteProductIds: List<Int>,
     onAddToCart: (Product) -> Unit,
     onRemoveFromCart: (Product) -> Unit,
-    onToggleFavorite: (Int) -> Unit
+    onToggleFavorite: (Int) -> Unit,
+    onProductClick: (Product) -> Unit
 ) {
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(horizontal = 24.dp)
     ) {
-        // Category Chips Row
         LazyRow(
             modifier = Modifier.padding(vertical = 12.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -1142,21 +1244,23 @@ fun SearchFlowView(
                 modifier = Modifier.weight(1f)
             ) {
                 items(products) { product ->
-                    ProductGridCard(
-                        product = product,
-                        isFavorite = favoriteProductIds.contains(product.id),
-                        cartQuantity = cartItems[product] ?: 0,
-                        onToggleFavorite = { onToggleFavorite(product.id) },
-                        onAddToCart = { onAddToCart(product) },
-                        onRemoveFromCart = { onRemoveFromCart(product) }
-                    )
+                    Box(modifier = Modifier.clickable { onProductClick(product) }) {
+                        ProductGridCard(
+                            product = product,
+                            isFavorite = favoriteProductIds.contains(product.id),
+                            cartQuantity = cartItems[product] ?: 0,
+                            onToggleFavorite = { onToggleFavorite(product.id) },
+                            onAddToCart = { onAddToCart(product) },
+                            onRemoveFromCart = { onRemoveFromCart(product) }
+                        )
+                    }
                 }
             }
         }
     }
 }
 
-// 8. Catalog Main View (Supports Top Tabs for Products, Farmers, and Recipes)
+// 8. Catalog Main View supporting clicks on products & farmers
 @Composable
 fun CatalogMainView(
     subTab: Int,
@@ -1172,10 +1276,11 @@ fun CatalogMainView(
     onAddToCart: (Product) -> Unit,
     onRemoveFromCart: (Product) -> Unit,
     onToggleFavorite: (Int) -> Unit,
-    onAddRecipeIngredients: (Recipe) -> Unit
+    onAddRecipeIngredients: (Recipe) -> Unit,
+    onProductClick: (Product) -> Unit,
+    onFarmerClick: (Farmer) -> Unit
 ) {
     Column(modifier = Modifier.fillMaxSize()) {
-        // Top 3-tabs Selector: Produk (0), Petani (1), Resep (2)
         TabRow(
             selectedTabIndex = subTab,
             containerColor = OnboardBgWarm,
@@ -1201,7 +1306,6 @@ fun CatalogMainView(
 
         when (subTab) {
             0 -> {
-                // Products list with categories
                 SearchFlowView(
                     categories = categories,
                     selectedCategory = selectedCategory,
@@ -1211,11 +1315,11 @@ fun CatalogMainView(
                     favoriteProductIds = favoriteProductIds,
                     onAddToCart = onAddToCart,
                     onRemoveFromCart = onRemoveFromCart,
-                    onToggleFavorite = onToggleFavorite
+                    onToggleFavorite = onToggleFavorite,
+                    onProductClick = onProductClick
                 )
             }
             1 -> {
-                // Farmers list (Screen C style)
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
@@ -1223,7 +1327,9 @@ fun CatalogMainView(
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     items(farmers) { farmer ->
-                        FarmerListCard(farmer = farmer)
+                        Box(modifier = Modifier.clickable { onFarmerClick(farmer) }) {
+                            FarmerListCard(farmer = farmer)
+                        }
                     }
                     item {
                         Spacer(modifier = Modifier.height(80.dp))
@@ -1231,7 +1337,6 @@ fun CatalogMainView(
                 }
             }
             2 -> {
-                // Recipes list grid (Screen D style)
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(2),
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -1283,7 +1388,6 @@ fun FarmerListCard(farmer: Farmer) {
             Spacer(modifier = Modifier.width(16.dp))
 
             Column(modifier = Modifier.weight(1f)) {
-                // Name and Rating Row
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
@@ -1319,14 +1423,12 @@ fun FarmerListCard(farmer: Farmer) {
 
                 Spacer(modifier = Modifier.height(2.dp))
 
-                // Location address
                 Text(
                     text = farmer.location,
                     color = OnboardTextMuted,
                     fontSize = 11.sp
                 )
 
-                // Distance label
                 Text(
                     text = "${farmer.distance} dari lokasi Anda",
                     color = OnboardAccentTerracotta,
@@ -1336,7 +1438,6 @@ fun FarmerListCard(farmer: Farmer) {
 
                 Spacer(modifier = Modifier.height(6.dp))
 
-                // Farmer specialties tags
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     farmer.productsList.split(",").take(3).forEach { tag ->
                         Box(
@@ -1386,7 +1487,6 @@ fun RecipeGridCard(
                     modifier = Modifier.fillMaxSize()
                 )
 
-                // Time Badge
                 Row(
                     modifier = Modifier
                         .align(Alignment.BottomStart)
@@ -1433,7 +1533,6 @@ fun RecipeGridCard(
                     fontSize = 10.sp
                 )
 
-                // Add Recipe ingredients button
                 IconButton(
                     onClick = onAddIngredients,
                     modifier = Modifier
@@ -1453,7 +1552,7 @@ fun RecipeGridCard(
     }
 }
 
-// 9. Favorites View Tab
+// 9. Favorites View Tab supporting click
 @Composable
 fun FavoritesView(
     products: List<Product>,
@@ -1461,7 +1560,8 @@ fun FavoritesView(
     favoriteProductIds: List<Int>,
     onAddToCart: (Product) -> Unit,
     onRemoveFromCart: (Product) -> Unit,
-    onToggleFavorite: (Int) -> Unit
+    onToggleFavorite: (Int) -> Unit,
+    onProductClick: (Product) -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -1512,14 +1612,16 @@ fun FavoritesView(
                 modifier = Modifier.weight(1f)
             ) {
                 items(products) { product ->
-                    ProductGridCard(
-                        product = product,
-                        isFavorite = true,
-                        cartQuantity = cartItems[product] ?: 0,
-                        onToggleFavorite = { onToggleFavorite(product.id) },
-                        onAddToCart = { onAddToCart(product) },
-                        onRemoveFromCart = { onRemoveFromCart(product) }
-                    )
+                    Box(modifier = Modifier.clickable { onProductClick(product) }) {
+                        ProductGridCard(
+                            product = product,
+                            isFavorite = true,
+                            cartQuantity = cartItems[product] ?: 0,
+                            onToggleFavorite = { onToggleFavorite(product.id) },
+                            onAddToCart = { onAddToCart(product) },
+                            onRemoveFromCart = { onRemoveFromCart(product) }
+                        )
+                    }
                 }
             }
         }
@@ -1573,7 +1675,6 @@ fun ProfileView(
 
         Spacer(modifier = Modifier.height(40.dp))
 
-        // Profile Cards Info
         Card(
             colors = CardDefaults.cardColors(containerColor = OnboardSurfaceWarm),
             border = BorderStroke(1.dp, OnboardBorderGrey),
@@ -1608,7 +1709,6 @@ fun ProfileView(
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        // Reset Onboarding Button
         Button(
             onClick = onResetOnboarding,
             colors = ButtonDefaults.buttonColors(containerColor = OnboardAccentTerracotta),
@@ -1637,7 +1737,6 @@ fun CartBottomOverlay(
         Column(
             modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)
         ) {
-            // Free Shipping status
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -1658,7 +1757,6 @@ fun CartBottomOverlay(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Cart Summary and checkout button
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -1741,7 +1839,7 @@ fun BottomNavigationBar(
     }
 }
 
-// --- 13. Fullscreen Filter Sheet View (Mocking Image 4) ---
+// --- 13. Fullscreen Filter Sheet View ---
 @Composable
 fun FilterSheetView(
     deliveryDays: Int,
@@ -1768,7 +1866,6 @@ fun FilterSheetView(
             .statusBarsPadding()
             .navigationBarsPadding()
     ) {
-        // Top Header
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -1802,7 +1899,6 @@ fun FilterSheetView(
             )
         }
 
-        // Selected parameters listing (Image 4 style)
         val hasParameters = deliveryDays > 0 || region != "Semua" || ecoFriendly || discountedOnly ||
                 selectedDiets.isNotEmpty() || selectedAllergens.isNotEmpty() || selectedNutrients.isNotEmpty()
 
@@ -1853,7 +1949,6 @@ fun FilterSheetView(
             Spacer(modifier = Modifier.height(12.dp))
         }
 
-        // Scrollable Filter Settings
         Column(
             modifier = Modifier
                 .weight(1f)
@@ -1861,7 +1956,6 @@ fun FilterSheetView(
                 .padding(horizontal = 24.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            // 1. Delivery Time (Waktu Pengiriman)
             Column {
                 Text(
                     text = "Waktu Pengiriman",
@@ -1901,7 +1995,6 @@ fun FilterSheetView(
                 }
             }
 
-            // 2. Production Region (Wilayah Produksi)
             Column {
                 Text(
                     text = "Wilayah Produksi",
@@ -1935,9 +2028,7 @@ fun FilterSheetView(
                 }
             }
 
-            // 3. Toggles
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                // Eco packaging toggle
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -1968,7 +2059,6 @@ fun FilterSheetView(
                     )
                 }
 
-                // Discounted products toggle
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -2000,7 +2090,6 @@ fun FilterSheetView(
                 }
             }
 
-            // 4. Expandable Nutrition & Health (Diet, Allergens, Nutrients)
             Column {
                 Text(
                     text = "Nutrisi & Kesehatan",
@@ -2010,7 +2099,6 @@ fun FilterSheetView(
                     modifier = Modifier.padding(bottom = 10.dp)
                 )
 
-                // Sub-Diet selection chips
                 Text(
                     text = "Program Diet",
                     color = OnboardTextMuted,
@@ -2043,7 +2131,6 @@ fun FilterSheetView(
                     }
                 }
 
-                // Sub-Allergens selection chips
                 Text(
                     text = "Kandungan / Bebas Alergen",
                     color = OnboardTextMuted,
@@ -2076,7 +2163,6 @@ fun FilterSheetView(
                     }
                 }
 
-                // Sub-Nutrients selection chips
                 Text(
                     text = "Mikroelemen & Nutrisi",
                     color = OnboardTextMuted,
@@ -2112,7 +2198,6 @@ fun FilterSheetView(
             Spacer(modifier = Modifier.height(16.dp))
         }
 
-        // Bottom Apply Button (Green button: Tampilkan X Produk)
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -2137,7 +2222,6 @@ fun FilterSheetView(
     }
 }
 
-// Dismissable Parameter Chip used in Selected Parameters listing
 @Composable
 fun ParameterChip(
     text: String,
@@ -2168,6 +2252,786 @@ fun ParameterChip(
                     .size(12.dp)
                     .clickable { onDismiss() }
             )
+        }
+    }
+}
+
+// --- 14. Fullscreen Product Detail View (Mocking Image 5) ---
+@Composable
+fun ProductDetailView(
+    product: Product,
+    cartQuantity: Int,
+    isFavorite: Boolean,
+    farmersList: List<Farmer>,
+    recipesList: List<Recipe>,
+    onBack: () -> Unit,
+    onToggleFavorite: () -> Unit,
+    onAddToCart: () -> Unit,
+    onRemoveFromCart: () -> Unit,
+    onFarmerClick: (Farmer) -> Unit,
+    onAddRecipeIngredients: (Recipe) -> Unit
+) {
+    val scrollState = rememberScrollState()
+    var selectedTab by remember { mutableIntStateOf(0) } // 0 = Tentang Produk, 1 = Ulasan, 2 = Resep Terkait
+
+    val matchingFarmer = remember(product) {
+        farmersList.firstOrNull { it.name.contains(product.farmer.split(",").first().trim()) || it.name.contains("Pujon") } ?: farmersList.first()
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(OnboardBgWarm)
+            .statusBarsPadding()
+            .navigationBarsPadding()
+    ) {
+        // Custom Header Bar
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(
+                onClick = onBack,
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(OnboardSurfaceWarm)
+            ) {
+                Icon(Icons.Default.ArrowBack, contentDescription = "Kembali", tint = OnboardTextDark)
+            }
+
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                IconButton(
+                    onClick = { /* share mock */ },
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(OnboardSurfaceWarm)
+                ) {
+                    Icon(Icons.Outlined.Share, contentDescription = "Bagikan", tint = OnboardTextDark)
+                }
+
+                IconButton(
+                    onClick = onToggleFavorite,
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(OnboardSurfaceWarm)
+                ) {
+                    Icon(
+                        imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Outlined.FavoriteBorder,
+                        contentDescription = "Favorit",
+                        tint = if (isFavorite) Color.Red else OnboardTextDark
+                    )
+                }
+            }
+        }
+
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .verticalScroll(scrollState)
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(280.dp)
+                    .background(OnboardSurfaceWarm),
+                contentAlignment = Alignment.Center
+            ) {
+                Image(
+                    painter = painterResource(id = product.imageResId),
+                    contentDescription = product.name,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        if (product.isDiscounted) {
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(OnboardAccentTerracotta)
+                                    .padding(horizontal = 8.dp, vertical = 3.dp)
+                            ) {
+                                Text("Diskon", color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(OnboardPrimaryGreen)
+                                .padding(horizontal = 8.dp, vertical = 3.dp)
+                        ) {
+                            Text("Baru", color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Icon(Icons.Default.Star, contentDescription = "Star", tint = OnboardAccentTerracotta, modifier = Modifier.size(16.dp))
+                        Text(text = product.rating, color = OnboardTextDark, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = product.name,
+                    color = OnboardTextDark,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    lineHeight = 26.sp
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.Bottom) {
+                        Text(
+                            text = "Rp ${product.price}",
+                            color = OnboardAccentTerracotta,
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        if (product.isDiscounted) {
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Rp ${product.originalPrice}",
+                                color = OnboardTextMuted,
+                                fontSize = 14.sp,
+                                textDecoration = TextDecoration.LineThrough
+                            )
+                        }
+                        Text(
+                            text = " / ${product.unit}",
+                            color = OnboardTextMuted,
+                            fontSize = 12.sp,
+                            modifier = Modifier.padding(bottom = 3.dp)
+                        )
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(OnboardOliveLight)
+                            .padding(horizontal = 12.dp, vertical = 6.dp)
+                    ) {
+                        Text(
+                            text = "Estimasi Kirim: ${if (product.deliveryDays == 1) "Hari Ini" else "Besok"}",
+                            color = OnboardPrimaryGreen,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Text(
+                    text = product.ingredients,
+                    color = OnboardTextMuted,
+                    fontSize = 13.sp,
+                    lineHeight = 18.sp
+                )
+            }
+
+            TabRow(
+                selectedTabIndex = selectedTab,
+                containerColor = OnboardBgWarm,
+                contentColor = OnboardPrimaryGreen,
+                divider = { HorizontalDivider(color = OnboardBorderGrey) }
+            ) {
+                val tabs = listOf("Detail Produk", "Ulasan (15)", "Resep")
+                tabs.forEachIndexed { index, title ->
+                    Tab(
+                        selected = selectedTab == index,
+                        onClick = { selectedTab = index },
+                        text = {
+                            Text(
+                                text = title,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (selectedTab == index) OnboardPrimaryGreen else OnboardTextMuted
+                            )
+                        }
+                    )
+                }
+            }
+
+            when (selectedTab) {
+                0 -> {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(24.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Text("Kandungan Nutrisi (per 100g):", color = OnboardTextDark, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            listOf(
+                                Pair(product.protein, "Protein"),
+                                Pair(product.fat, "Lemak"),
+                                Pair(product.carbs, "Karbohidrat"),
+                                Pair(product.calories, "Energi")
+                            ).forEach { (value, label) ->
+                                Column(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(OnboardSurfaceWarm)
+                                        .padding(vertical = 8.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Text(text = value, color = OnboardTextDark, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                                    Text(text = label, color = OnboardTextMuted, fontSize = 9.sp)
+                                }
+                            }
+                        }
+
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            SpecRow("Masa Simpan", product.shelfLife)
+                            SpecRow("Penyimpanan", product.storage)
+                            SpecRow("Kemasan", product.packaging)
+                        }
+
+                        Column {
+                            Text("Karakteristik & Nutrisi:", color = OnboardTextDark, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                            Spacer(modifier = Modifier.height(8.dp))
+                            FlowRow(horizontalGap = 8.dp, verticalGap = 8.dp) {
+                                (product.diets + product.allergens + product.nutrients).forEach { tag ->
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(20.dp))
+                                            .background(OnboardOliveLight)
+                                            .padding(horizontal = 10.dp, vertical = 4.dp)
+                                    ) {
+                                        Text(text = tag, color = OnboardTextMuted, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                                    }
+                                }
+                            }
+                        }
+
+                        Text("Produsen Mitra Tani:", color = OnboardTextDark, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                        Box(modifier = Modifier.clickable { onFarmerClick(matchingFarmer) }) {
+                            FarmerListCard(farmer = matchingFarmer)
+                        }
+
+                        Card(
+                            colors = CardDefaults.cardColors(containerColor = OnboardSurfaceWarm),
+                            border = BorderStroke(1.dp, OnboardBorderGrey),
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { /* certs detail */ }
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(14.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(Icons.Default.CheckCircle, contentDescription = "Cert", tint = OnboardPrimaryGreen, modifier = Modifier.size(18.dp))
+                                    Spacer(modifier = Modifier.width(10.dp))
+                                    Text("Sertifikat Kualitas Produk", color = OnboardTextDark, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                                }
+                                Icon(Icons.Default.KeyboardArrowRight, contentDescription = "Next", tint = OnboardTextMuted)
+                            }
+                        }
+                    }
+                }
+                1 -> {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(24.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(text = "4.9", color = OnboardTextDark, fontSize = 32.sp, fontWeight = FontWeight.Black)
+                            Column {
+                                Row {
+                                    repeat(5) { Icon(Icons.Default.Star, contentDescription = "Star", tint = OnboardAccentTerracotta, modifier = Modifier.size(14.dp)) }
+                                }
+                                Text("Berdasarkan 15 Ulasan Pembeli", color = OnboardTextMuted, fontSize = 11.sp)
+                            }
+                        }
+
+                        HorizontalDivider(color = OnboardBorderGrey)
+
+                        val reviews = listOf(
+                            Triple("Amir Santoso", "Susu kambing segar ini mantap sekali rasanya, gurih dan kemasannya botol kaca tebal steril. Recomended!", R.drawable.sapi),
+                            Triple("Desi Ratnasari", "Pengirimannya super cepat, masih dingin saat sampai. Sangat higienis bagi kesehatan keluarga.", R.drawable.sapi),
+                            Triple("Edi Wijaya", "Biasa buat langganan sarapan pagi anak-anak. Bagus kualitas Pujon.", R.drawable.sapi)
+                        )
+
+                        reviews.forEach { (name, review, imgId) ->
+                            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(text = name, color = OnboardTextDark, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                                    Row {
+                                        repeat(5) { Icon(Icons.Default.Star, contentDescription = "*", tint = OnboardAccentTerracotta, modifier = Modifier.size(10.dp)) }
+                                    }
+                                }
+                                Text(text = review, color = OnboardTextMuted, fontSize = 12.sp, lineHeight = 16.sp)
+
+                                Image(
+                                    painter = painterResource(id = imgId),
+                                    contentDescription = "Review attachment",
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier
+                                        .size(60.dp)
+                                        .clip(RoundedCornerShape(8.dp))
+                                )
+
+                                Spacer(modifier = Modifier.height(8.dp))
+                                HorizontalDivider(color = OnboardBorderGrey.copy(alpha = 0.5f))
+                            }
+                        }
+                    }
+                }
+                2 -> {
+                    val matchingRecipes = recipesList.filter { it.ingredients.contains(product.id) }
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(24.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Text("Daftar Resep Berbahan Ini:", color = OnboardTextDark, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+
+                        if (matchingRecipes.isEmpty()) {
+                            Text("Belum ada resep khusus untuk produk ini.", color = OnboardTextMuted, fontSize = 12.sp)
+                        } else {
+                            LazyVerticalGrid(
+                                columns = GridCells.Fixed(2),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                verticalArrangement = Arrangement.spacedBy(12.dp),
+                                modifier = Modifier
+                                    .height(280.dp)
+                                    .fillMaxWidth()
+                            ) {
+                                items(matchingRecipes) { recipe ->
+                                    RecipeGridCard(
+                                        recipe = recipe,
+                                        onAddIngredients = { onAddRecipeIngredients(recipe) }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        Card(
+            colors = CardDefaults.cardColors(containerColor = OnboardSurfaceWarm),
+            elevation = CardDefaults.cardElevation(8.dp),
+            shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text("Total Harga:", color = OnboardTextMuted, fontSize = 11.sp)
+                    Text(
+                        text = "Rp ${product.price * if (cartQuantity > 0) cartQuantity else 1}",
+                        color = OnboardAccentTerracotta,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                if (cartQuantity > 0) {
+                    Row(
+                        modifier = Modifier
+                            .height(44.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(OnboardPrimaryGreen)
+                            .padding(horizontal = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        IconButton(onClick = onRemoveFromCart, modifier = Modifier.size(32.dp)) {
+                            Icon(Icons.Default.Remove, contentDescription = "Kurang", tint = Color.White)
+                        }
+                        Text(
+                            text = "$cartQuantity Pcs",
+                            color = Color.White,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        IconButton(onClick = onAddToCart, modifier = Modifier.size(32.dp)) {
+                            Icon(Icons.Default.Add, contentDescription = "Tambah", tint = Color.White)
+                        }
+                    }
+                } else {
+                    Button(
+                        onClick = onAddToCart,
+                        colors = ButtonDefaults.buttonColors(containerColor = OnboardPrimaryGreen),
+                        shape = RoundedCornerShape(12.dp),
+                        contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp)
+                    ) {
+                        Icon(Icons.Default.ShoppingCart, contentDescription = null, tint = Color.White)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Tambah ke Keranjang", color = Color.White, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Spec row helper
+@Composable
+fun SpecRow(label: String, value: String) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(text = label, color = OnboardTextMuted, fontSize = 12.sp)
+        Text(
+            text = value,
+            color = OnboardTextDark,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.widthIn(max = 220.dp),
+            textAlign = TextAlign.End
+        )
+    }
+}
+
+// FlowRow layout helper for tags wrapping
+@Composable
+fun FlowRow(
+    horizontalGap: androidx.compose.ui.unit.Dp,
+    verticalGap: androidx.compose.ui.unit.Dp,
+    content: @Composable () -> Unit
+) {
+    androidx.compose.ui.layout.Layout(content = content) { measurables, constraints ->
+        val placeables = measurables.map { it.measure(constraints) }
+        val layoutWidth = constraints.maxWidth
+        var currentX = 0
+        var currentY = 0
+        var maxHeightInLine = 0
+        val positions = mutableListOf<Pair<Int, Int>>()
+
+        placeables.forEach { placeable ->
+            if (currentX + placeable.width > layoutWidth) {
+                currentX = 0
+                currentY += maxHeightInLine + verticalGap.roundToPx()
+                maxHeightInLine = 0
+            }
+            positions.add(Pair(currentX, currentY))
+            maxHeightInLine = maxOf(maxHeightInLine, placeable.height)
+            currentX += placeable.width + horizontalGap.roundToPx()
+        }
+
+        layout(
+            width = layoutWidth,
+            height = if (positions.isEmpty()) 0 else (positions.last().second + maxHeightInLine)
+        ) {
+            placeables.forEachIndexed { index, placeable ->
+                val (x, y) = positions[index]
+                placeable.placeRelative(x, y)
+            }
+        }
+    }
+}
+
+// --- 15. Fullscreen Farmer Detail View (Mocking Image 5 Left) ---
+@Composable
+fun FarmerDetailView(
+    farmer: Farmer,
+    productsList: List<Product>,
+    cartItems: Map<Product, Int>,
+    favoriteProductIds: List<Int>,
+    onBack: () -> Unit,
+    onAddToCart: (Product) -> Unit,
+    onRemoveFromCart: (Product) -> Unit,
+    onToggleFavorite: (Int) -> Unit,
+    onProductClick: (Product) -> Unit
+) {
+    var selectedTab by remember { mutableIntStateOf(0) } // 0 = Produk, 1 = Sertifikasi, 2 = Ulasan
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(OnboardBgWarm)
+            .statusBarsPadding()
+            .navigationBarsPadding()
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(
+                onClick = onBack,
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(OnboardSurfaceWarm)
+            ) {
+                Icon(Icons.Default.ArrowBack, contentDescription = "Kembali", tint = OnboardTextDark)
+            }
+
+            Text(
+                text = "Profil Produsen",
+                color = OnboardTextDark,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold
+            )
+
+            IconButton(
+                onClick = { /* share */ },
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(OnboardSurfaceWarm)
+            ) {
+                Icon(Icons.Outlined.Share, contentDescription = "Bagikan", tint = OnboardTextDark)
+            }
+        }
+
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp)
+                        .background(OnboardSurfaceWarm),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Image(
+                        painter = painterResource(id = farmer.imageResId),
+                        contentDescription = farmer.name,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+            }
+
+            item {
+                Column(modifier = Modifier.padding(horizontal = 24.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(OnboardPrimaryGreen)
+                                    .padding(horizontal = 8.dp, vertical = 3.dp)
+                            ) {
+                                Text("Mitra Utama", color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                            }
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(OnboardOliveDark)
+                                    .padding(horizontal = 8.dp, vertical = 3.dp)
+                            ) {
+                                Text("Organik", color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
+
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.Star, contentDescription = "★", tint = OnboardAccentTerracotta, modifier = Modifier.size(16.dp))
+                            Text(text = farmer.rating, color = OnboardTextDark, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Text(
+                        text = farmer.name,
+                        color = OnboardTextDark,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Text(
+                        text = farmer.description,
+                        color = OnboardTextMuted,
+                        fontSize = 13.sp,
+                        lineHeight = 18.sp
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.LocationOn, contentDescription = "Loc", tint = OnboardAccentTerracotta, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "${farmer.location} (${farmer.distance} dari lokasi Anda)",
+                            color = OnboardTextDark,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+
+            item {
+                TabRow(
+                    selectedTabIndex = selectedTab,
+                    containerColor = OnboardBgWarm,
+                    contentColor = OnboardPrimaryGreen,
+                    divider = { HorizontalDivider(color = OnboardBorderGrey) }
+                ) {
+                    val tabs = listOf("Produk", "Sertifikasi", "Ulasan")
+                    tabs.forEachIndexed { index, title ->
+                        Tab(
+                            selected = selectedTab == index,
+                            onClick = { selectedTab = index },
+                            text = {
+                                Text(
+                                    text = title,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (selectedTab == index) OnboardPrimaryGreen else OnboardTextMuted
+                                )
+                            }
+                        )
+                    }
+                }
+            }
+
+            item {
+                Column(modifier = Modifier.padding(horizontal = 24.dp)) {
+                    when (selectedTab) {
+                        0 -> {
+                            if (productsList.isEmpty()) {
+                                Text("Belum ada produk terdaftar untuk mitra ini.", color = OnboardTextMuted, fontSize = 12.sp)
+                            } else {
+                                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                                    for (chunk in productsList.chunked(2)) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.spacedBy(16.dp)
+                                        ) {
+                                            for (product in chunk) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .weight(1f)
+                                                        .clickable { onProductClick(product) }
+                                                ) {
+                                                    ProductGridCard(
+                                                        product = product,
+                                                        isFavorite = favoriteProductIds.contains(product.id),
+                                                        cartQuantity = cartItems[product] ?: 0,
+                                                        onToggleFavorite = { onToggleFavorite(product.id) },
+                                                        onAddToCart = { onAddToCart(product) },
+                                                        onRemoveFromCart = { onRemoveFromCart(product) }
+                                                    )
+                                                }
+                                            }
+                                            if (chunk.size < 2) {
+                                                Spacer(modifier = Modifier.weight(1f))
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        1 -> {
+                            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                farmer.certs.forEach { cert ->
+                                    Card(
+                                        colors = CardDefaults.cardColors(containerColor = OnboardSurfaceWarm),
+                                        border = BorderStroke(1.dp, OnboardBorderGrey),
+                                        shape = RoundedCornerShape(12.dp),
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.padding(14.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Icon(Icons.Default.CheckCircle, contentDescription = "Cert", tint = OnboardPrimaryGreen, modifier = Modifier.size(20.dp))
+                                            Spacer(modifier = Modifier.width(12.dp))
+                                            Text(text = cert, color = OnboardTextDark, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        2 -> {
+                            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                val farmReviews = listOf(
+                                    Pair("Budi Santoso", "Susu pasteurisasi dari Pujon ini selalu konsisten mutunya. Segar sekali!"),
+                                    Pair("Hartono Malang", "Mitra tani terpercaya, hasil buminya memuaskan untuk konsumsi harian keluarga.")
+                                )
+                                farmReviews.forEach { (reviewer, text) ->
+                                    Column {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text(text = reviewer, color = OnboardTextDark, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                                            Row {
+                                                repeat(5) { Icon(Icons.Default.Star, contentDescription = "*", tint = OnboardAccentTerracotta, modifier = Modifier.size(10.dp)) }
+                                            }
+                                        }
+                                        Text(text = text, color = OnboardTextMuted, fontSize = 12.sp, modifier = Modifier.padding(top = 4.dp))
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        HorizontalDivider(color = OnboardBorderGrey.copy(alpha = 0.5f))
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            item {
+                Spacer(modifier = Modifier.height(40.dp))
+            }
         }
     }
 }
