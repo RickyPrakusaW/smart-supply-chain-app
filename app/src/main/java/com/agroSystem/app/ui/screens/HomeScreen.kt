@@ -14,9 +14,11 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.FavoriteBorder
@@ -63,7 +65,9 @@ data class Product(
     val imageResId: Int,
     val category: String,
     val isDiscounted: Boolean = false,
-    val originalPrice: Int = 0
+    val originalPrice: Int = 0,
+    val isEcoFriendly: Boolean = false,
+    val deliveryDays: Int = 1 // 1 for today, 2 for tomorrow, 3 for 3 days, etc.
 )
 
 data class Farmer(
@@ -110,17 +114,29 @@ fun HomeScreen(onResetOnboarding: () -> Unit) {
     // Selected category for filtering products
     var selectedCategory by remember { mutableStateOf("Semua") }
 
-    // Raw mock product list using existing drawable resources
+    // --- Filter States (Mocking Image 4 filters) ---
+    var isFilterSheetOpen by remember { mutableStateOf(false) }
+    var filterDeliveryDays by remember { mutableIntStateOf(0) } // 0 = Semua, 1 = Hari Ini, 2 = Besok, 3 = s.d 3 Hari, 5 = s.d 5 Hari, 7 = s.d 7 Hari
+    var filterRegion by remember { mutableStateOf("Semua") } // "Semua", "Malang Raya", "Terdekat"
+    var filterEcoFriendly by remember { mutableStateOf(false) }
+    var filterDiscountedOnly by remember { mutableStateOf(false) }
+
+    // Multi-select lists for Expandable sections
+    val filterSelectedDiets = remember { mutableStateListOf<String>() }
+    val filterSelectedAllergens = remember { mutableStateListOf<String>() }
+    val filterSelectedNutrients = remember { mutableStateListOf<String>() }
+
+    // Raw mock product list
     val allProducts = remember {
         listOf(
-            Product(1, "Telur Ayam Kampung Segar", "Peternakan Tani Jaya, Malang", "5.0", 24000, "10 pcs", R.drawable.padi, "Telur"),
-            Product(2, "Keju Kambing Organik", "Koperasi Susu Pujon, Batu", "4.9", 45000, "200 g", R.drawable.sapi, "Susu", isDiscounted = true, originalPrice = 50000),
-            Product(3, "Bayam Hidroponik Bersih", "Agro Makmur, Batu", "4.8", 12000, "250 g", R.drawable.sayuran, "Sayuran"),
-            Product(4, "Daging Sapi Potong Premium", "Peternakan Singosari, Malang", "5.0", 95000, "500 g", R.drawable.sapi, "Daging"),
-            Product(5, "Beras Merah Organik Cianjur", "Mitra Tani Sejahtera", "4.9", 35000, "1 kg", R.drawable.padi, "Bahan Sup"),
-            Product(6, "Tomat Beef Hidroponik", "Agro Makmur, Batu", "4.7", 15000, "500 g", R.drawable.sayuran, "Sayuran", isDiscounted = true, originalPrice = 18000),
-            Product(7, "Susu Sapi Murni Pasteurisasi", "Peternakan Pujon, Batu", "4.9", 18000, "1 L", R.drawable.sapi, "Susu"),
-            Product(8, "Wortel Manis Organik", "Kaki Gunung Panderman", "4.8", 14000, "500 g", R.drawable.sayuran, "Sayuran")
+            Product(1, "Telur Ayam Kampung Segar", "Peternakan Tani Jaya, Malang", "5.0", 24000, "10 pcs", R.drawable.padi, "Telur", isEcoFriendly = true, deliveryDays = 1),
+            Product(2, "Keju Kambing Organik", "Koperasi Susu Pujon, Batu", "4.9", 45000, "200 g", R.drawable.sapi, "Susu", isDiscounted = true, originalPrice = 50000, isEcoFriendly = false, deliveryDays = 2),
+            Product(3, "Bayam Hidroponik Bersih", "Agro Makmur, Batu", "4.8", 12000, "250 g", R.drawable.sayuran, "Sayuran", isEcoFriendly = true, deliveryDays = 1),
+            Product(4, "Daging Sapi Potong Premium", "Peternakan Singosari, Malang", "5.0", 95000, "500 g", R.drawable.sapi, "Daging", isEcoFriendly = false, deliveryDays = 3),
+            Product(5, "Beras Merah Organik Cianjur", "Mitra Tani Sejahtera", "4.9", 35000, "1 kg", R.drawable.padi, "Bahan Sup", isEcoFriendly = true, deliveryDays = 5),
+            Product(6, "Tomat Beef Hidroponik", "Agro Makmur, Batu", "4.7", 15000, "500 g", R.drawable.sayuran, "Sayuran", isDiscounted = true, originalPrice = 18000, isEcoFriendly = true, deliveryDays = 2),
+            Product(7, "Susu Sapi Murni Pasteurisasi", "Peternakan Pujon, Batu", "4.9", 18000, "1 L", R.drawable.sapi, "Susu", isEcoFriendly = false, deliveryDays = 1),
+            Product(8, "Wortel Manis Organik", "Kaki Gunung Panderman", "4.8", 14000, "500 g", R.drawable.sayuran, "Sayuran", isEcoFriendly = true, deliveryDays = 3)
         )
     }
 
@@ -146,14 +162,55 @@ fun HomeScreen(onResetOnboarding: () -> Unit) {
 
     val categories = listOf("Semua", "Telur", "Susu", "Sayuran", "Daging", "Bahan Sup")
 
-    // Filtered products list
-    val filteredProducts = remember(searchQuery, selectedCategory, currentTab, favoriteProductIds) {
+    // Filtered products list applying both category, search, and dynamic filter parameters
+    val filteredProducts = remember(
+        searchQuery, selectedCategory, currentTab, favoriteProductIds,
+        filterDeliveryDays, filterRegion, filterEcoFriendly, filterDiscountedOnly,
+        filterSelectedDiets.size, filterSelectedAllergens.size, filterSelectedNutrients.size
+    ) {
         allProducts.filter { product ->
             val matchesSearch = product.name.contains(searchQuery, ignoreCase = true) ||
                     product.farmer.contains(searchQuery, ignoreCase = true)
             val matchesCategory = selectedCategory == "Semua" || product.category == selectedCategory
             val matchesFavorites = currentTab != "favorites" || favoriteProductIds.contains(product.id)
-            matchesSearch && matchesCategory && matchesFavorites
+
+            // Filter logic matching the selected parameters
+            val matchesDelivery = filterDeliveryDays == 0 || product.deliveryDays <= filterDeliveryDays
+            val matchesEco = !filterEcoFriendly || product.isEcoFriendly
+            val matchesDiscount = !filterDiscountedOnly || product.isDiscounted
+
+            // Diet filter logic (Vegetarian: Sayuran, Susu, Telur, Bahan Sup categories)
+            val matchesDiet = filterSelectedDiets.isEmpty() || filterSelectedDiets.all { diet ->
+                when (diet) {
+                    "Vegetarian" -> product.category in listOf("Sayuran", "Susu", "Telur", "Bahan Sup")
+                    "Vegan" -> product.category in listOf("Sayuran", "Bahan Sup")
+                    "Keto" -> product.category in listOf("Daging", "Susu", "Telur")
+                    else -> true
+                }
+            }
+
+            // Allergen filter logic (Lactose-free means category is not Susu)
+            val matchesAllergen = filterSelectedAllergens.isEmpty() || filterSelectedAllergens.all { allergen ->
+                when (allergen) {
+                    "Bebas Laktosa" -> product.category != "Susu"
+                    "Bebas Gluten" -> product.category != "Telur" // Mock gluten representation
+                    else -> true
+                }
+            }
+
+            // Nutrients filter logic
+            val matchesNutrients = filterSelectedNutrients.isEmpty() || filterSelectedNutrients.all { nutrient ->
+                when (nutrient) {
+                    "Tinggi Kalsium" -> product.category == "Susu"
+                    "Tinggi Protein" -> product.category in listOf("Daging", "Telur")
+                    "Kaya Serat" -> product.category == "Sayuran"
+                    else -> true
+                }
+            }
+
+            matchesSearch && matchesCategory && matchesFavorites &&
+                    matchesDelivery && matchesEco && matchesDiscount &&
+                    matchesDiet && matchesAllergen && matchesNutrients
         }
     }
 
@@ -183,13 +240,14 @@ fun HomeScreen(onResetOnboarding: () -> Unit) {
                     }
                 )
 
-                // Search Bar component
+                // Search Bar component with filter click action
                 SearchBarComponent(
                     query = searchQuery,
                     onQueryChanged = { searchQuery = it },
                     isFocused = isSearchFocused,
                     onFocusChanged = { isSearchFocused = it },
-                    onClearQuery = { searchQuery = "" }
+                    onClearQuery = { searchQuery = "" },
+                    onFilterClick = { isFilterSheetOpen = true }
                 )
 
                 // If search is focused or query is not empty, show the search results list
@@ -343,6 +401,39 @@ fun HomeScreen(onResetOnboarding: () -> Unit) {
                     }
                 )
             }
+
+            // Fullscreen Filter Sheet Overlay (Mocking Image 4 layouts)
+            AnimatedVisibility(
+                visible = isFilterSheetOpen,
+                enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
+                exit = slideOutVertically(targetOffsetY = { it }) + fadeOut(),
+                modifier = Modifier.fillMaxSize()
+            ) {
+                FilterSheetView(
+                    deliveryDays = filterDeliveryDays,
+                    onDeliveryDaysChanged = { filterDeliveryDays = it },
+                    region = filterRegion,
+                    onRegionChanged = { filterRegion = it },
+                    ecoFriendly = filterEcoFriendly,
+                    onEcoFriendlyChanged = { filterEcoFriendly = it },
+                    discountedOnly = filterDiscountedOnly,
+                    onDiscountedOnlyChanged = { filterDiscountedOnly = it },
+                    selectedDiets = filterSelectedDiets,
+                    selectedAllergens = filterSelectedAllergens,
+                    selectedNutrients = filterSelectedNutrients,
+                    matchingProductsCount = filteredProducts.size,
+                    onClose = { isFilterSheetOpen = false },
+                    onReset = {
+                        filterDeliveryDays = 0
+                        filterRegion = "Semua"
+                        filterEcoFriendly = false
+                        filterDiscountedOnly = false
+                        filterSelectedDiets.clear()
+                        filterSelectedAllergens.clear()
+                        filterSelectedNutrients.clear()
+                    }
+                )
+            }
         }
     }
 }
@@ -399,76 +490,101 @@ fun HomeHeader(
     }
 }
 
-// 2. Search Bar Component
+// 2. Search Bar Component with Filter Icon
 @Composable
 fun SearchBarComponent(
     query: String,
     onQueryChanged: (String) -> Unit,
     isFocused: Boolean,
     onFocusChanged: (Boolean) -> Unit,
-    onClearQuery: () -> Unit
+    onClearQuery: () -> Unit,
+    onFilterClick: () -> Unit
 ) {
-    Box(
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 24.dp, vertical = 8.dp)
-            .height(50.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .background(OnboardSurfaceWarm)
-            .border(1.dp, if (isFocused) OnboardPrimaryGreen else OnboardBorderGrey, RoundedCornerShape(12.dp))
-            .padding(horizontal = 16.dp),
-        contentAlignment = Alignment.CenterStart
+            .padding(horizontal = 24.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .height(50.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(OnboardSurfaceWarm)
+                .border(1.dp, if (isFocused) OnboardPrimaryGreen else OnboardBorderGrey, RoundedCornerShape(12.dp))
+                .padding(horizontal = 16.dp),
+            contentAlignment = Alignment.CenterStart
         ) {
-            Icon(
-                imageVector = Icons.Outlined.Search,
-                contentDescription = "Search",
-                tint = OnboardTextMuted,
-                modifier = Modifier.size(20.dp)
-            )
-            Spacer(modifier = Modifier.width(12.dp))
-
-            Box(
-                modifier = Modifier.weight(1f),
-                contentAlignment = Alignment.CenterStart
+            Row(
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                if (query.isEmpty()) {
-                    Text(
-                        text = "Cari sayur, buah, beras, susu...",
-                        color = OnboardTextMuted.copy(alpha = 0.5f),
-                        fontSize = 14.sp
+                Icon(
+                    imageVector = Icons.Outlined.Search,
+                    contentDescription = "Search",
+                    tint = OnboardTextMuted,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+
+                Box(
+                    modifier = Modifier.weight(1f),
+                    contentAlignment = Alignment.CenterStart
+                ) {
+                    if (query.isEmpty()) {
+                        Text(
+                            text = "Cari sayur, buah, beras, susu...",
+                            color = OnboardTextMuted.copy(alpha = 0.5f),
+                            fontSize = 14.sp
+                        )
+                    }
+
+                    BasicTextField(
+                        value = query,
+                        onValueChange = {
+                            onQueryChanged(it)
+                            onFocusChanged(true)
+                        },
+                        textStyle = TextStyle(
+                            color = OnboardTextDark,
+                            fontSize = 14.sp
+                        ),
+                        modifier = Modifier.fillMaxWidth()
                     )
                 }
 
-                BasicTextField(
-                    value = query,
-                    onValueChange = {
-                        onQueryChanged(it)
-                        onFocusChanged(true)
-                    },
-                    textStyle = TextStyle(
-                        color = OnboardTextDark,
-                        fontSize = 14.sp
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                )
+                if (query.isNotEmpty() || isFocused) {
+                    Icon(
+                        imageVector = Icons.Default.Clear,
+                        contentDescription = "Clear",
+                        tint = OnboardTextMuted,
+                        modifier = Modifier
+                            .size(18.dp)
+                            .clickable {
+                                onClearQuery()
+                                onFocusChanged(false)
+                            }
+                    )
+                }
             }
+        }
 
-            if (query.isNotEmpty() || isFocused) {
-                Icon(
-                    imageVector = Icons.Default.Clear,
-                    contentDescription = "Clear",
-                    tint = OnboardTextMuted,
-                    modifier = Modifier
-                        .size(18.dp)
-                        .clickable {
-                            onClearQuery()
-                            onFocusChanged(false)
-                        }
-                )
-            }
+        // Filter button matching style kit
+        IconButton(
+            onClick = onFilterClick,
+            modifier = Modifier
+                .size(50.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(OnboardSurfaceWarm)
+                .border(1.dp, OnboardBorderGrey, RoundedCornerShape(12.dp))
+        ) {
+            Icon(
+                imageVector = Icons.Default.Menu,
+                contentDescription = "Filter",
+                tint = OnboardPrimaryGreen,
+                modifier = Modifier.size(22.dp)
+            )
         }
     }
 }
@@ -1167,37 +1283,58 @@ fun FarmerListCard(farmer: Farmer) {
             Spacer(modifier = Modifier.width(16.dp))
 
             Column(modifier = Modifier.weight(1f)) {
+                // Name and Rating Row
                 Row(
+                    modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
                         text = farmer.name,
                         color = OnboardTextDark,
                         fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.weight(1f),
+                        maxLines = 1
                     )
-                    Icon(
-                        imageVector = Icons.Default.Star,
-                        contentDescription = "Rating",
-                        tint = OnboardAccentTerracotta,
-                        modifier = Modifier.size(12.dp)
-                    )
-                    Text(
-                        text = farmer.rating,
-                        color = OnboardTextDark,
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(2.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Star,
+                            contentDescription = "Rating",
+                            tint = OnboardAccentTerracotta,
+                            modifier = Modifier.size(12.dp)
+                        )
+                        Text(
+                            text = farmer.rating,
+                            color = OnboardTextDark,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
 
+                Spacer(modifier = Modifier.height(2.dp))
+
+                // Location address
                 Text(
                     text = farmer.location,
                     color = OnboardTextMuted,
                     fontSize = 11.sp
                 )
 
-                Spacer(modifier = Modifier.height(4.dp))
+                // Distance label
+                Text(
+                    text = "${farmer.distance} dari lokasi Anda",
+                    color = OnboardAccentTerracotta,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Spacer(modifier = Modifier.height(6.dp))
 
                 // Farmer specialties tags
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -1218,19 +1355,11 @@ fun FarmerListCard(farmer: Farmer) {
                     }
                 }
             }
-
-            Text(
-                text = farmer.distance,
-                color = OnboardAccentTerracotta,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(start = 8.dp)
-            )
         }
     }
 }
 
-// 8c. Recipe Grid Card component (Allows adding ingredients direct to cart)
+// 8c. Recipe Grid Card component
 @Composable
 fun RecipeGridCard(
     recipe: Recipe,
@@ -1268,7 +1397,7 @@ fun RecipeGridCard(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
-                        imageVector = Icons.Default.PlayArrow, // clock representation
+                        imageVector = Icons.Default.PlayArrow,
                         contentDescription = "Time",
                         tint = OnboardTextMuted,
                         modifier = Modifier.size(10.dp)
@@ -1607,6 +1736,437 @@ fun BottomNavigationBar(
                 colors = NavigationBarItemDefaults.colors(
                     indicatorColor = OnboardOliveLight
                 )
+            )
+        }
+    }
+}
+
+// --- 13. Fullscreen Filter Sheet View (Mocking Image 4) ---
+@Composable
+fun FilterSheetView(
+    deliveryDays: Int,
+    onDeliveryDaysChanged: (Int) -> Unit,
+    region: String,
+    onRegionChanged: (String) -> Unit,
+    ecoFriendly: Boolean,
+    onEcoFriendlyChanged: (Boolean) -> Unit,
+    discountedOnly: Boolean,
+    onDiscountedOnlyChanged: (Boolean) -> Unit,
+    selectedDiets: MutableList<String>,
+    selectedAllergens: MutableList<String>,
+    selectedNutrients: MutableList<String>,
+    matchingProductsCount: Int,
+    onClose: () -> Unit,
+    onReset: () -> Unit
+) {
+    val scrollState = rememberScrollState()
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(OnboardBgWarm)
+            .statusBarsPadding()
+            .navigationBarsPadding()
+    ) {
+        // Top Header
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp, vertical = 16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = onClose) {
+                    Icon(
+                        imageVector = Icons.Default.ArrowBack,
+                        contentDescription = "Kembali",
+                        tint = OnboardTextDark
+                    )
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Filter",
+                    color = OnboardTextDark,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            Text(
+                text = "Bersihkan",
+                color = OnboardTextMuted,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.clickable { onReset() }
+            )
+        }
+
+        // Selected parameters listing (Image 4 style)
+        val hasParameters = deliveryDays > 0 || region != "Semua" || ecoFriendly || discountedOnly ||
+                selectedDiets.isNotEmpty() || selectedAllergens.isNotEmpty() || selectedNutrients.isNotEmpty()
+
+        if (hasParameters) {
+            Text(
+                text = "Parameter Terpilih",
+                color = OnboardTextDark,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
+            )
+
+            LazyRow(
+                modifier = Modifier.padding(horizontal = 24.dp, vertical = 4.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                if (deliveryDays > 0) {
+                    item {
+                        ParameterChip(
+                            text = when (deliveryDays) {
+                                1 -> "Hari Ini"
+                                2 -> "Besok"
+                                else -> "s.d $deliveryDays Hari"
+                            },
+                            onDismiss = { onDeliveryDaysChanged(0) }
+                        )
+                    }
+                }
+                if (region != "Semua") {
+                    item { ParameterChip(text = region, onDismiss = { onRegionChanged("Semua") }) }
+                }
+                if (ecoFriendly) {
+                    item { ParameterChip(text = "Eco-friendly", onDismiss = { onEcoFriendlyChanged(false) }) }
+                }
+                if (discountedOnly) {
+                    item { ParameterChip(text = "Diskon", onDismiss = { onDiscountedOnlyChanged(false) }) }
+                }
+                items(selectedDiets) { diet ->
+                    ParameterChip(text = diet, onDismiss = { selectedDiets.remove(diet) })
+                }
+                items(selectedAllergens) { allergen ->
+                    ParameterChip(text = allergen, onDismiss = { selectedAllergens.remove(allergen) })
+                }
+                items(selectedNutrients) { nutrient ->
+                    ParameterChip(text = nutrient, onDismiss = { selectedNutrients.remove(nutrient) })
+                }
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+
+        // Scrollable Filter Settings
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .verticalScroll(scrollState)
+                .padding(horizontal = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp)
+        ) {
+            // 1. Delivery Time (Waktu Pengiriman)
+            Column {
+                Text(
+                    text = "Waktu Pengiriman",
+                    color = OnboardTextDark,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(bottom = 10.dp)
+                )
+
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    listOf(
+                        Pair(1, "Hari Ini"),
+                        Pair(2, "Besok"),
+                        Pair(3, "s.d 3 Hari"),
+                        Pair(5, "s.d 5 Hari")
+                    ).forEach { (days, label) ->
+                        val isSelected = deliveryDays == days
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(20.dp))
+                                .background(if (isSelected) OnboardPrimaryGreen else OnboardSurfaceWarm)
+                                .border(1.dp, OnboardBorderGrey, RoundedCornerShape(20.dp))
+                                .clickable { onDeliveryDaysChanged(if (isSelected) 0 else days) }
+                                .padding(horizontal = 12.dp, vertical = 6.dp)
+                        ) {
+                            Text(
+                                text = label,
+                                color = if (isSelected) Color.White else OnboardTextDark,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
+            }
+
+            // 2. Production Region (Wilayah Produksi)
+            Column {
+                Text(
+                    text = "Wilayah Produksi",
+                    color = OnboardTextDark,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(bottom = 10.dp)
+                )
+
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    listOf("Malang Raya", "Terdekat").forEach { label ->
+                        val isSelected = region == label
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(20.dp))
+                                .background(if (isSelected) OnboardPrimaryGreen else OnboardSurfaceWarm)
+                                .border(1.dp, OnboardBorderGrey, RoundedCornerShape(20.dp))
+                                .clickable { onRegionChanged(if (isSelected) "Semua" else label) }
+                                .padding(horizontal = 14.dp, vertical = 6.dp)
+                        ) {
+                            Text(
+                                text = label,
+                                color = if (isSelected) Color.White else OnboardTextDark,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
+            }
+
+            // 3. Toggles
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                // Eco packaging toggle
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            text = "Kemasan Ramah Lingkungan",
+                            color = OnboardTextDark,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "Gunakan paperbag / bio-degradable bag",
+                            color = OnboardTextMuted,
+                            fontSize = 11.sp
+                        )
+                    }
+                    Switch(
+                        checked = ecoFriendly,
+                        onCheckedChange = onEcoFriendlyChanged,
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = Color.White,
+                            checkedTrackColor = OnboardPrimaryGreen,
+                            uncheckedThumbColor = OnboardTextMuted,
+                            uncheckedTrackColor = OnboardSurfaceWarm
+                        )
+                    )
+                }
+
+                // Discounted products toggle
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            text = "Hanya Produk Diskon",
+                            color = OnboardTextDark,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "Tampilkan komoditas berlabel coret saja",
+                            color = OnboardTextMuted,
+                            fontSize = 11.sp
+                        )
+                    }
+                    Switch(
+                        checked = discountedOnly,
+                        onCheckedChange = onDiscountedOnlyChanged,
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = Color.White,
+                            checkedTrackColor = OnboardPrimaryGreen,
+                            uncheckedThumbColor = OnboardTextMuted,
+                            uncheckedTrackColor = OnboardSurfaceWarm
+                        )
+                    )
+                }
+            }
+
+            // 4. Expandable Nutrition & Health (Diet, Allergens, Nutrients)
+            Column {
+                Text(
+                    text = "Nutrisi & Kesehatan",
+                    color = OnboardTextDark,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(bottom = 10.dp)
+                )
+
+                // Sub-Diet selection chips
+                Text(
+                    text = "Program Diet",
+                    color = OnboardTextMuted,
+                    fontSize = 12.sp,
+                    modifier = Modifier.padding(bottom = 6.dp)
+                )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.padding(bottom = 12.dp)
+                ) {
+                    listOf("Vegetarian", "Vegan", "Keto").forEach { diet ->
+                        val isSelected = selectedDiets.contains(diet)
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(20.dp))
+                                .background(if (isSelected) OnboardPrimaryGreen else OnboardSurfaceWarm)
+                                .border(1.dp, OnboardBorderGrey, RoundedCornerShape(20.dp))
+                                .clickable {
+                                    if (isSelected) selectedDiets.remove(diet) else selectedDiets.add(diet)
+                                }
+                                .padding(horizontal = 12.dp, vertical = 6.dp)
+                        ) {
+                            Text(
+                                text = diet,
+                                color = if (isSelected) Color.White else OnboardTextDark,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
+
+                // Sub-Allergens selection chips
+                Text(
+                    text = "Kandungan / Bebas Alergen",
+                    color = OnboardTextMuted,
+                    fontSize = 12.sp,
+                    modifier = Modifier.padding(bottom = 6.dp)
+                )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.padding(bottom = 12.dp)
+                ) {
+                    listOf("Bebas Laktosa", "Bebas Gluten").forEach { allergen ->
+                        val isSelected = selectedAllergens.contains(allergen)
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(20.dp))
+                                .background(if (isSelected) OnboardPrimaryGreen else OnboardSurfaceWarm)
+                                .border(1.dp, OnboardBorderGrey, RoundedCornerShape(20.dp))
+                                .clickable {
+                                    if (isSelected) selectedAllergens.remove(allergen) else selectedAllergens.add(allergen)
+                                }
+                                .padding(horizontal = 12.dp, vertical = 6.dp)
+                        ) {
+                            Text(
+                                text = allergen,
+                                color = if (isSelected) Color.White else OnboardTextDark,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
+
+                // Sub-Nutrients selection chips
+                Text(
+                    text = "Mikroelemen & Nutrisi",
+                    color = OnboardTextMuted,
+                    fontSize = 12.sp,
+                    modifier = Modifier.padding(bottom = 6.dp)
+                )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    listOf("Tinggi Kalsium", "Tinggi Protein", "Kaya Serat").forEach { nutrient ->
+                        val isSelected = selectedNutrients.contains(nutrient)
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(20.dp))
+                                .background(if (isSelected) OnboardPrimaryGreen else OnboardSurfaceWarm)
+                                .border(1.dp, OnboardBorderGrey, RoundedCornerShape(20.dp))
+                                .clickable {
+                                    if (isSelected) selectedNutrients.remove(nutrient) else selectedNutrients.add(nutrient)
+                                }
+                                .padding(horizontal = 12.dp, vertical = 6.dp)
+                        ) {
+                            Text(
+                                text = nutrient,
+                                color = if (isSelected) Color.White else OnboardTextDark,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+
+        // Bottom Apply Button (Green button: Tampilkan X Produk)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(24.dp)
+        ) {
+            Button(
+                onClick = onClose,
+                colors = ButtonDefaults.buttonColors(containerColor = OnboardPrimaryGreen),
+                shape = RoundedCornerShape(14.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(54.dp)
+            ) {
+                Text(
+                    text = "Tampilkan $matchingProductsCount Produk",
+                    color = Color.White,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+    }
+}
+
+// Dismissable Parameter Chip used in Selected Parameters listing
+@Composable
+fun ParameterChip(
+    text: String,
+    onDismiss: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(20.dp))
+            .background(OnboardOliveLight)
+            .border(1.dp, OnboardBorderGrey, RoundedCornerShape(20.dp))
+            .padding(horizontal = 12.dp, vertical = 6.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Text(
+                text = text,
+                color = OnboardTextMuted,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold
+            )
+            Icon(
+                imageVector = Icons.Default.Clear,
+                contentDescription = "Dismiss",
+                tint = OnboardTextMuted,
+                modifier = Modifier
+                    .size(12.dp)
+                    .clickable { onDismiss() }
             )
         }
     }
