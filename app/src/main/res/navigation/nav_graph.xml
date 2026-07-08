@@ -7,7 +7,7 @@
 
     <fragment
         android:id="@+id/onboardingFragment"
-        android:name="com.agroSystem.app.ui.fragments.OnboardingFragment"
+        android:name="com.agroSystem.app.features.auth.OnboardingFragment"
         android:label="Onboarding"
         tools:layout="@layout/fragment_onboarding">
         <action
@@ -19,7 +19,7 @@
 
     <fragment
         android:id="@+id/phoneInputFragment"
-        android:name="com.agroSystem.app.ui.fragments.PhoneInputFragment"
+        android:name="com.agroSystem.app.features.auth.PhoneInputFragment"
         android:label="Input Telepon"
         tools:layout="@layout/fragment_phone_input">
         <action
@@ -39,7 +39,7 @@
 
     <fragment
         android:id="@+id/otpInputFragment"
-        android:name="com.agroSystem.app.ui.fragments.OtpInputFragment"
+        android:name="com.agroSystem.app.features.auth.OtpInputFragment"
         android:label="Verifikasi OTP"
         tools:layout="@layout/fragment_otp_input">
         <action
@@ -54,7 +54,7 @@
 
     <fragment
         android:id="@+id/profileSetupFragment"
-        android:name="com.agroSystem.app.ui.fragments.ProfileSetupFragment"
+        android:name="com.agroSystem.app.features.auth.ProfileSetupFragment"
         android:label="Buat Profil"
         tools:layout="@layout/fragment_profile_setup">
         <action
@@ -69,7 +69,7 @@
 
     <fragment
         android:id="@+id/locationPermissionFragment"
-        android:name="com.agroSystem.app.ui.fragments.LocationPermissionFragment"
+        android:name="com.agroSystem.app.features.address.LocationPermissionFragment"
         android:label="Izin Lokasi"
         tools:layout="@layout/fragment_location_permission">
         <action
@@ -84,7 +84,7 @@
 
     <fragment
         android:id="@+id/selectAddressFragment"
-        android:name="com.agroSystem.app.ui.fragments.SelectAddressFragment"
+        android:name="com.agroSystem.app.features.address.SelectAddressFragment"
         android:label="Pilih Alamat"
         tools:layout="@layout/fragment_select_address">
         <action
@@ -99,7 +99,7 @@
 
     <fragment
         android:id="@+id/addressDetailFragment"
-        android:name="com.agroSystem.app.ui.fragments.AddressDetailFragment"
+        android:name="com.agroSystem.app.features.address.AddressDetailFragment"
         android:label="Detail Alamat"
         tools:layout="@layout/fragment_address_detail">
         <action
@@ -116,13 +116,51 @@
 
     <fragment
         android:id="@+id/homeFragment"
-        android:name="com.agroSystem.app.ui.fragments.HomeFragment"
+        android:name="com.agroSystem.app.features.home.HomeFragment"
         android:label="Home Dashboard">
         <action
             android:id="@+id/action_homeFragment_to_onboardingFragment"
             app:destination="@id/onboardingFragment"
             app:popUpTo="@id/homeFragment"
             app:popUpToInclusive="true" />
+        <action
+            android:id="@+id/action_homeFragment_to_productDetailFragment"
+            app:destination="@id/productDetailFragment" />
+        <action
+            android:id="@+id/action_homeFragment_to_farmerDetailFragment"
+            app:destination="@id/farmerDetailFragment" />
+        <action
+            android:id="@+id/action_homeFragment_to_cartFragment"
+            app:destination="@id/cartFragment" />
     </fragment>
+
+    <fragment
+        android:id="@+id/productDetailFragment"
+        android:name="com.agroSystem.app.features.catalog.ProductDetailFragment"
+        android:label="Detail Produk">
+        <argument
+            android:name="productId"
+            app:argType="integer" />
+        <action
+            android:id="@+id/action_productDetailFragment_to_farmerDetailFragment"
+            app:destination="@id/farmerDetailFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/farmerDetailFragment"
+        android:name="com.agroSystem.app.features.catalog.FarmerDetailFragment"
+        android:label="Profil Petani">
+        <argument
+            android:name="farmerId"
+            app:argType="integer" />
+        <action
+            android:id="@+id/action_farmerDetailFragment_to_productDetailFragment"
+            app:destination="@id/productDetailFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/cartFragment"
+        android:name="com.agroSystem.app.features.cart.CartFragment"
+        android:label="Keranjang Belanja" />
 
 </navigation>
