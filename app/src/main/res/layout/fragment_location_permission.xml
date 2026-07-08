@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/color_bg_warm"
+    android:padding="24dp">
+
+    <!-- Back Button -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/btn_back"
+        android:layout_width="44dp"
+        android:layout_height="44dp"
+        app:cardCornerRadius="22dp"
+        app:cardElevation="0dp"
+        app:strokeWidth="1dp"
+        app:strokeColor="@color/color_border_grey"
+        app:cardBackgroundColor="@color/color_surface_warm"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_gravity="center"
+            android:src="@drawable/ic_back_arrow" />
+
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- Header Content -->
+    <TextView
+        android:id="@+id/text_header"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="32dp"
+        android:text="Izin Akses Lokasi"
+        android:textColor="@color/color_text_dark"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        app:layout_constraintTop_toBottomOf="@id/btn_back"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <TextView
+        android:id="@+id/text_sub"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:text="Kami memerlukan akses lokasi Anda untuk mencocokkan dengan petani terdekat, menampilkan jalur logistik yang optimal, serta mempermudah pengiriman pesanan pangan Anda."
+        android:textColor="@color/color_text_muted"
+        android:textSize="14sp"
+        android:lineSpacingMultiplier="1.3"
+        app:layout_constraintTop_toBottomOf="@id/text_header"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <!-- Vector Illustration Map Pin -->
+    <ImageView
+        android:id="@+id/image_illustration"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_location_radar"
+        app:layout_constraintTop_toBottomOf="@id/text_sub"
+        app:layout_constraintBottom_toTopOf="@id/layout_buttons"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Action Buttons Block -->
+    <LinearLayout
+        android:id="@+id/layout_buttons"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:layout_marginBottom="8dp"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <!-- Saat Aplikasi Digunakan Button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_while_using"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:text="Saat Aplikasi Digunakan"
+            android:textColor="@color/white"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            app:backgroundTint="@color/color_primary_green"
+            app:cornerRadius="12dp" />
+
+        <!-- Minta Sekali Button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_one_time"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_marginTop="10dp"
+            android:text="Minta Sekali"
+            android:textColor="@color/color_text_dark"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            app:strokeColor="@color/color_border_grey"
+            app:strokeWidth="1dp"
+            app:cornerRadius="12dp"
+            app:backgroundTint="@color/color_surface_warm" />
+
+        <!-- Jangan Izinkan Button -->
+        <Button
+            android:id="@+id/btn_deny"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginTop="10dp"
+            android:text="Jangan Izinkan"
+            android:textColor="@color/color_red_error"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

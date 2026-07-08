@@ -1,0 +1,36 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="200dp"
+    android:height="200dp"
+    android:viewportWidth="200"
+    android:viewportHeight="200">
+  <!-- Outer Ring -->
+  <path
+      android:pathData="M100,100m-80,0a80,80 0,1 1,160 0a80,80 0,1 1,-160 0"
+      android:strokeWidth="2"
+      android:strokeColor="#20475B40"
+      android:fillColor="#00000000"/>
+  <!-- Middle Ring -->
+  <path
+      android:pathData="M100,100m-50,0a50,50 0,1 1,100 0a50,50 0,1 1,-100 0"
+      android:strokeWidth="2"
+      android:strokeColor="#40475B40"
+      android:fillColor="#10475B40"/>
+  <!-- Inner Pulse -->
+  <path
+      android:pathData="M100,100m-30,0a30,30 0,1 1,60 0a30,30 0,1 1,-60 0"
+      android:strokeWidth="2"
+      android:strokeColor="#60475B40"
+      android:fillColor="#25475B40"/>
+  <!-- Pin Shadow -->
+  <path
+      android:pathData="M100,120m-12,0a12,4 0,1 1,24 0a12,4 0,1 1,-24 0"
+      android:fillColor="#15000000"/>
+  <!-- Map Pin Shape -->
+  <path
+      android:pathData="M100,120c-15,-15 -25,-30 -25,-42c0,-15 11,-26 25,-26s25,11 25,26c0,12 -10,27 -25,42z"
+      android:fillColor="@color/color_accent_terracotta"/>
+  <!-- Pin Center Circle -->
+  <path
+      android:pathData="M100,78m-6,0a6,6 0,1 1,12 0a6,6 0,1 1,-12 0"
+      android:fillColor="#F5F3EE"/>
+</vector>

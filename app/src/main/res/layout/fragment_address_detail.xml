@@ -1,0 +1,317 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:background="@color/color_bg_warm">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="24dp">
+
+        <!-- Back Button -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/btn_back"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            app:cardCornerRadius="22dp"
+            app:cardElevation="0dp"
+            app:strokeWidth="1dp"
+            app:strokeColor="@color/color_border_grey"
+            app:cardBackgroundColor="@color/color_surface_warm"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_back_arrow" />
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Header -->
+        <TextView
+            android:id="@+id/text_header"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="28dp"
+            android:text="Detail Alamat Pengiriman"
+            android:textColor="@color/color_text_dark"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            app:layout_constraintTop_toBottomOf="@id/btn_back"
+            app:layout_constraintStart_toStartOf="parent" />
+
+        <TextView
+            android:id="@+id/text_sub"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Lengkapi koordinat alamat pengiriman Anda"
+            android:textColor="@color/color_text_muted"
+            android:textSize="13sp"
+            app:layout_constraintTop_toBottomOf="@id/text_header"
+            app:layout_constraintStart_toStartOf="parent" />
+
+        <!-- Input 1: Detail Alamat -->
+        <TextView
+            android:id="@+id/lbl_detail"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="Detail Alamat (Jalan / Blok)"
+            android:textColor="@color/color_text_dark"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            app:layout_constraintTop_toBottomOf="@id/text_sub"
+            app:layout_constraintStart_toStartOf="parent" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/layout_detail"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            app:boxStrokeColor="@color/color_primary_green"
+            app:boxStrokeWidth="1dp"
+            app:boxStrokeWidthFocused="2dp"
+            app:boxCornerRadiusTopStart="12dp"
+            app:boxCornerRadiusTopEnd="12dp"
+            app:boxCornerRadiusBottomStart="12dp"
+            app:boxCornerRadiusBottomEnd="12dp"
+            app:boxBackgroundColor="@color/color_surface_warm"
+            app:layout_constraintTop_toBottomOf="@id/lbl_detail">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/input_detail"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="cth: Perumahan Sawah Indah Blok C-12"
+                android:textColorHint="@color/color_text_muted"
+                android:textColor="@color/color_text_dark"
+                android:singleLine="true" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Input 2: Apartemen -->
+        <TextView
+            android:id="@+id/lbl_apartment"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Apartemen / Gedung / Unit (Opsional)"
+            android:textColor="@color/color_text_dark"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            app:layout_constraintTop_toBottomOf="@id/layout_detail"
+            app:layout_constraintStart_toStartOf="parent" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/layout_apartment"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            app:boxStrokeColor="@color/color_primary_green"
+            app:boxStrokeWidth="1dp"
+            app:boxStrokeWidthFocused="2dp"
+            app:boxCornerRadiusTopStart="12dp"
+            app:boxCornerRadiusTopEnd="12dp"
+            app:boxCornerRadiusBottomStart="12dp"
+            app:boxCornerRadiusBottomEnd="12dp"
+            app:boxBackgroundColor="@color/color_surface_warm"
+            app:layout_constraintTop_toBottomOf="@id/lbl_apartment">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/input_apartment"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="cth: Tower B Lantai 8 Unit 2A"
+                android:textColorHint="@color/color_text_muted"
+                android:textColor="@color/color_text_dark"
+                android:singleLine="true" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Input 3: Nama Jalan -->
+        <TextView
+            android:id="@+id/lbl_street"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Nama Jalan Utama"
+            android:textColor="@color/color_text_dark"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            app:layout_constraintTop_toBottomOf="@id/layout_apartment"
+            app:layout_constraintStart_toStartOf="parent" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/layout_street"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            app:boxStrokeColor="@color/color_primary_green"
+            app:boxStrokeWidth="1dp"
+            app:boxStrokeWidthFocused="2dp"
+            app:boxCornerRadiusTopStart="12dp"
+            app:boxCornerRadiusTopEnd="12dp"
+            app:boxCornerRadiusBottomStart="12dp"
+            app:boxCornerRadiusBottomEnd="12dp"
+            app:boxBackgroundColor="@color/color_surface_warm"
+            app:layout_constraintTop_toBottomOf="@id/lbl_street">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/input_street"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="cth: Jalan Raya Sawah Indah"
+                android:textColorHint="@color/color_text_muted"
+                android:textColor="@color/color_text_dark"
+                android:singleLine="true" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Input 4: Lantai -->
+        <TextView
+            android:id="@+id/lbl_floor"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Lantai (Jika ada)"
+            android:textColor="@color/color_text_dark"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            app:layout_constraintTop_toBottomOf="@id/layout_street"
+            app:layout_constraintStart_toStartOf="parent" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/layout_floor"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            app:boxStrokeColor="@color/color_primary_green"
+            app:boxStrokeWidth="1dp"
+            app:boxStrokeWidthFocused="2dp"
+            app:boxCornerRadiusTopStart="12dp"
+            app:boxCornerRadiusTopEnd="12dp"
+            app:boxCornerRadiusBottomStart="12dp"
+            app:boxCornerRadiusBottomEnd="12dp"
+            app:boxBackgroundColor="@color/color_surface_warm"
+            app:layout_constraintTop_toBottomOf="@id/lbl_floor">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/input_floor"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="cth: Lantai 2"
+                android:textColorHint="@color/color_text_muted"
+                android:textColor="@color/color_text_dark"
+                android:singleLine="true" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Input 5: Landmark -->
+        <TextView
+            android:id="@+id/lbl_landmark"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Landmark / Patokan Alamat"
+            android:textColor="@color/color_text_dark"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            app:layout_constraintTop_toBottomOf="@id/layout_floor"
+            app:layout_constraintStart_toStartOf="parent" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/layout_landmark"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            app:boxStrokeColor="@color/color_primary_green"
+            app:boxStrokeWidth="1dp"
+            app:boxStrokeWidthFocused="2dp"
+            app:boxCornerRadiusTopStart="12dp"
+            app:boxCornerRadiusTopEnd="12dp"
+            app:boxCornerRadiusBottomStart="12dp"
+            app:boxCornerRadiusBottomEnd="12dp"
+            app:boxBackgroundColor="@color/color_surface_warm"
+            app:layout_constraintTop_toBottomOf="@id/lbl_landmark">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/input_landmark"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="cth: Sebelah Masjid Baiturrahman"
+                android:textColorHint="@color/color_text_muted"
+                android:textColor="@color/color_text_dark"
+                android:singleLine="true" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Input 6: Komentar Opsional -->
+        <TextView
+            android:id="@+id/lbl_comment"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Komentar Tambahan untuk Kurir (Opsional)"
+            android:textColor="@color/color_text_dark"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            app:layout_constraintTop_toBottomOf="@id/layout_landmark"
+            app:layout_constraintStart_toStartOf="parent" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/layout_comment"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            app:boxStrokeColor="@color/color_primary_green"
+            app:boxStrokeWidth="1dp"
+            app:boxStrokeWidthFocused="2dp"
+            app:boxCornerRadiusTopStart="12dp"
+            app:boxCornerRadiusTopEnd="12dp"
+            app:boxCornerRadiusBottomStart="12dp"
+            app:boxCornerRadiusBottomEnd="12dp"
+            app:boxBackgroundColor="@color/color_surface_warm"
+            app:layout_constraintTop_toBottomOf="@id/lbl_comment">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/input_comment"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="cth: Gerbang warna hitam, titip satpam jika kosong"
+                android:textColorHint="@color/color_text_muted"
+                android:textColor="@color/color_text_dark" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Save Button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_save"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="32dp"
+            android:layout_marginBottom="8dp"
+            android:text="Simpan &amp; Masuk"
+            android:textColor="@color/white"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:enabled="false"
+            app:backgroundTint="@color/color_primary_green"
+            app:cornerRadius="16dp"
+            app:layout_constraintTop_toBottomOf="@id/layout_comment"
+            app:layout_constraintBottom_toBottomOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</ScrollView>

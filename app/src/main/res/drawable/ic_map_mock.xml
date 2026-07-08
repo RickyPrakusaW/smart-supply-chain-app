@@ -1,0 +1,54 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="300dp"
+    android:height="280dp"
+    android:viewportWidth="300"
+    android:viewportHeight="280">
+  <!-- Map Background -->
+  <path
+      android:pathData="M0,0h300v280H0z"
+      android:fillColor="#E2EFE0"/>
+  <!-- River/Lake -->
+  <path
+      android:pathData="M0,40 C80,20 120,70 210,40 C250,30 270,80 300,70 L300,100 C255,60 225,100 195,70 C105,100 60,40 0,60 Z"
+      android:fillColor="#A5C8F2"/>
+  <!-- Park Zone -->
+  <path
+      android:pathData="M135,126 L174,117 L165,182 L120,168 Z"
+      android:fillColor="#C7E2C5"/>
+  <!-- Road 1 -->
+  <path
+      android:pathData="M0,84 L300,126"
+      android:strokeWidth="20"
+      android:strokeColor="#FFFFFF"
+      android:strokeLineCap="round"/>
+  <!-- Road 2 -->
+  <path
+      android:pathData="M75,0 L105,280"
+      android:strokeWidth="18"
+      android:strokeColor="#FFFFFF"
+      android:strokeLineCap="round"/>
+  <!-- Road 3 -->
+  <path
+      android:pathData="M210,0 L180,280"
+      android:strokeWidth="15"
+      android:strokeColor="#FFFFFF"
+      android:strokeLineCap="round"/>
+  <!-- Road 4 -->
+  <path
+      android:pathData="M0,210 L300,196"
+      android:strokeWidth="16"
+      android:strokeColor="#FFFFFF"
+      android:strokeLineCap="round"/>
+  <!-- Selected Pin Ring Shadow -->
+  <path
+      android:pathData="M150,140m-16,0a16,16 0,1 1,32 0a16,16 0,1 1,-32 0"
+      android:fillColor="#20BE7C4A"/>
+  <!-- Selected Pin Outer Shape -->
+  <path
+      android:pathData="M150,140c-10,-10 -16,-20 -16,-28c0,-10 7,-18 16,-18s16,8 16,18c0,8 -6,18 -16,28z"
+      android:fillColor="@color/color_accent_terracotta"/>
+  <!-- Selected Pin Inner Dot -->
+  <path
+      android:pathData="M150,122m-4,0a4,4 0,1 1,8 0a4,4 0,1 1,-8 0"
+      android:fillColor="#FFFFFF"/>
+</vector>
