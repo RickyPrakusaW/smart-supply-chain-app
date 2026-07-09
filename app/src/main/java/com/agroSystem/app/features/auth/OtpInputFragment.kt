@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
 import com.agroSystem.app.R
 import com.google.android.material.button.MaterialButton
@@ -14,6 +15,7 @@ import com.google.android.material.card.MaterialCardView
 
 class OtpInputFragment : Fragment() {
 
+    private val authViewModel: AuthViewModel by activityViewModels()
     private var otpCode: String = ""
     private var isError: Boolean = false
     private lateinit var boxViews: List<TextView>
@@ -102,7 +104,9 @@ class OtpInputFragment : Fragment() {
 
     private fun validateOtp() {
         if (otpCode == "123456") {
-            findNavController().navigate(R.id.action_otpInputFragment_to_profileSetupFragment)
+            authViewModel.loginWithPhone {
+                findNavController().navigate(R.id.action_otpInputFragment_to_profileSetupFragment)
+            }
         } else {
             isError = true
             updateOtpDisplay()

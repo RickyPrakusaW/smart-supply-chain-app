@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "183291450985",
+    "project_id": "savvy-octagon-473312-s8",
+    "storage_bucket": "savvy-octagon-473312-s8.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:183291450985:android:0d91fd5269ce3c0514b4f8",
+        "android_client_info": {
+          "package_name": "com.agroSystem.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBndFSFaxQldjwTc5sW2mH9QlKrg4grJZY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
