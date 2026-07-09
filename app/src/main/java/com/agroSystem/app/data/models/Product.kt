@@ -23,5 +23,35 @@ data class Product(
     val packaging: String = "Botol Kaca steril 1 Liter (Ramah Lingkungan)",
     val diets: List<String> = emptyList(),
     val allergens: List<String> = emptyList(),
-    val nutrients: List<String> = emptyList()
-)
+    val nutrients: List<String> = emptyList(),
+    val ownerId: String? = null,
+    val imageBytes: String? = null
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is Product) return false
+        return id == other.id
+    }
+
+    override fun hashCode(): Int {
+        var result = id
+        result = 31 * result + (name?.hashCode() ?: 0)
+        result = 31 * result + (farmer?.hashCode() ?: 0)
+        result = 31 * result + (category?.hashCode() ?: 0)
+        return result
+    }
+}
+
+fun Product.bindImageTo(imageView: android.widget.ImageView) {
+    if (!this.imageBytes.isNullOrEmpty()) {
+        try {
+            val decodedString = android.util.Base64.decode(this.imageBytes, android.util.Base64.DEFAULT)
+            val decodedByte = android.graphics.BitmapFactory.decodeByteArray(decodedString, 0, decodedString.size)
+            imageView.setImageBitmap(decodedByte)
+        } catch (e: Exception) {
+            imageView.setImageResource(this.imageResId)
+        }
+    } else {
+        imageView.setImageResource(this.imageResId)
+    }
+}

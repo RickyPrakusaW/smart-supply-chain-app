@@ -119,6 +119,7 @@ class CatalogFragment : Fragment() {
         }
         sharedViewModel.favoriteProductIds.observe(viewLifecycleOwner) { updateProductsList() }
         sharedViewModel.cartItems.observe(viewLifecycleOwner) { updateProductsList() }
+        sharedViewModel.productsList.observe(viewLifecycleOwner) { updateProductsList() }
     }
 
     private fun updateProductsList() {

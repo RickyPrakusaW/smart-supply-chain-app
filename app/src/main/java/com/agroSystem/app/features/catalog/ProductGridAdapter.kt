@@ -10,6 +10,7 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.agroSystem.app.R
 import com.agroSystem.app.data.models.Product
+import com.agroSystem.app.data.models.bindImageTo
 import com.google.android.material.card.MaterialCardView
 
 class ProductGridAdapter(
@@ -58,7 +59,7 @@ class ProductGridAdapter(
         private val btnStepperPlus: ImageView = itemView.findViewById(R.id.btn_stepper_plus)
 
         fun bind(product: Product) {
-            imageIllustration.setImageResource(product.imageResId)
+            product.bindImageTo(imageIllustration)
             textTitle.text = product.name
             textFarmer.text = product.farmer
             textRating.text = product.rating

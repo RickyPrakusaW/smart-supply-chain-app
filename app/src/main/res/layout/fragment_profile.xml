@@ -416,6 +416,24 @@
             android:layout_width="match_parent"
             android:layout_height="12dp" />
 
+        <!-- Kelola Produk Saya Button (B2B CRUD) -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_manage_products"
+            style="@style/Widget.Material3.Button.ElevatedButton"
+            android:layout_width="match_parent"
+            android:layout_height="54dp"
+            android:text="Kelola Produk Saya"
+            android:textColor="@color/color_primary_green"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            app:cornerRadius="12dp"
+            app:icon="@android:drawable/ic_menu_myplaces"
+            app:iconTint="@color/color_primary_green" />
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="12dp" />
+
         <!-- Save Profile Button -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_save_profile"

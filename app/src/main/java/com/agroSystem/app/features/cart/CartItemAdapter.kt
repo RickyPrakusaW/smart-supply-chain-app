@@ -8,6 +8,7 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.agroSystem.app.R
 import com.agroSystem.app.data.models.Product
+import com.agroSystem.app.data.models.bindImageTo
 
 class CartItemAdapter(
     private var items: List<Pair<Product, Int>>,
@@ -42,7 +43,7 @@ class CartItemAdapter(
         private val textItemTotalPrice: TextView = itemView.findViewById(R.id.text_item_total_price)
 
         fun bind(product: Product, quantity: Int) {
-            imageIllustration.setImageResource(product.imageResId)
+            product.bindImageTo(imageIllustration)
             textTitle.text = product.name
             textSubtitle.text = "Rp ${product.price} / ${product.unit}"
             textStepperCount.text = "$quantity pcs"

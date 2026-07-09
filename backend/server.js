@@ -61,7 +61,9 @@ const ProductSchema = new mongoose.Schema({
   fat: String,
   carbs: String,
   calories: String,
-  ingredients: String
+  ingredients: String,
+  ownerId: { type: String, default: null },
+  imageBytes: { type: String, default: null }
 });
 const Product = mongoose.model('Product', ProductSchema);
 
@@ -278,6 +280,183 @@ app.get('/api/v1/products', async (req, res) => {
     res.json(list);
   } else {
     res.json(inMemoryProducts);
+  }
+});
+
+// Create Product (B2B)
+app.post('/api/v1/products', async (req, res) => {
+  try {
+    const productData = req.body;
+    productData.id = Math.floor(Math.random() * 1000000) + 10;
+    
+    if (mongoose.connection.readyState === 1) {
+      const newProduct = new Product(productData);
+      await newProduct.save();
+      res.json({ success: true, data: newProduct });
+    } else {
+      inMemoryProducts.push(productData);
+      res.json({ success: true, data: productData });
+    }
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Update Product (B2B)
+app.put('/api/v1/products/:id', async (req, res) => {
+  const { id } = req.params;
+  const updateData = req.body;
+  const numId = parseInt(id, 10);
+  
+  try {
+    if (mongoose.connection.readyState === 1) {
+      const updated = await Product.findOneAndUpdate({ id: numId }, updateData, { new: true });
+      if (!updated) return res.status(404).json({ success: false, message: "Product not found" });
+      res.json({ success: true, data: updated });
+    } else {
+      const idx = inMemoryProducts.findIndex(p => p.id === numId);
+      if (idx !== -1) {
+        inMemoryProducts[idx] = { ...inMemoryProducts[idx], ...updateData };
+        res.json({ success: true, data: inMemoryProducts[idx] });
+      } else {
+        res.status(404).json({ success: false, message: "Product not found" });
+      }
+    }
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Delete Product (B2B)
+app.delete('/api/v1/products/:id', async (req, res) => {
+  const { id } = req.params;
+  const numId = parseInt(id, 10);
+  
+  try {
+    if (mongoose.connection.readyState === 1) {
+      const deleted = await Product.findOneAndDelete({ id: numId });
+      if (!deleted) return res.status(404).json({ success: false, message: "Product not found" });
+      res.json({ success: true });
+    } else {
+      const originalLen = inMemoryProducts.length;
+      inMemoryProducts = inMemoryProducts.filter(p => p.id !== numId);
+      if (inMemoryProducts.length === originalLen) {
+        return res.status(404).json({ success: false, message: "Product not found" });
+      }
+      res.json({ success: true });
+    }
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+// Spoonacular Seeder API
+app.post('/api/v1/spoonacular/seed', async (req, res) => {
+  const apiKey = 'aeee52afea7e4669886561d48ea54557';
+  
+  // Queries mapped to category
+  const categoriesMap = [
+    { query: 'egg', category: 'Telur' },
+    { query: 'milk', category: 'Susu' },
+    { query: 'vegetable', category: 'Sayuran' },
+    { query: 'beef', category: 'Daging' },
+    { query: 'soup', category: 'Bahan Sup' }
+  ];
+
+  try {
+    let seededProducts = [];
+    let idCounter = 100; // Custom start ID for Spoonacular items
+
+    for (const item of categoriesMap) {
+      console.log(`[Spoonacular] Searching for query: ${item.query}...`);
+      const searchUrl = `https://api.spoonacular.com/food/ingredients/search?query=${item.query}&number=3&apiKey=${apiKey}`;
+      const searchRes = await fetch(searchUrl);
+      const searchData = await searchRes.json();
+
+      if (searchData.results && searchData.results.length > 0) {
+        for (const ingredient of searchData.results) {
+          const detailUrl = `https://api.spoonacular.com/food/ingredients/${ingredient.id}/information?amount=100&unit=g&apiKey=${apiKey}`;
+          const detailRes = await fetch(detailUrl);
+          const detailData = await detailRes.json();
+
+          // Fetch nutrition facts
+          let protein = "2g";
+          let fat = "1g";
+          let carbs = "4g";
+          let calories = "50 Kcal";
+
+          if (detailData.nutrition && detailData.nutrition.nutrients) {
+            const nutrients = detailData.nutrition.nutrients;
+            const protObj = nutrients.find(n => n.name === 'Protein');
+            const fatObj = nutrients.find(n => n.name === 'Fat');
+            const carbObj = nutrients.find(n => n.name === 'Carbohydrates');
+            const calObj = nutrients.find(n => n.name === 'Calories');
+
+            if (protObj) protein = `${Math.round(protObj.amount)}${protObj.unit}`;
+            if (fatObj) fat = `${Math.round(fatObj.amount)}${fatObj.unit}`;
+            if (carbObj) carbs = `${Math.round(carbObj.amount)}${carbObj.unit}`;
+            if (calObj) calories = `${Math.round(calObj.amount)} Kcal`;
+          }
+
+          // Convert image to Base64
+          let base64Image = null;
+          if (ingredient.image) {
+            try {
+              const imageUrl = `https://spoonacular.com/cdn/ingredients_250x250/${ingredient.image}`;
+              const imgRes = await fetch(imageUrl);
+              const buffer = await imgRes.arrayBuffer();
+              base64Image = Buffer.from(buffer).toString('base64');
+            } catch (imgErr) {
+              console.error(`Failed to download image for ${ingredient.name}`, imgErr);
+            }
+          }
+
+          // Build product object
+          const product = {
+            id: idCounter++,
+            name: ingredient.name.replace(/\b\w/g, c => c.toUpperCase()),
+            farmer: "Peternakan Kemitraan Mandiri, Batu",
+            location: "Peternakan Kemitraan Mandiri",
+            rating: (4.5 + Math.random() * 0.5).toFixed(1),
+            price: Math.floor((15000 + Math.random() * 35000) / 1000) * 1000,
+            unit: "100 g",
+            imageResId: 2131230814, // R.drawable.padi fallback
+            category: item.category,
+            isEcoFriendly: Math.random() > 0.5,
+            deliveryDays: Math.floor(Math.random() * 3) + 1,
+            protein: protein,
+            fat: fat,
+            carbs: carbs,
+            calories: calories,
+            ingredients: `Bahan makanan ${ingredient.name} organik segar berkualitas tinggi pilihan langsung dari mitra tani Indonesia.`,
+            shelfLife: "5 Hari",
+            storage: "Suhu Dingin (+2°C s.d +6°C)",
+            packaging: "Kemasan Vakum Higienis (Ramah Lingkungan)",
+            imageBytes: base64Image
+          };
+
+          seededProducts.push(product);
+        }
+      }
+    }
+
+    if (seededProducts.length > 0) {
+      if (mongoose.connection.readyState === 1) {
+        // Clear old database products first
+        await Product.deleteMany({});
+        await Product.insertMany(seededProducts);
+        console.log(`[Spoonacular] Successfully seeded ${seededProducts.length} items to MongoDB.`);
+      } else {
+        inMemoryProducts = seededProducts;
+        console.log(`[Spoonacular] Successfully seeded ${seededProducts.length} items to memory.`);
+      }
+      return res.json({ success: true, count: seededProducts.length, data: seededProducts });
+    } else {
+      return res.status(400).json({ success: false, message: "No items fetched from Spoonacular" });
+    }
+
+  } catch (error) {
+    console.error("Spoonacular seed error:", error);
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 

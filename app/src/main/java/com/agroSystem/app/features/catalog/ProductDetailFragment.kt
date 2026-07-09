@@ -22,6 +22,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.agroSystem.app.R
 import com.agroSystem.app.data.models.Farmer
 import com.agroSystem.app.data.models.Product
+import com.agroSystem.app.data.models.bindImageTo
 import com.agroSystem.app.data.models.Recipe
 import com.agroSystem.app.features.shared.MainSharedViewModel
 import com.google.android.material.button.MaterialButton
@@ -98,7 +99,8 @@ class ProductDetailFragment : Fragment() {
         // Find product
         product = sharedViewModel.allProducts.firstOrNull { it.id == productId } ?: sharedViewModel.allProducts.first()
         // Find matching farmer
-        farmer = sharedViewModel.allFarmers.firstOrNull { it.name.contains(product.farmer.split(",").first().trim()) || it.name.contains("Pujon") } ?: sharedViewModel.allFarmers.first()
+        val farmerName = product.farmer ?: "Peternakan Kemitraan Mandiri, Batu"
+        farmer = sharedViewModel.allFarmers.firstOrNull { it.name.contains(farmerName.split(",").first().trim()) || it.name.contains("Pujon") } ?: sharedViewModel.allFarmers.first()
 
         bindViews(view)
         setupHeaderActions()
@@ -205,7 +207,7 @@ class ProductDetailFragment : Fragment() {
     }
 
     private fun populateProductInfo() {
-        imageProduct.setImageResource(product.imageResId)
+        product.bindImageTo(imageProduct)
         textRating.text = product.rating
         textTitle.text = product.name
         textPrice.text = "Rp ${product.price}"

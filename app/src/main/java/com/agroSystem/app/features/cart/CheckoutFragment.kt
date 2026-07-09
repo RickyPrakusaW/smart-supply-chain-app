@@ -15,6 +15,7 @@ import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
 import com.agroSystem.app.R
 import com.agroSystem.app.data.models.Product
+import com.agroSystem.app.data.models.bindImageTo
 import com.agroSystem.app.features.shared.MainSharedViewModel
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
@@ -430,7 +431,7 @@ class CheckoutFragment : Fragment() {
         val image = view.findViewById<ImageView>(R.id.image_product)
         val textQty = view.findViewById<TextView>(R.id.text_qty)
 
-        image.setImageResource(product.imageResId)
+        product.bindImageTo(image)
         textQty.text = qty.toString()
 
         container.addView(view)

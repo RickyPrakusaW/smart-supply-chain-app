@@ -148,16 +148,23 @@ class DashboardFragment : Fragment() {
         )
 
         // Observe main states
+        sharedViewModel.productsList.observe(viewLifecycleOwner) { prods ->
+            productsAdapter.updateData(
+                prods.take(4),
+                sharedViewModel.favoriteProductIds.value ?: emptyList(),
+                sharedViewModel.cartItems.value ?: emptyMap()
+            )
+        }
         sharedViewModel.favoriteProductIds.observe(viewLifecycleOwner) { favs ->
             productsAdapter.updateData(
-                sharedViewModel.allProducts.take(4),
+                (sharedViewModel.productsList.value ?: sharedViewModel.allProducts).take(4),
                 favs,
                 sharedViewModel.cartItems.value ?: emptyMap()
             )
         }
         sharedViewModel.cartItems.observe(viewLifecycleOwner) { cart ->
             productsAdapter.updateData(
-                sharedViewModel.allProducts.take(4),
+                (sharedViewModel.productsList.value ?: sharedViewModel.allProducts).take(4),
                 sharedViewModel.favoriteProductIds.value ?: emptyList(),
                 cart
             )

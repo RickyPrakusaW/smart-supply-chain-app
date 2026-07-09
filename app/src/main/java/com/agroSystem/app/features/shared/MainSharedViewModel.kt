@@ -11,10 +11,13 @@ import com.agroSystem.app.data.models.Farmer
 import com.agroSystem.app.data.models.Recipe
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.launch
+import com.agroSystem.app.data.remote.ApiClient
 
 class MainSharedViewModel(application: Application) : AndroidViewModel(application) {
 
-    val allProducts = listOf(
+    val allProducts = mutableListOf(
         Product(1, "Telur Ayam Kampung Segar", "Peternakan Tani Jaya, Malang", "5.0", 24000, "10 pcs", R.drawable.padi, "Telur", isEcoFriendly = true, deliveryDays = 1, protein = "13g", fat = "11g", carbs = "1.1g", calories = "155 Kcal", ingredients = "Telur ayam kampung organik segar hasil pakan jagung alami bebas antibiotik."),
         Product(2, "Keju Kambing Organik", "Koperasi Susu Pujon, Batu", "4.9", 45000, "200 g", R.drawable.sapi, "Susu", isDiscounted = true, originalPrice = 50000, isEcoFriendly = false, deliveryDays = 2, protein = "22g", fat = "24g", carbs = "3g", calories = "360 Kcal", ingredients = "Keju artisan semi-hard buatan tangan dari 100% susu kambing murni berkualitas tinggi."),
         Product(3, "Bayam Hidroponik Bersih", "Agro Makmur, Batu", "4.8", 12000, "250 g", R.drawable.sayuran, "Sayuran", isEcoFriendly = true, deliveryDays = 1, protein = "2.9g", fat = "0.4g", carbs = "3.6g", calories = "23 Kcal", ingredients = "Sayur bayam hijau segar hidroponik bebas pestisida kimia. Dikemas steril."),
@@ -68,8 +71,83 @@ class MainSharedViewModel(application: Application) : AndroidViewModel(applicati
     private val sharedPrefs = application.getSharedPreferences("agrimitra_cart_prefs", Context.MODE_PRIVATE)
     private val gson = Gson()
 
+    val productsList = MutableLiveData<List<Product>>(allProducts)
+
     init {
         loadCartFromPrefs()
+        fetchProductsFromServer()
+    }
+
+    fun fetchProductsFromServer() {
+        viewModelScope.launch {
+            try {
+                val list = ApiClient.apiService.getProducts()
+                if (list.isNotEmpty()) {
+                    allProducts.clear()
+                    allProducts.addAll(list)
+                    productsList.value = allProducts
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    fun createProduct(product: Product, onResult: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val res = ApiClient.authApiService.createProduct(product)
+                if (res.success && res.data != null) {
+                    allProducts.add(res.data)
+                    productsList.value = allProducts
+                    onResult(true)
+                } else {
+                    onResult(false)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                onResult(false)
+            }
+        }
+    }
+
+    fun updateProduct(product: Product, onResult: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val res = ApiClient.authApiService.updateProduct(product.id, product)
+                if (res.success && res.data != null) {
+                    val idx = allProducts.indexOfFirst { it.id == product.id }
+                    if (idx != -1) {
+                        allProducts[idx] = res.data
+                        productsList.value = allProducts
+                    }
+                    onResult(true)
+                } else {
+                    onResult(false)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                onResult(false)
+            }
+        }
+    }
+
+    fun deleteProduct(productId: Int, onResult: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val res = ApiClient.authApiService.deleteProduct(productId)
+                if (res.success) {
+                    allProducts.removeAll { it.id == productId }
+                    productsList.value = allProducts
+                    onResult(true)
+                } else {
+                    onResult(false)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                onResult(false)
+            }
+        }
     }
 
     private fun saveCartToPrefs() {
@@ -185,7 +263,8 @@ class MainSharedViewModel(application: Application) : AndroidViewModel(applicati
         val allergens = filterSelectedAllergens.value ?: emptyList()
         val nutrients = filterSelectedNutrients.value ?: emptyList()
 
-        return allProducts.filter { product ->
+        val sourceList = productsList.value ?: allProducts
+        return sourceList.filter { product ->
             val matchesSearch = product.name.contains(query, ignoreCase = true) ||
                     product.farmer.contains(query, ignoreCase = true)
             val matchesCategory = category == "Semua" || product.category == category

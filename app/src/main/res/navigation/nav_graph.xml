@@ -156,6 +156,9 @@
         <action
             android:id="@+id/action_homeFragment_to_transactionHistoryFragment"
             app:destination="@id/transactionHistoryFragment" />
+        <action
+            android:id="@+id/action_homeFragment_to_sellerProductsFragment"
+            app:destination="@id/sellerProductsFragment" />
     </fragment>
 
     <fragment
@@ -220,6 +223,27 @@
         <action
             android:id="@+id/action_transactionHistoryFragment_to_paymentWebViewFragment"
             app:destination="@id/paymentWebViewFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/sellerProductsFragment"
+        android:name="com.agroSystem.app.features.seller.SellerProductsFragment"
+        android:label="Produk Saya"
+        tools:layout="@layout/fragment_seller_products">
+        <action
+            android:id="@+id/action_sellerProductsFragment_to_addEditProductFragment"
+            app:destination="@id/addEditProductFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/addEditProductFragment"
+        android:name="com.agroSystem.app.features.seller.AddEditProductFragment"
+        android:label="Tambah/Ubah Produk"
+        tools:layout="@layout/fragment_add_edit_product">
+        <argument
+            android:name="productId"
+            app:argType="integer"
+            android:defaultValue="-1" />
     </fragment>
 
 </navigation>

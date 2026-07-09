@@ -28,7 +28,9 @@ data class ProductEntity(
     val packaging: String,
     val diets: List<String>,
     val allergens: List<String>,
-    val nutrients: List<String>
+    val nutrients: List<String>,
+    val ownerId: String?,
+    val imageBytes: String?
 ) {
     fun toDomain(): Product = Product(
         id = id,
@@ -53,7 +55,9 @@ data class ProductEntity(
         packaging = packaging,
         diets = diets,
         allergens = allergens,
-        nutrients = nutrients
+        nutrients = nutrients,
+        ownerId = ownerId,
+        imageBytes = imageBytes
     )
 }
 
@@ -80,5 +84,7 @@ fun Product.toEntity(): ProductEntity = ProductEntity(
     packaging = packaging,
     diets = diets,
     allergens = allergens,
-    nutrients = nutrients
+    nutrients = nutrients,
+    ownerId = ownerId,
+    imageBytes = imageBytes
 )

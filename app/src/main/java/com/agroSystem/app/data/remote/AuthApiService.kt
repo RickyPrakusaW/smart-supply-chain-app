@@ -4,6 +4,9 @@ import retrofit2.http.Body
 import retrofit2.http.POST
 import retrofit2.http.GET
 import retrofit2.http.Path
+import retrofit2.http.PUT
+import retrofit2.http.DELETE
+import com.agroSystem.app.data.models.Product
 
 interface AuthApiService {
     @POST("auth/google")
@@ -20,6 +23,15 @@ interface AuthApiService {
 
     @GET("payment/orders/{userId}")
     suspend fun getUserOrders(@Path("userId") userId: String): OrdersListResponse
+
+    @POST("products")
+    suspend fun createProduct(@Body product: Product): CreateUpdateProductResponse
+
+    @PUT("products/{id}")
+    suspend fun updateProduct(@Path("id") id: Int, @Body product: Product): CreateUpdateProductResponse
+
+    @DELETE("products/{id}")
+    suspend fun deleteProduct(@Path("id") id: Int): GeneralStatusResponse
 }
 
 data class CheckoutRequest(
@@ -104,4 +116,14 @@ data class OrderItemResponse(
 data class OrderPaymentInfo(
     val token: String?,
     val redirect_url: String?
+)
+
+data class CreateUpdateProductResponse(
+    val success: Boolean,
+    val data: Product?
+)
+
+data class GeneralStatusResponse(
+    val success: Boolean,
+    val message: String? = null
 )
