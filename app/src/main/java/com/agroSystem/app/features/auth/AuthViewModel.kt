@@ -16,7 +16,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
     init {
         val database = AppDatabase.getDatabase(application)
-        authRepository = AuthRepository(database.userDao(), com.agroSystem.app.data.remote.ApiClient.authApiService)
+        authRepository = AuthRepository(database.userDao(), com.agroSystem.app.data.remote.ApiClient.authApiService, application)
         
         viewModelScope.launch {
             authRepository.loadSession()
@@ -88,11 +88,19 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun updateProfile(name: String, role: String, onSuccess: () -> Unit) {
+    fun updateProfile(
+        name: String,
+        email: String?,
+        phone: String?,
+        address: String?,
+        photoUrl: String?,
+        role: String,
+        onSuccess: () -> Unit
+    ) {
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                authRepository.updateProfile(name, role)
+                authRepository.updateProfile(name, email, phone, address, photoUrl, role)
                 _isLoading.value = false
                 onSuccess()
             } catch (e: Exception) {

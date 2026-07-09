@@ -36,10 +36,15 @@ class HomeFragment : Fragment() {
         textCartInfo = view.findViewById(R.id.text_cart_info)
         btnCheckout = view.findViewById(R.id.btn_checkout)
 
-        // Set default fragment
-        if (savedInstanceState == null) {
-            loadFragment(DashboardFragment())
+        // Restore and load the fragment matching the currently selected tab
+        val initialFragment = when (bottomNav.selectedItemId) {
+            R.id.menu_home -> DashboardFragment()
+            R.id.menu_catalog -> CatalogFragment()
+            R.id.menu_favorites -> FavoritesFragment()
+            R.id.menu_profile -> ProfileFragment()
+            else -> DashboardFragment()
         }
+        loadFragment(initialFragment)
 
         bottomNav.setOnItemSelectedListener { menuItem ->
             val fragment = when (menuItem.itemId) {

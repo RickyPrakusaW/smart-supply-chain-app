@@ -12,7 +12,8 @@ data class UserEntity(
     val phone: String?,
     val role: String,
     val token: String?,
-    val photoUrl: String?
+    val photoUrl: String?,
+    val address: String?
 ) {
     fun toDomain(): User {
         return User(
@@ -22,7 +23,8 @@ data class UserEntity(
             phone = phone,
             role = role,
             token = token,
-            photoUrl = photoUrl
+            photoUrl = photoUrl,
+            address = address
         )
     }
 }
@@ -35,6 +37,7 @@ fun User.toEntity(): UserEntity {
         phone = phone,
         role = role,
         token = token,
-        photoUrl = photoUrl
+        photoUrl = photoUrl,
+        address = address
     )
 }

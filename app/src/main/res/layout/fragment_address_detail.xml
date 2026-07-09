@@ -216,6 +216,48 @@
 
         </com.google.android.material.textfield.TextInputLayout>
 
+        <!-- Input: Kode Pos -->
+        <TextView
+            android:id="@+id/lbl_postal_code"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Kode Pos (5 Digit)"
+            android:textColor="@color/color_text_dark"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            app:layout_constraintTop_toBottomOf="@id/layout_floor"
+            app:layout_constraintStart_toStartOf="parent" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/layout_postal_code"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            app:boxStrokeColor="@color/color_primary_green"
+            app:boxStrokeWidth="1dp"
+            app:boxStrokeWidthFocused="2dp"
+            app:boxCornerRadiusTopStart="12dp"
+            app:boxCornerRadiusTopEnd="12dp"
+            app:boxCornerRadiusBottomStart="12dp"
+            app:boxCornerRadiusBottomEnd="12dp"
+            app:boxBackgroundColor="@color/color_surface_warm"
+            app:layout_constraintTop_toBottomOf="@id/lbl_postal_code">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/input_postal_code"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="cth: 65144"
+                android:textColorHint="@color/color_text_muted"
+                android:textColor="@color/color_text_dark"
+                android:inputType="number"
+                android:maxLength="5"
+                android:singleLine="true" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
         <!-- Input 5: Landmark -->
         <TextView
             android:id="@+id/lbl_landmark"
@@ -226,7 +268,7 @@
             android:textColor="@color/color_text_dark"
             android:textSize="12sp"
             android:textStyle="bold"
-            app:layout_constraintTop_toBottomOf="@id/layout_floor"
+            app:layout_constraintTop_toBottomOf="@id/layout_postal_code"
             app:layout_constraintStart_toStartOf="parent" />
 
         <com.google.android.material.textfield.TextInputLayout

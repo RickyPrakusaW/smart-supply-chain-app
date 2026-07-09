@@ -1,151 +1,431 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<androidx.core.widget.NestedScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="@color/color_bg_warm"
-    android:gravity="center_horizontal"
-    android:padding="24dp">
+    android:fillViewport="true"
+    android:background="@color/color_bg_warm">
 
-    <Space
-        android:layout_width="match_parent"
-        android:layout_height="20dp" />
-
-    <!-- Avatar Container -->
-    <com.google.android.material.card.MaterialCardView
-        android:layout_width="90dp"
-        android:layout_height="90dp"
-        app:cardCornerRadius="45dp"
-        app:cardElevation="0dp"
-        app:strokeColor="@color/color_primary_green"
-        app:strokeWidth="2dp"
-        app:cardBackgroundColor="@color/color_surface_warm">
-
-        <ImageView
-            android:layout_width="56dp"
-            android:layout_height="56dp"
-            android:layout_gravity="center"
-            android:src="@android:drawable/ic_menu_myplaces"
-            app:tint="@color/color_primary_green" />
-
-    </com.google.android.material.card.MaterialCardView>
-
-    <TextView
-        android:id="@+id/text_profile_name"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="Ricky Prakusa"
-        android:textColor="@color/color_text_dark"
-        android:textSize="20sp"
-        android:textStyle="bold" />
-
-    <TextView
-        android:id="@+id/text_profile_contact"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
-        android:text="ricky@gmail.com | +62 812-3456-7890"
-        android:textColor="@color/color_text_muted"
-        android:textSize="12sp" />
-
-    <Space
-        android:layout_width="match_parent"
-        android:layout_height="40dp" />
-
-    <!-- Settings Card -->
-    <com.google.android.material.card.MaterialCardView
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:cardCornerRadius="12dp"
-        app:cardElevation="0dp"
-        app:strokeColor="@color/color_border_grey"
-        app:strokeWidth="1dp"
-        app:cardBackgroundColor="@color/color_surface_warm">
+        android:orientation="vertical"
+        android:gravity="center_horizontal"
+        android:padding="24dp">
 
-        <LinearLayout
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="16dp" />
+
+        <!-- Avatar Wrapper FrameLayout (Floating Edit Overlay) -->
+        <FrameLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp">
+
+            <!-- Avatar Container -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/card_avatar"
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                app:cardCornerRadius="50dp"
+                app:cardElevation="2dp"
+                app:strokeColor="@color/color_primary_green"
+                app:strokeWidth="2.5dp"
+                app:cardBackgroundColor="@color/color_surface_warm">
+
+                <ImageView
+                    android:id="@+id/image_profile_avatar"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/ic_profile_default"
+                    app:tint="@color/color_primary_green" />
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Circular Edit Overlay Button -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/btn_avatar_edit"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_gravity="bottom|end"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="4dp"
+                app:strokeWidth="0dp"
+                app:cardBackgroundColor="@color/color_primary_green">
+
+                <ImageView
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_edit"
+                    app:tint="@color/white" />
+
+            </com.google.android.material.card.MaterialCardView>
+
+        </FrameLayout>
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="24dp" />
+
+        <!-- Profile Details Fields Card -->
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="16dp">
+            app:cardCornerRadius="16dp"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/color_border_grey"
+            app:strokeWidth="1dp"
+            app:cardBackgroundColor="@color/color_surface_warm">
 
-            <TextView
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Pengaturan Akun"
-                android:textColor="@color/color_text_dark"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                android:layout_marginBottom="12dp" />
-
-            <!-- Language option -->
-            <RelativeLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="8dp">
+                android:orientation="vertical"
+                android:padding="16dp">
 
                 <TextView
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Bahasa"
-                    android:textColor="@color/color_text_muted"
-                    android:textSize="13sp"
-                    android:layout_alignParentStart="true" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Indonesia"
+                    android:text="Data Diri Pengguna"
                     android:textColor="@color/color_text_dark"
-                    android:textSize="13sp"
+                    android:textSize="15sp"
                     android:textStyle="bold"
-                    android:layout_alignParentEnd="true" />
+                    android:layout_marginBottom="16dp" />
 
-            </RelativeLayout>
+                <!-- Input Nama Lengkap -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/layout_profile_name"
+                    style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Nama Lengkap"
+                    android:layout_marginBottom="12dp"
+                    app:boxStrokeColor="@color/color_primary_green"
+                    app:boxStrokeWidth="1dp"
+                    app:boxStrokeWidthFocused="2dp"
+                    app:boxCornerRadiusTopStart="12dp"
+                    app:boxCornerRadiusTopEnd="12dp"
+                    app:boxCornerRadiusBottomStart="12dp"
+                    app:boxCornerRadiusBottomEnd="12dp"
+                    app:boxBackgroundColor="@color/color_bg_warm">
 
-            <!-- Role option -->
-            <RelativeLayout
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/input_profile_name"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/color_text_dark"
+                        android:inputType="textPersonName"
+                        android:singleLine="true" />
+
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <!-- Input Email -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/layout_profile_email"
+                    style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Alamat E-mail"
+                    android:layout_marginBottom="12dp"
+                    app:boxStrokeColor="@color/color_primary_green"
+                    app:boxStrokeWidth="1dp"
+                    app:boxStrokeWidthFocused="2dp"
+                    app:boxCornerRadiusTopStart="12dp"
+                    app:boxCornerRadiusTopEnd="12dp"
+                    app:boxCornerRadiusBottomStart="12dp"
+                    app:boxCornerRadiusBottomEnd="12dp"
+                    app:boxBackgroundColor="@color/color_bg_warm">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/input_profile_email"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/color_text_dark"
+                        android:inputType="textEmailAddress"
+                        android:singleLine="true" />
+
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <!-- Label & Status Nomor Telepon -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginTop="4dp"
+                    android:layout_marginBottom="4dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Nomor Telepon"
+                        android:textColor="@color/color_text_dark"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+
+                    <Space
+                        android:layout_width="8dp"
+                        android:layout_height="match_parent" />
+
+                    <!-- Status Badge -->
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/card_phone_status"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        app:cardCornerRadius="4dp"
+                        app:cardElevation="0dp"
+                        app:strokeWidth="0dp"
+                        app:cardBackgroundColor="@color/color_red_error">
+
+                        <TextView
+                            android:id="@+id/text_phone_status"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Belum Diverifikasi"
+                            android:textColor="@color/white"
+                            android:textSize="9sp"
+                            android:textStyle="bold"
+                            android:paddingHorizontal="6dp"
+                            android:paddingVertical="2dp" />
+
+                    </com.google.android.material.card.MaterialCardView>
+
+                </LinearLayout>
+
+                <!-- Input Nomor Telepon -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/layout_profile_phone"
+                    style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Nomor Telepon (contoh: +628...)"
+                    app:boxStrokeColor="@color/color_primary_green"
+                    app:boxStrokeWidth="1dp"
+                    app:boxStrokeWidthFocused="2dp"
+                    app:boxCornerRadiusTopStart="12dp"
+                    app:boxCornerRadiusTopEnd="12dp"
+                    app:boxCornerRadiusBottomStart="12dp"
+                    app:boxCornerRadiusBottomEnd="12dp"
+                    app:boxBackgroundColor="@color/color_bg_warm">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/input_profile_phone"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/color_text_dark"
+                        android:inputType="phone"
+                        android:singleLine="true" />
+
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <!-- OTP Verification Button (Visible only when phone is edited or empty) -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_verify_phone"
+                    style="@style/Widget.Material3.Button.TextButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="end"
+                    android:text="Verifikasi Nomor via OTP"
+                    android:textColor="@color/color_accent_terracotta"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:visibility="gone" />
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="16dp" />
+
+        <!-- Address Card -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/color_border_grey"
+            app:strokeWidth="1dp"
+            app:cardBackgroundColor="@color/color_surface_warm">
+
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
 
                 <TextView
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Mode Aplikasi"
-                    android:textColor="@color/color_text_muted"
-                    android:textSize="13sp"
-                    android:layout_alignParentStart="true" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Pembeli"
-                    android:textColor="@color/color_primary_green"
-                    android:textSize="13sp"
+                    android:text="Alamat Pengiriman"
+                    android:textColor="@color/color_text_dark"
+                    android:textSize="15sp"
                     android:textStyle="bold"
-                    android:layout_alignParentEnd="true" />
+                    android:layout_marginBottom="12dp" />
 
-            </RelativeLayout>
+                <!-- Input Detail / Rumah -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/layout_profile_address_detail"
+                    style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="No. Rumah, RT/RW, Blok, Unit"
+                    android:layout_marginBottom="12dp"
+                    app:boxStrokeColor="@color/color_primary_green"
+                    app:boxStrokeWidth="1dp"
+                    app:boxStrokeWidthFocused="2dp"
+                    app:boxCornerRadiusTopStart="12dp"
+                    app:boxCornerRadiusTopEnd="12dp"
+                    app:boxCornerRadiusBottomStart="12dp"
+                    app:boxCornerRadiusBottomEnd="12dp"
+                    app:boxBackgroundColor="@color/color_bg_warm">
 
-        </LinearLayout>
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/input_profile_address_detail"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/color_text_dark"
+                        android:inputType="textPostalAddress"
+                        android:singleLine="true" />
 
-    </com.google.android.material.card.MaterialCardView>
+                </com.google.android.material.textfield.TextInputLayout>
 
-    <Space
-        android:layout_width="match_parent"
-        android:layout_height="32dp" />
+                <!-- Input Jalan -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/layout_profile_address_street"
+                    style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Nama Jalan, Kelurahan, Kecamatan"
+                    android:layout_marginBottom="12dp"
+                    app:boxStrokeColor="@color/color_primary_green"
+                    app:boxStrokeWidth="1dp"
+                    app:boxStrokeWidthFocused="2dp"
+                    app:boxCornerRadiusTopStart="12dp"
+                    app:boxCornerRadiusTopEnd="12dp"
+                    app:boxCornerRadiusBottomStart="12dp"
+                    app:boxCornerRadiusBottomEnd="12dp"
+                    app:boxBackgroundColor="@color/color_bg_warm">
 
-    <!-- Reset Onboarding Button -->
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btn_reset_onboarding"
-        android:layout_width="match_parent"
-        android:layout_height="54dp"
-        android:text="Reset Slide Onboarding"
-        android:textColor="@color/white"
-        android:textStyle="bold"
-        app:backgroundTint="@color/color_accent_terracotta"
-        app:cornerRadius="12dp" />
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/input_profile_address_street"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/color_text_dark"
+                        android:inputType="textPostalAddress"
+                        android:singleLine="true" />
 
-</LinearLayout>
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <!-- Input Kode Pos -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/layout_profile_address_postal_code"
+                    style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Kode Pos (5 Digit)"
+                    android:layout_marginBottom="12dp"
+                    app:boxStrokeColor="@color/color_primary_green"
+                    app:boxStrokeWidth="1dp"
+                    app:boxStrokeWidthFocused="2dp"
+                    app:boxCornerRadiusTopStart="12dp"
+                    app:boxCornerRadiusTopEnd="12dp"
+                    app:boxCornerRadiusBottomStart="12dp"
+                    app:boxCornerRadiusBottomEnd="12dp"
+                    app:boxBackgroundColor="@color/color_bg_warm">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/input_profile_address_postal_code"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/color_text_dark"
+                        android:inputType="number"
+                        android:maxLength="5"
+                        android:singleLine="true" />
+
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <!-- Input Patokan -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/layout_profile_address_landmark"
+                    style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Patokan / Petunjuk Tambahan"
+                    android:layout_marginBottom="16dp"
+                    app:boxStrokeColor="@color/color_primary_green"
+                    app:boxStrokeWidth="1dp"
+                    app:boxStrokeWidthFocused="2dp"
+                    app:boxCornerRadiusTopStart="12dp"
+                    app:boxCornerRadiusTopEnd="12dp"
+                    app:boxCornerRadiusBottomStart="12dp"
+                    app:boxCornerRadiusBottomEnd="12dp"
+                    app:boxBackgroundColor="@color/color_bg_warm">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/input_profile_address_landmark"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/color_text_dark"
+                        android:inputType="textPostalAddress"
+                        android:singleLine="true" />
+
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_change_address"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Pilih Alamat di Peta (GPS)"
+                    android:textColor="@color/color_primary_green"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    app:strokeColor="@color/color_primary_green"
+                    app:strokeWidth="1.5dp"
+                    app:cornerRadius="10dp" />
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="24dp" />
+
+        <!-- Save Profile Button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_save_profile"
+            android:layout_width="match_parent"
+            android:layout_height="54dp"
+            android:text="Simpan Perubahan"
+            android:textColor="@color/white"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            app:backgroundTint="@color/color_primary_green"
+            app:cornerRadius="12dp" />
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="12dp" />
+
+        <!-- Logout Button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_logout"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="54dp"
+            android:text="Keluar dari Akun"
+            android:textColor="@color/color_red_error"
+            android:textStyle="bold"
+            app:strokeColor="@color/color_red_error"
+            app:strokeWidth="1.5dp"
+            app:cornerRadius="12dp" />
+
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

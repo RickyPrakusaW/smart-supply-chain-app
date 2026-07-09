@@ -7,5 +7,6 @@ data class User(
     val phone: String?,
     val role: String, // "Petani" or "Pembeli"
     val token: String?,
-    val photoUrl: String?
+    val photoUrl: String?,
+    val address: String? = null
 )

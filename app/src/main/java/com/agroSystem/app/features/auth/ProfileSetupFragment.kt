@@ -18,6 +18,7 @@ class ProfileSetupFragment : Fragment() {
 
     private val authViewModel: AuthViewModel by activityViewModels()
     private lateinit var inputName: EditText
+    private lateinit var inputEmail: EditText
     private lateinit var btnContinue: MaterialButton
 
     override fun onCreateView(
@@ -27,6 +28,7 @@ class ProfileSetupFragment : Fragment() {
         val view = inflater.inflate(R.layout.fragment_profile_setup, container, false)
 
         inputName = view.findViewById(R.id.input_name)
+        inputEmail = view.findViewById(R.id.input_email)
         btnContinue = view.findViewById(R.id.btn_continue)
 
         // Back action
@@ -36,9 +38,14 @@ class ProfileSetupFragment : Fragment() {
 
         // Pre-fill if name is already populated in VM
         val currentUser = authViewModel.currentUser.value
-        if (currentUser != null && currentUser.name.isNotEmpty()) {
-            inputName.setText(currentUser.name)
-            btnContinue.isEnabled = true
+        if (currentUser != null) {
+            if (currentUser.name.isNotEmpty()) {
+                inputName.setText(currentUser.name)
+            }
+            if (!currentUser.email.isNullOrEmpty()) {
+                inputEmail.setText(currentUser.email)
+            }
+            btnContinue.isEnabled = inputName.text.isNotEmpty()
         }
 
         // Validate name entry to enable continue button
@@ -53,7 +60,29 @@ class ProfileSetupFragment : Fragment() {
         // Continue action
         btnContinue.setOnClickListener {
             val name = inputName.text.toString().trim()
-            authViewModel.updateProfile(name, "Pembeli") {
+            val email = inputEmail.text.toString().trim().ifEmpty { null }
+
+            // Sinkronkan Nama dan Email ke akun Firebase Auth
+            val firebaseUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
+            if (firebaseUser != null) {
+                // Update Nama
+                val profileUpdates = com.google.firebase.auth.UserProfileChangeRequest.Builder()
+                    .setDisplayName(name)
+                    .build()
+                firebaseUser.updateProfile(profileUpdates)
+
+                // Update Email jika dimasukkan
+                if (email != null && firebaseUser.email != email) {
+                    firebaseUser.updateEmail(email)
+                        .addOnCompleteListener { task ->
+                            if (!task.isSuccessful) {
+                                android.util.Log.e("ProfileSetupFragment", "Gagal sinkron email ke Firebase", task.exception)
+                            }
+                        }
+                }
+            }
+
+            authViewModel.updateProfile(name, email, null, null, null, "Pembeli") {
                 findNavController().navigate(R.id.action_profileSetupFragment_to_locationPermissionFragment)
             }
         }

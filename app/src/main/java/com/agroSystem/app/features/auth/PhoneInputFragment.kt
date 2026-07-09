@@ -1,24 +1,28 @@
 package com.agroSystem.app.features.auth
 
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.util.Log
+import android.util.Patterns
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.credentials.CredentialManager
-import androidx.credentials.CustomCredential
-import androidx.credentials.GetCredentialRequest
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.agroSystem.app.R
 import com.agroSystem.app.databinding.FragmentPhoneInputBinding
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.GoogleAuthProvider
+import com.google.firebase.auth.UserProfileChangeRequest
+import androidx.credentials.CredentialManager
+import androidx.credentials.CustomCredential
+import androidx.credentials.GetCredentialRequest
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
-import com.google.android.material.button.MaterialButton
-import com.google.android.material.card.MaterialCardView
 import kotlinx.coroutines.launch
 
 class PhoneInputFragment : Fragment() {
@@ -26,6 +30,8 @@ class PhoneInputFragment : Fragment() {
     private val authViewModel: AuthViewModel by activityViewModels()
     private var _binding: FragmentPhoneInputBinding? = null
     private val binding get() = _binding!!
+
+    private var isLoginMode = true
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -35,71 +41,201 @@ class PhoneInputFragment : Fragment() {
         binding.lifecycleOwner = viewLifecycleOwner
         binding.viewModel = authViewModel
 
-        // Back action
+        setupInputValidation()
+
+        // Back Action
         binding.btnBack.setOnClickListener {
             findNavController().navigate(R.id.action_phoneInputFragment_to_onboardingFragment)
         }
 
-        // Guest mode action
-        binding.btnGuest.setOnClickListener {
-            findNavController().navigate(R.id.action_phoneInputFragment_to_homeFragment)
+        // Toggle Login / Register Mode
+        binding.textToggleMode.setOnClickListener {
+            toggleMode()
         }
 
-        // Register custom keyboard click actions
-        val keys = listOf(
-            R.id.key_0 to "0", R.id.key_1 to "1", R.id.key_2 to "2",
-            R.id.key_3 to "3", R.id.key_4 to "4", R.id.key_5 to "5",
-            R.id.key_6 to "6", R.id.key_7 to "7", R.id.key_8 to "8",
-            R.id.key_9 to "9"
-        )
-
-        for ((id, char) in keys) {
-            binding.root.findViewById<MaterialButton>(id).setOnClickListener {
-                authViewModel.appendPhoneDigit(char)
-            }
-        }
-
-        binding.root.findViewById<MaterialButton>(R.id.key_del).setOnClickListener {
-            authViewModel.deletePhoneDigit()
-        }
-
-        // Continue action
+        // Action Button (Login / Register)
         binding.btnContinue.setOnClickListener {
-            val phoneVal = authViewModel.phone.value ?: ""
-            val bundle = Bundle().apply {
-                putString("phone", phoneVal)
-            }
-            findNavController().navigate(R.id.action_phoneInputFragment_to_otpInputFragment, bundle)
+            handleAuthAction()
         }
 
-        // Google Sign-In action using Android Credential Manager
+        // Google Sign-In Action
         binding.btnGoogle.setOnClickListener {
             performGoogleSignIn()
         }
 
-        // Observe phone state changes to update UI
-        authViewModel.phone.observe(viewLifecycleOwner) { phoneVal ->
-            if (phoneVal.isEmpty()) {
-                binding.textPhoneNumber.text = ""
-                binding.textPhonePlaceholder.visibility = View.VISIBLE
-                binding.btnContinue.isEnabled = false
-            } else {
-                binding.textPhoneNumber.text = formatPhone(phoneVal)
-                binding.textPhonePlaceholder.visibility = View.GONE
-                binding.btnContinue.isEnabled = phoneVal.length >= 9
+        // Guest Login Action
+        binding.btnGuest.setOnClickListener {
+            Toast.makeText(requireContext(), "Masuk sebagai Tamu...", Toast.LENGTH_SHORT).show()
+            authViewModel.loginWithGoogle("guest_mode_id", "Tamu AgriMitra", "guest@agrimitra.com") {
+                findNavController().navigate(R.id.action_phoneInputFragment_to_homeFragment)
             }
         }
 
         return binding.root
     }
 
+    private fun setupInputValidation() {
+        // Hapus notifikasi error saat user mulai mengetik ulang
+        binding.inputName.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                binding.layoutInputName.error = null
+            }
+            override fun afterTextChanged(s: Editable?) {}
+        })
+
+        binding.inputEmail.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                binding.layoutInputEmail.error = null
+            }
+            override fun afterTextChanged(s: Editable?) {}
+        })
+
+        binding.inputPassword.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                binding.layoutInputPassword.error = null
+            }
+            override fun afterTextChanged(s: Editable?) {}
+        })
+    }
+
+    private fun toggleMode() {
+        isLoginMode = !isLoginMode
+        // Bersihkan seluruh error saat berpindah mode
+        binding.layoutInputName.error = null
+        binding.layoutInputEmail.error = null
+        binding.layoutInputPassword.error = null
+
+        if (isLoginMode) {
+            binding.textHeader.text = "Masuk ke Akun"
+            binding.textSub.text = "Selamat datang kembali! Silakan login untuk melanjutkan."
+            binding.layoutInputName.visibility = View.GONE
+            binding.btnContinue.text = "Masuk"
+            binding.textToggleMode.text = "Belum punya akun? Daftar di sini"
+        } else {
+            binding.textHeader.text = "Daftar Akun Baru"
+            binding.textSub.text = "Silakan isi data untuk membuat akun Anda."
+            binding.layoutInputName.visibility = View.VISIBLE
+            binding.btnContinue.text = "Daftar"
+            binding.textToggleMode.text = "Sudah punya akun? Masuk"
+        }
+    }
+
+    private fun handleAuthAction() {
+        val email = binding.inputEmail.text.toString().trim()
+        val password = binding.inputPassword.text.toString().trim()
+        val name = binding.inputName.text.toString().trim()
+
+        // Reset error terlebih dahulu
+        binding.layoutInputName.error = null
+        binding.layoutInputEmail.error = null
+        binding.layoutInputPassword.error = null
+
+        var hasError = false
+
+        // Pengecekan Nama (Hanya mode register)
+        if (!isLoginMode && name.isEmpty()) {
+            binding.layoutInputName.error = "Nama Lengkap tidak boleh kosong!"
+            binding.layoutInputName.requestFocus()
+            hasError = true
+        }
+
+        // Pengecekan Email
+        if (email.isEmpty()) {
+            binding.layoutInputEmail.error = "Alamat e-mail tidak boleh kosong!"
+            binding.layoutInputEmail.requestFocus()
+            hasError = true
+        } else if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            binding.layoutInputEmail.error = "Format alamat e-mail tidak valid!"
+            binding.layoutInputEmail.requestFocus()
+            hasError = true
+        }
+
+        // Pengecekan Password
+        if (password.isEmpty()) {
+            binding.layoutInputPassword.error = "Kata sandi tidak boleh kosong!"
+            binding.layoutInputPassword.requestFocus()
+            hasError = true
+        } else if (password.length < 6) {
+            binding.layoutInputPassword.error = "Kata sandi minimal harus 6 karakter!"
+            binding.layoutInputPassword.requestFocus()
+            hasError = true
+        }
+
+        if (hasError) return
+
+        val firebaseAuth = FirebaseAuth.getInstance()
+        binding.btnContinue.isEnabled = false
+
+        if (isLoginMode) {
+            // LOGIN MODE
+            Toast.makeText(requireContext(), "Sedang masuk...", Toast.LENGTH_SHORT).show()
+            firebaseAuth.signInWithEmailAndPassword(email, password)
+                .addOnCompleteListener { task ->
+                    binding.btnContinue.isEnabled = true
+                    if (task.isSuccessful) {
+                        val firebaseUser = task.result?.user
+                        val userName = firebaseUser?.displayName ?: "User AgriMitra"
+                        
+                        // Sinkronkan ke database lokal & cloud
+                        authViewModel.loginWithGoogle("email_password_login", userName, email) {
+                            Toast.makeText(requireContext(), "Masuk sukses! Halo $userName", Toast.LENGTH_SHORT).show()
+                            findNavController().navigate(R.id.action_phoneInputFragment_to_homeFragment)
+                        }
+                    } else {
+                        Log.e("PhoneInputFragment", "Login failed", task.exception)
+                        // Tampilkan error di layout pass/email jika salah kredensial
+                        binding.layoutInputPassword.error = "E-mail atau kata sandi Anda salah!"
+                        binding.layoutInputPassword.requestFocus()
+                        Toast.makeText(requireContext(), "Gagal masuk: ${task.exception?.message}", Toast.LENGTH_LONG).show()
+                    }
+                }
+        } else {
+            // REGISTER MODE
+            Toast.makeText(requireContext(), "Membuat akun...", Toast.LENGTH_SHORT).show()
+            firebaseAuth.createUserWithEmailAndPassword(email, password)
+                .addOnCompleteListener { task ->
+                    binding.btnContinue.isEnabled = true
+                    if (task.isSuccessful) {
+                        val firebaseUser = task.result?.user
+                        
+                        // Set nama tampilan di Firebase
+                        val profileUpdates = UserProfileChangeRequest.Builder()
+                            .setDisplayName(name)
+                            .build()
+                        
+                        firebaseUser?.updateProfile(profileUpdates)?.addOnCompleteListener {
+                            // Keluar terlebih dahulu agar bersih
+                            firebaseAuth.signOut()
+                            
+                            // Notifikasi berhasil
+                            Toast.makeText(requireContext(), "Pendaftaran berhasil! Silakan masuk.", Toast.LENGTH_LONG).show()
+                            
+                            // Kembalikan tampilan ke halaman Login
+                            isLoginMode = false
+                            toggleMode()
+                            
+                            // Bersihkan password untuk keamanan
+                            binding.inputPassword.text?.clear()
+                        }
+                    } else {
+                        Log.e("PhoneInputFragment", "Registration failed", task.exception)
+                        binding.layoutInputEmail.error = "Gagal mendaftar: ${task.exception?.message}"
+                        binding.layoutInputEmail.requestFocus()
+                        Toast.makeText(requireContext(), "Gagal daftar: ${task.exception?.message}", Toast.LENGTH_LONG).show()
+                    }
+                }
+        }
+    }
+
     private fun performGoogleSignIn() {
         val credentialManager = CredentialManager.create(requireContext())
 
-        // Set up the Google ID request
         val googleIdOption = GetGoogleIdOption.Builder()
             .setFilterByAuthorizedAccounts(false)
-            .setServerClientId("183291450985-phvcp8lkqn2hmh0k1ep6vmss9asj4qtv.apps.googleusercontent.com")
+            .setServerClientId("183291450985-lors5s3m8plfu2t5gqiucnphn4kl1epn.apps.googleusercontent.com")
             .setAutoSelectEnabled(false)
             .build()
 
@@ -117,19 +253,32 @@ class PhoneInputFragment : Fragment() {
                 if (credential is CustomCredential && credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
                     val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
                     val idToken = googleIdTokenCredential.idToken
-                    val email = googleIdTokenCredential.id
-                    val name = googleIdTokenCredential.displayName ?: googleIdTokenCredential.givenName ?: "User Google"
+                    
+                    val firebaseAuth = FirebaseAuth.getInstance()
+                    val firebaseCredential = GoogleAuthProvider.getCredential(idToken, null)
 
-                    authViewModel.loginWithGoogle(idToken, name, email) {
-                        Toast.makeText(requireContext(), "Masuk sebagai $name", Toast.LENGTH_SHORT).show()
-                        findNavController().navigate(R.id.action_phoneInputFragment_to_homeFragment)
-                    }
+                    firebaseAuth.signInWithCredential(firebaseCredential)
+                        .addOnCompleteListener { task ->
+                            if (task.isSuccessful) {
+                                val firebaseUser = task.result?.user
+                                val name = firebaseUser?.displayName ?: "User Google"
+                                val email = firebaseUser?.email ?: ""
+                                
+                                authViewModel.loginWithGoogle(idToken, name, email) {
+                                    Toast.makeText(requireContext(), "Masuk sebagai $name", Toast.LENGTH_SHORT).show()
+                                    findNavController().navigate(R.id.action_phoneInputFragment_to_homeFragment)
+                                }
+                            } else {
+                                Log.e("PhoneInputFragment", "Firebase Google login failed", task.exception)
+                                Toast.makeText(requireContext(), "Google Sign-In gagal di Firebase: ${task.exception?.message}", Toast.LENGTH_LONG).show()
+                            }
+                        }
                 } else {
                     throw Exception("Tipe kredensial tidak dikenali")
                 }
             } catch (e: Exception) {
-                Log.e("PhoneInputFragment", "Credential Manager failed, falling back to mock login: ${e.message}", e)
-                Toast.makeText(requireContext(), "Mode Demo: Menggunakan login Google simulasi", Toast.LENGTH_SHORT).show()
+                Log.e("PhoneInputFragment", "Credential Manager failed: ${e.message}", e)
+                Toast.makeText(requireContext(), "Google Auth gagal: ${e.message}. Masuk ke Mode Demo...", Toast.LENGTH_LONG).show()
                 
                 // Fallback demo mode mock login
                 authViewModel.loginWithGoogle(
@@ -143,20 +292,8 @@ class PhoneInputFragment : Fragment() {
         }
     }
 
-    private fun formatPhone(raw: String): String {
-        val sb = StringBuilder()
-        for (i in raw.indices) {
-            sb.append(raw[i])
-            if (i == 2 || i == 6) {
-                sb.append("-")
-            }
-        }
-        return sb.toString()
-    }
-
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
     }
 }
-

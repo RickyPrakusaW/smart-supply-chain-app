@@ -56,6 +56,9 @@ dependencies {
     implementation(libs.androidx.navigation.fragment)
     implementation(libs.androidx.navigation.ui)
     implementation(libs.google.material)
+    
+    // OSMDroid for Keyless Interactive Maps
+    implementation("org.osmdroid:osmdroid-android:6.1.18")
 
     // Credentials for Google Sign-in
     implementation(libs.androidx.credentials)
@@ -65,6 +68,7 @@ dependencies {
     // Firebase
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)
+    implementation(libs.firebase.auth)
 
     // Room DB
     implementation(libs.room.runtime)

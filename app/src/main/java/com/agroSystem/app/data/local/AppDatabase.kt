@@ -13,7 +13,7 @@ import com.agroSystem.app.data.local.entities.FarmerEntity
 import com.agroSystem.app.data.local.entities.ProductEntity
 import com.agroSystem.app.data.local.entities.UserEntity
 
-@Database(entities = [ProductEntity::class, FarmerEntity::class, UserEntity::class], version = 2, exportSchema = false)
+@Database(entities = [ProductEntity::class, FarmerEntity::class, UserEntity::class], version = 3, exportSchema = false)
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun productDao(): ProductDao

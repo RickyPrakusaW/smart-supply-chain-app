@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -103,14 +104,50 @@ class OtpInputFragment : Fragment() {
     }
 
     private fun validateOtp() {
-        if (otpCode == "123456") {
-            authViewModel.loginWithPhone {
-                findNavController().navigate(R.id.action_otpInputFragment_to_profileSetupFragment)
+        val verificationId = arguments?.getString("verificationId")
+        val phoneNum = arguments?.getString("phone") ?: ""
+
+        if (verificationId.isNullOrEmpty()) {
+            // Mode Demo / Simulasi jika verificationId tidak tersedia
+            if (otpCode == "123456") {
+                authViewModel.setPhone(phoneNum)
+                authViewModel.loginWithPhone {
+                    findNavController().navigate(R.id.action_otpInputFragment_to_profileSetupFragment)
+                }
+            } else {
+                isError = true
+                updateOtpDisplay()
             }
-        } else {
-            isError = true
-            updateOtpDisplay()
+            return
         }
+
+        // Mode Riil: Verifikasi OTP menggunakan Firebase Authentication
+        val credential = com.google.firebase.auth.PhoneAuthProvider.getCredential(verificationId, otpCode)
+        com.google.firebase.auth.FirebaseAuth.getInstance().signInWithCredential(credential)
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    val firebaseUser = task.result?.user
+                    val formattedPhone = firebaseUser?.phoneNumber ?: phoneNum
+                    
+                    authViewModel.setPhone(formattedPhone)
+                    authViewModel.loginWithPhone {
+                        Toast.makeText(requireContext(), "OTP Terverifikasi!", Toast.LENGTH_SHORT).show()
+                        findNavController().navigate(R.id.action_otpInputFragment_to_profileSetupFragment)
+                    }
+                } else {
+                    // Fallback keselamatan demo jika OTP yang dimasukkan adalah "123456"
+                    if (otpCode == "123456") {
+                        authViewModel.setPhone(phoneNum)
+                        authViewModel.loginWithPhone {
+                            findNavController().navigate(R.id.action_otpInputFragment_to_profileSetupFragment)
+                        }
+                    } else {
+                        isError = true
+                        updateOtpDisplay()
+                        Toast.makeText(requireContext(), "Kode OTP salah: ${task.exception?.message}", Toast.LENGTH_LONG).show()
+                    }
+                }
+            }
     }
 
     private fun formatPhone(raw: String): String {

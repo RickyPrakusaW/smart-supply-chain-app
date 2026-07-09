@@ -15,10 +15,34 @@ import kotlinx.coroutines.Dispatchers
 
 class AuthRepository(
     private val userDao: UserDao,
-    private val authApiService: AuthApiService
+    private val authApiService: AuthApiService,
+    private val context: android.content.Context
 ) {
     private val _currentUser = MutableStateFlow<User?>(null)
     val currentUser: StateFlow<User?> = _currentUser
+
+    private fun backupProfile(user: User) {
+        val sp = context.getSharedPreferences("user_profile_backup", android.content.Context.MODE_PRIVATE)
+        sp.edit().apply {
+            putString("photo_${user.id}", user.photoUrl)
+            putString("address_${user.id}", user.address)
+            putString("phone_${user.id}", user.phone)
+            apply()
+        }
+    }
+
+    private fun restoreProfileBackup(user: User): User {
+        val sp = context.getSharedPreferences("user_profile_backup", android.content.Context.MODE_PRIVATE)
+        val savedPhoto = sp.getString("photo_${user.id}", null)
+        val savedAddress = sp.getString("address_${user.id}", null)
+        val savedPhone = sp.getString("phone_${user.id}", null)
+        
+        return user.copy(
+            photoUrl = if (user.photoUrl.isNullOrEmpty()) savedPhoto else user.photoUrl,
+            address = if (user.address.isNullOrEmpty()) savedAddress else user.address,
+            phone = if (user.phone.isNullOrEmpty()) savedPhone else user.phone
+        )
+    }
 
     suspend fun loadSession(): User? = withContext(Dispatchers.IO) {
         val entity = userDao.getLoggedInUser()
@@ -39,7 +63,8 @@ class AuthRepository(
                     phone = response.phone,
                     role = response.role,
                     token = response.token,
-                    photoUrl = response.photoUrl
+                    photoUrl = response.photoUrl,
+                    address = response.address
                 )
             }
         } catch (e: Exception) {
@@ -47,16 +72,22 @@ class AuthRepository(
         }
 
         if (user == null) {
+            val cleanEmail = email.replace(Regex("[^a-zA-Z0-9]"), "")
             user = User(
-                id = "google_" + email.hashCode(),
+                id = "google_$cleanEmail",
                 name = name,
                 email = email,
                 phone = null,
                 role = "Pembeli", // Default role
                 token = "jwt_mock_token_for_" + idToken.take(10),
-                photoUrl = null
+                photoUrl = null,
+                address = null
             )
         }
+
+        // Restore local profile backup (photo, address, phone) if missing from server response
+        user = restoreProfileBackup(user)
+        backupProfile(user)
 
         userDao.clearUser()
         userDao.insertUser(user.toEntity())
@@ -76,7 +107,8 @@ class AuthRepository(
                     phone = response.phone,
                     role = response.role,
                     token = response.token,
-                    photoUrl = response.photoUrl
+                    photoUrl = response.photoUrl,
+                    address = response.address
                 )
             }
         } catch (e: Exception) {
@@ -84,16 +116,22 @@ class AuthRepository(
         }
 
         if (user == null) {
+            val cleanPhone = phone.replace(Regex("[^0-9]"), "")
             user = User(
-                id = "phone_" + phone.hashCode(),
+                id = "phone_$cleanPhone",
                 name = name.ifEmpty { "User Telpon" },
                 email = null,
                 phone = phone,
                 role = "Pembeli",
                 token = "jwt_mock_token_for_" + phone,
-                photoUrl = null
+                photoUrl = null,
+                address = null
             )
         }
+
+        // Restore local profile backup (photo, address, phone) if missing from server response
+        user = restoreProfileBackup(user)
+        backupProfile(user)
 
         userDao.clearUser()
         userDao.insertUser(user.toEntity())
@@ -101,11 +139,20 @@ class AuthRepository(
         return@withContext user
     }
 
-    suspend fun updateProfile(name: String, role: String): User? = withContext(Dispatchers.IO) {
+    suspend fun updateProfile(
+        name: String,
+        email: String?,
+        phone: String?,
+        address: String?,
+        photoUrl: String?,
+        role: String
+    ): User? = withContext(Dispatchers.IO) {
         val current = _currentUser.value ?: return@withContext null
         var updated: User? = null
         try {
-            val response = authApiService.updateProfile(UpdateProfileRequest(current.id, name, role))
+            val response = authApiService.updateProfile(
+                UpdateProfileRequest(current.id, name, email, phone, address, photoUrl, role)
+            )
             if (response.success) {
                 updated = User(
                     id = response.id,
@@ -114,7 +161,8 @@ class AuthRepository(
                     phone = response.phone,
                     role = response.role,
                     token = response.token,
-                    photoUrl = response.photoUrl
+                    photoUrl = response.photoUrl,
+                    address = response.address
                 )
             }
         } catch (e: Exception) {
@@ -122,8 +170,18 @@ class AuthRepository(
         }
 
         if (updated == null) {
-            updated = current.copy(name = name, role = role)
+            updated = current.copy(
+                name = name,
+                email = email ?: current.email,
+                phone = phone ?: current.phone,
+                address = address ?: current.address,
+                photoUrl = photoUrl ?: current.photoUrl,
+                role = role
+            )
         }
+
+        // Keep local backups fresh
+        backupProfile(updated)
 
         userDao.insertUser(updated.toEntity())
         _currentUser.value = updated

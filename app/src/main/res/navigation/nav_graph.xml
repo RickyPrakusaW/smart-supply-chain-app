@@ -15,6 +15,11 @@
             app:destination="@id/phoneInputFragment"
             app:popUpTo="@id/onboardingFragment"
             app:popUpToInclusive="true" />
+        <action
+            android:id="@+id/action_onboardingFragment_to_homeFragment"
+            app:destination="@id/homeFragment"
+            app:popUpTo="@id/onboardingFragment"
+            app:popUpToInclusive="true" />
     </fragment>
 
     <fragment
@@ -64,7 +69,7 @@
             app:popUpToInclusive="true" />
         <action
             android:id="@+id/action_profileSetupFragment_to_locationPermissionFragment"
-            app:destination="@id/locationPermissionFragment" />
+            app:destination="@id/selectAddressFragment" />
     </fragment>
 
     <fragment
@@ -80,6 +85,9 @@
         <action
             android:id="@+id/action_locationPermissionFragment_to_selectAddressFragment"
             app:destination="@id/selectAddressFragment" />
+        <action
+            android:id="@+id/action_locationPermissionFragment_to_addressDetailFragment"
+            app:destination="@id/addressDetailFragment" />
     </fragment>
 
     <fragment
@@ -95,6 +103,11 @@
         <action
             android:id="@+id/action_selectAddressFragment_to_addressDetailFragment"
             app:destination="@id/addressDetailFragment" />
+        <action
+            android:id="@+id/action_selectAddressFragment_to_homeFragment"
+            app:destination="@id/homeFragment"
+            app:popUpTo="@id/selectAddressFragment"
+            app:popUpToInclusive="true" />
     </fragment>
 
     <fragment
@@ -124,6 +137,11 @@
             app:popUpTo="@id/homeFragment"
             app:popUpToInclusive="true" />
         <action
+            android:id="@+id/action_homeFragment_to_phoneInputFragment"
+            app:destination="@id/phoneInputFragment"
+            app:popUpTo="@id/homeFragment"
+            app:popUpToInclusive="true" />
+        <action
             android:id="@+id/action_homeFragment_to_productDetailFragment"
             app:destination="@id/productDetailFragment" />
         <action
@@ -132,6 +150,9 @@
         <action
             android:id="@+id/action_homeFragment_to_cartFragment"
             app:destination="@id/cartFragment" />
+        <action
+            android:id="@+id/action_homeFragment_to_locationPermissionFragment"
+            app:destination="@id/selectAddressFragment" />
     </fragment>
 
     <fragment

@@ -32,7 +32,8 @@ const UserSchema = new mongoose.Schema({
   email: { type: String, default: null },
   phone: { type: String, default: null },
   role: { type: String, default: 'Pembeli' },
-  photoUrl: { type: String, default: null }
+  photoUrl: { type: String, default: null },
+  address: { type: String, default: null }
 });
 const User = mongoose.model('User', UserSchema);
 
@@ -146,7 +147,8 @@ app.post('/api/v1/auth/google', async (req, res) => {
     email: userObj.email,
     phone: userObj.phone,
     role: userObj.role,
-    photoUrl: userObj.photoUrl
+    photoUrl: userObj.photoUrl,
+    address: userObj.address
   });
 });
 
@@ -185,13 +187,14 @@ app.post('/api/v1/auth/phone', async (req, res) => {
     email: userObj.email,
     phone: userObj.phone,
     role: userObj.role,
-    photoUrl: userObj.photoUrl
+    photoUrl: userObj.photoUrl,
+    address: userObj.address
   });
 });
 
 // Update Profile
 app.post('/api/v1/auth/update-profile', async (req, res) => {
-  const { userId, name, role } = req.body;
+  const { userId, name, email, phone, address, photoUrl, role } = req.body;
   if (!userId) {
     return res.status(400).json({ success: false, message: "User ID is required" });
   }
@@ -202,6 +205,10 @@ app.post('/api/v1/auth/update-profile', async (req, res) => {
     if (existing) {
       existing.name = name;
       existing.role = role;
+      if (email !== undefined) existing.email = email;
+      if (phone !== undefined) existing.phone = phone;
+      if (address !== undefined) existing.address = address;
+      if (photoUrl !== undefined) existing.photoUrl = photoUrl;
       await existing.save();
       userObj = existing.toObject();
     }
@@ -210,6 +217,10 @@ app.post('/api/v1/auth/update-profile', async (req, res) => {
     if (existing) {
       existing.name = name;
       existing.role = role;
+      if (email !== undefined) existing.email = email;
+      if (phone !== undefined) existing.phone = phone;
+      if (address !== undefined) existing.address = address;
+      if (photoUrl !== undefined) existing.photoUrl = photoUrl;
       userObj = existing;
     }
   }
@@ -226,7 +237,8 @@ app.post('/api/v1/auth/update-profile', async (req, res) => {
     email: userObj.email,
     phone: userObj.phone,
     role: userObj.role,
-    photoUrl: userObj.photoUrl
+    photoUrl: userObj.photoUrl,
+    address: userObj.address
   });
 });
 

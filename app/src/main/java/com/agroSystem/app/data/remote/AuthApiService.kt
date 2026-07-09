@@ -28,6 +28,10 @@ data class PhoneLoginRequest(
 data class UpdateProfileRequest(
     val userId: String,
     val name: String,
+    val email: String?,
+    val phone: String?,
+    val address: String?,
+    val photoUrl: String?,
     val role: String
 )
 
@@ -39,5 +43,6 @@ data class AuthResponse(
     val email: String?,
     val phone: String?,
     val role: String,
-    val photoUrl: String?
+    val photoUrl: String?,
+    val address: String?
 )
