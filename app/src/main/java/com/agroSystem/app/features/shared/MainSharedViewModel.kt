@@ -1,14 +1,18 @@
 package com.agroSystem.app.features.shared
 
+import android.app.Application
+import android.content.Context
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
 import com.agroSystem.app.R
 import com.agroSystem.app.data.models.Product
 import com.agroSystem.app.data.models.Farmer
 import com.agroSystem.app.data.models.Recipe
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 
-class MainSharedViewModel : ViewModel() {
+class MainSharedViewModel(application: Application) : AndroidViewModel(application) {
 
     val allProducts = listOf(
         Product(1, "Telur Ayam Kampung Segar", "Peternakan Tani Jaya, Malang", "5.0", 24000, "10 pcs", R.drawable.padi, "Telur", isEcoFriendly = true, deliveryDays = 1, protein = "13g", fat = "11g", carbs = "1.1g", calories = "155 Kcal", ingredients = "Telur ayam kampung organik segar hasil pakan jagung alami bebas antibiotik."),
@@ -61,10 +65,45 @@ class MainSharedViewModel : ViewModel() {
     val filterSelectedAllergens = MutableLiveData<MutableList<String>>(mutableListOf())
     val filterSelectedNutrients = MutableLiveData<MutableList<String>>(mutableListOf())
 
+    private val sharedPrefs = application.getSharedPreferences("agrimitra_cart_prefs", Context.MODE_PRIVATE)
+    private val gson = Gson()
+
+    init {
+        loadCartFromPrefs()
+    }
+
+    private fun saveCartToPrefs() {
+        val items = _cartItems.value ?: return
+        val idMap = items.mapKeys { it.key.id }
+        val json = gson.toJson(idMap)
+        sharedPrefs.edit().putString("cart_json", json).apply()
+    }
+
+    private fun loadCartFromPrefs() {
+        val json = sharedPrefs.getString("cart_json", null)
+        if (!json.isNullOrEmpty()) {
+            try {
+                val type = object : TypeToken<Map<Int, Int>>() {}.type
+                val idMap: Map<Int, Int> = gson.fromJson(json, type)
+                val cartMap = mutableMapOf<Product, Int>()
+                idMap.forEach { (productId, qty) ->
+                    val product = allProducts.firstOrNull { it.id == productId }
+                    if (product != null) {
+                        cartMap[product] = qty
+                    }
+                }
+                _cartItems.value = cartMap
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
     fun addProductToCart(product: Product) {
         val current = _cartItems.value ?: mutableMapOf()
         current[product] = (current[product] ?: 0) + 1
         _cartItems.value = current
+        saveCartToPrefs()
     }
 
     fun removeProductFromCart(product: Product) {
@@ -80,6 +119,7 @@ class MainSharedViewModel : ViewModel() {
             _cartItems.value = current
             isUndoVisible.value = true
         }
+        saveCartToPrefs()
     }
 
     fun restoreRemovedProduct() {
@@ -90,6 +130,7 @@ class MainSharedViewModel : ViewModel() {
             current[product] = qty
             _cartItems.value = current
             isUndoVisible.value = false
+            saveCartToPrefs()
         }
     }
 
@@ -97,6 +138,7 @@ class MainSharedViewModel : ViewModel() {
         val current = _cartItems.value ?: mutableMapOf()
         current.clear()
         _cartItems.value = current
+        saveCartToPrefs()
     }
 
     fun addRecipeIngredients(recipe: Recipe) {
@@ -108,6 +150,7 @@ class MainSharedViewModel : ViewModel() {
             }
         }
         _cartItems.value = current
+        saveCartToPrefs()
     }
 
     fun toggleFavorite(productId: Int) {

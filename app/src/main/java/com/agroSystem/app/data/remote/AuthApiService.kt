@@ -2,6 +2,8 @@ package com.agroSystem.app.data.remote
 
 import retrofit2.http.Body
 import retrofit2.http.POST
+import retrofit2.http.GET
+import retrofit2.http.Path
 
 interface AuthApiService {
     @POST("auth/google")
@@ -15,6 +17,9 @@ interface AuthApiService {
 
     @POST("payment/checkout")
     suspend fun checkout(@Body request: CheckoutRequest): CheckoutResponse
+
+    @GET("payment/orders/{userId}")
+    suspend fun getUserOrders(@Path("userId") userId: String): OrdersListResponse
 }
 
 data class CheckoutRequest(
@@ -80,4 +85,23 @@ data class AuthResponse(
     val role: String,
     val photoUrl: String?,
     val address: String?
+)
+
+data class OrdersListResponse(
+    val success: Boolean,
+    val data: List<OrderItemResponse>?
+)
+
+data class OrderItemResponse(
+    val orderId: String,
+    val amount: Int,
+    val status: String,
+    val createdAt: String,
+    val items: List<CheckoutItem>?,
+    val payment: OrderPaymentInfo?
+)
+
+data class OrderPaymentInfo(
+    val token: String?,
+    val redirect_url: String?
 )

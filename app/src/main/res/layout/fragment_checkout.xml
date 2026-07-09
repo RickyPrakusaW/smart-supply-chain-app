@@ -501,178 +501,186 @@
 
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- 5. Payment Methods -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Metode Pembayaran"
-                android:textColor="@color/color_text_dark"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                android:layout_marginBottom="8dp" />
-
-            <HorizontalScrollView
+            <!-- 5. Payment Methods (Hidden - Midtrans handles all methods on the gateway page) -->
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:scrollbars="none"
-                android:layout_marginBottom="24dp">
+                android:orientation="vertical"
+                android:visibility="gone">
 
-                <LinearLayout
-                    android:id="@+id/layout_payment_methods"
+                <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal">
+                    android:text="Metode Pembayaran"
+                    android:textColor="@color/color_text_dark"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="8dp" />
 
-                    <!-- Cash Card -->
-                    <com.google.android.material.card.MaterialCardView
-                        android:id="@+id/btn_pay_cash"
-                        android:layout_width="100dp"
-                        android:layout_height="64dp"
-                        app:cardCornerRadius="14dp"
-                        app:cardElevation="0dp"
-                        app:strokeWidth="2dp"
-                        app:strokeColor="@color/color_primary_green"
-                        app:cardBackgroundColor="@color/color_surface_warm"
-                        android:layout_marginEnd="8dp">
+                <HorizontalScrollView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:scrollbars="none"
+                    android:layout_marginBottom="24dp">
 
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:orientation="vertical"
-                            android:gravity="center"
-                            android:padding="8dp">
+                    <LinearLayout
+                        android:id="@+id/layout_payment_methods"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
 
-                            <ImageView
-                                android:layout_width="20dp"
-                                android:layout_height="20dp"
-                                android:src="@android:drawable/ic_menu_save"
-                                app:tint="@color/color_primary_green" />
+                        <!-- Cash Card -->
+                        <com.google.android.material.card.MaterialCardView
+                            android:id="@+id/btn_pay_cash"
+                            android:layout_width="100dp"
+                            android:layout_height="64dp"
+                            app:cardCornerRadius="14dp"
+                            app:cardElevation="0dp"
+                            app:strokeWidth="2dp"
+                            app:strokeColor="@color/color_primary_green"
+                            app:cardBackgroundColor="@color/color_surface_warm"
+                            android:layout_marginEnd="8dp">
 
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Tunai (Cash)"
-                                android:textColor="@color/color_text_dark"
-                                android:textSize="10sp"
-                                android:layout_marginTop="4dp" />
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:orientation="vertical"
+                                android:gravity="center"
+                                android:padding="8dp">
 
-                        </LinearLayout>
+                                <ImageView
+                                    android:layout_width="20dp"
+                                    android:layout_height="20dp"
+                                    android:src="@android:drawable/ic_menu_save"
+                                    app:tint="@color/color_primary_green" />
 
-                    </com.google.android.material.card.MaterialCardView>
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Tunai (Cash)"
+                                    android:textColor="@color/color_text_dark"
+                                    android:textSize="10sp"
+                                    android:layout_marginTop="4dp" />
 
-                    <!-- Saved Card 1 -->
-                    <com.google.android.material.card.MaterialCardView
-                        android:id="@+id/btn_pay_card1"
-                        android:layout_width="100dp"
-                        android:layout_height="64dp"
-                        app:cardCornerRadius="14dp"
-                        app:cardElevation="0dp"
-                        app:strokeWidth="1dp"
-                        app:strokeColor="@color/color_border_grey"
-                        app:cardBackgroundColor="@color/color_surface_warm"
-                        android:layout_marginEnd="8dp">
+                            </LinearLayout>
 
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:orientation="vertical"
-                            android:gravity="center"
-                            android:padding="8dp">
+                        </com.google.android.material.card.MaterialCardView>
 
-                            <ImageView
-                                android:layout_width="20dp"
-                                android:layout_height="20dp"
-                                android:src="@android:drawable/ic_menu_gallery"
-                                app:tint="@color/color_primary_green" />
+                        <!-- Saved Card 1 -->
+                        <com.google.android.material.card.MaterialCardView
+                            android:id="@+id/btn_pay_card1"
+                            android:layout_width="100dp"
+                            android:layout_height="64dp"
+                            app:cardCornerRadius="14dp"
+                            app:cardElevation="0dp"
+                            app:strokeWidth="1dp"
+                            app:strokeColor="@color/color_border_grey"
+                            app:cardBackgroundColor="@color/color_surface_warm"
+                            android:layout_marginEnd="8dp">
 
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="**1571"
-                                android:textColor="@color/color_text_dark"
-                                android:textSize="10sp"
-                                android:layout_marginTop="4dp" />
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:orientation="vertical"
+                                android:gravity="center"
+                                android:padding="8dp">
 
-                        </LinearLayout>
+                                <ImageView
+                                    android:layout_width="20dp"
+                                    android:layout_height="20dp"
+                                    android:src="@android:drawable/ic_menu_gallery"
+                                    app:tint="@color/color_primary_green" />
 
-                    </com.google.android.material.card.MaterialCardView>
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="**1571"
+                                    android:textColor="@color/color_text_dark"
+                                    android:textSize="10sp"
+                                    android:layout_marginTop="4dp" />
 
-                    <!-- Saved Card 2 -->
-                    <com.google.android.material.card.MaterialCardView
-                        android:id="@+id/btn_pay_card2"
-                        android:layout_width="100dp"
-                        android:layout_height="64dp"
-                        app:cardCornerRadius="14dp"
-                        app:cardElevation="0dp"
-                        app:strokeWidth="1dp"
-                        app:strokeColor="@color/color_border_grey"
-                        app:cardBackgroundColor="@color/color_surface_warm"
-                        android:layout_marginEnd="8dp">
+                            </LinearLayout>
 
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:orientation="vertical"
-                            android:gravity="center"
-                            android:padding="8dp">
+                        </com.google.android.material.card.MaterialCardView>
 
-                            <ImageView
-                                android:layout_width="20dp"
-                                android:layout_height="20dp"
-                                android:src="@android:drawable/ic_menu_gallery"
-                                app:tint="@color/color_primary_green" />
+                        <!-- Saved Card 2 -->
+                        <com.google.android.material.card.MaterialCardView
+                            android:id="@+id/btn_pay_card2"
+                            android:layout_width="100dp"
+                            android:layout_height="64dp"
+                            app:cardCornerRadius="14dp"
+                            app:cardElevation="0dp"
+                            app:strokeWidth="1dp"
+                            app:strokeColor="@color/color_border_grey"
+                            app:cardBackgroundColor="@color/color_surface_warm"
+                            android:layout_marginEnd="8dp">
 
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="**3113"
-                                android:textColor="@color/color_text_dark"
-                                android:textSize="10sp"
-                                android:layout_marginTop="4dp" />
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:orientation="vertical"
+                                android:gravity="center"
+                                android:padding="8dp">
 
-                        </LinearLayout>
+                                <ImageView
+                                    android:layout_width="20dp"
+                                    android:layout_height="20dp"
+                                    android:src="@android:drawable/ic_menu_gallery"
+                                    app:tint="@color/color_primary_green" />
 
-                    </com.google.android.material.card.MaterialCardView>
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="**3113"
+                                    android:textColor="@color/color_text_dark"
+                                    android:textSize="10sp"
+                                    android:layout_marginTop="4dp" />
 
-                    <!-- New Card Option -->
-                    <com.google.android.material.card.MaterialCardView
-                        android:id="@+id/btn_pay_new"
-                        android:layout_width="100dp"
-                        android:layout_height="64dp"
-                        app:cardCornerRadius="14dp"
-                        app:cardElevation="0dp"
-                        app:strokeWidth="1dp"
-                        app:strokeColor="@color/color_border_grey"
-                        app:cardBackgroundColor="@color/color_surface_warm">
+                            </LinearLayout>
 
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:orientation="vertical"
-                            android:gravity="center"
-                            android:padding="8dp">
+                        </com.google.android.material.card.MaterialCardView>
 
-                            <ImageView
-                                android:layout_width="20dp"
-                                android:layout_height="20dp"
-                                android:src="@android:drawable/ic_input_add"
-                                app:tint="@color/color_text_muted" />
+                        <!-- New Card Option -->
+                        <com.google.android.material.card.MaterialCardView
+                            android:id="@+id/btn_pay_new"
+                            android:layout_width="100dp"
+                            android:layout_height="64dp"
+                            app:cardCornerRadius="14dp"
+                            app:cardElevation="0dp"
+                            app:strokeWidth="1dp"
+                            app:strokeColor="@color/color_border_grey"
+                            app:cardBackgroundColor="@color/color_surface_warm">
 
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Kartu Baru"
-                                android:textColor="@color/color_text_muted"
-                                android:textSize="10sp"
-                                android:layout_marginTop="4dp" />
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:orientation="vertical"
+                                android:gravity="center"
+                                android:padding="8dp">
 
-                        </LinearLayout>
+                                <ImageView
+                                    android:layout_width="20dp"
+                                    android:layout_height="20dp"
+                                    android:src="@android:drawable/ic_input_add"
+                                    app:tint="@color/color_text_muted" />
 
-                    </com.google.android.material.card.MaterialCardView>
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Kartu Baru"
+                                    android:textColor="@color/color_text_muted"
+                                    android:textSize="10sp"
+                                    android:layout_marginTop="4dp" />
 
-                </LinearLayout>
+                            </LinearLayout>
 
-            </HorizontalScrollView>
+                        </com.google.android.material.card.MaterialCardView>
+
+                    </LinearLayout>
+
+                </HorizontalScrollView>
+
+            </LinearLayout>
 
             <!-- 6. Order Settings -->
             <TextView

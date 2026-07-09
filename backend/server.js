@@ -710,6 +710,27 @@ app.get('/api/v1/payment/mock-page', (req, res) => {
   `);
 });
 
+// Get User Orders API
+app.get('/api/v1/payment/orders/:userId', async (req, res) => {
+  const { userId } = req.params;
+  try {
+    let list = [];
+    if (mongoose.connection.readyState === 1) {
+      list = await Order.find({ userId }).sort({ createdAt: -1 });
+    } else {
+      list = inMemoryOrders
+        .filter(o => o.userId === userId)
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    }
+    res.json({
+      success: true,
+      data: list
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // Mock Callback Handler
 app.post('/api/v1/payment/mock-callback', async (req, res) => {
   const { orderId, status } = req.body;

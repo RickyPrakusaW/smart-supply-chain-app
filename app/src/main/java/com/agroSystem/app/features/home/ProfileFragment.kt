@@ -88,6 +88,12 @@ class ProfileFragment : Fragment() {
 
         val btnSaveProfile: Button = view.findViewById(R.id.btn_save_profile)
         val btnLogout: Button = view.findViewById(R.id.btn_logout)
+        val btnTransactionHistory: Button = view.findViewById(R.id.btn_transaction_history)
+
+        btnTransactionHistory.setOnClickListener {
+            val navController = parentFragment?.findNavController()
+            navController?.navigate(R.id.action_homeFragment_to_transactionHistoryFragment)
+        }
 
         // Show edit options (Ubah/Hapus) in a clean dialog popup
         btnAvatarEdit.setOnClickListener {

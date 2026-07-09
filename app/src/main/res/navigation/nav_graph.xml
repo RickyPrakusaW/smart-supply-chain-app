@@ -153,6 +153,9 @@
         <action
             android:id="@+id/action_homeFragment_to_locationPermissionFragment"
             app:destination="@id/selectAddressFragment" />
+        <action
+            android:id="@+id/action_homeFragment_to_transactionHistoryFragment"
+            app:destination="@id/transactionHistoryFragment" />
     </fragment>
 
     <fragment
@@ -208,5 +211,15 @@
         android:name="com.agroSystem.app.features.payment.PaymentWebViewFragment"
         android:label="Pembayaran Midtrans"
         tools:layout="@layout/fragment_payment_webview" />
+
+    <fragment
+        android:id="@+id/transactionHistoryFragment"
+        android:name="com.agroSystem.app.features.payment.TransactionHistoryFragment"
+        android:label="Riwayat Transaksi"
+        tools:layout="@layout/fragment_transaction_history">
+        <action
+            android:id="@+id/action_transactionHistoryFragment_to_paymentWebViewFragment"
+            app:destination="@id/paymentWebViewFragment" />
+    </fragment>
 
 </navigation>
