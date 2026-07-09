@@ -125,9 +125,10 @@ class CartFragment : Fragment() {
         radioPlastic.setOnClickListener { setPackagingSelection(1) }
 
         btnCheckoutFinal.setOnClickListener {
-            sharedViewModel.clearCart()
-            Toast.makeText(requireContext(), "Pesanan Anda berhasil dikirim ke mitra tani!", Toast.LENGTH_LONG).show()
-            findNavController().navigateUp()
+            val bundle = Bundle().apply {
+                putInt("packagingCost", if (selectedPackaging == 0) 2000 else 1000)
+            }
+            findNavController().navigate(R.id.action_cartFragment_to_checkoutFragment, bundle)
         }
 
         btnUndoAction.setOnClickListener {

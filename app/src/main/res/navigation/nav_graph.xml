@@ -110,7 +110,7 @@
         <action
             android:id="@+id/action_addressDetailFragment_to_homeFragment"
             app:destination="@id/homeFragment"
-            app:popUpTo="@id/onboardingFragment"
+            app:popUpTo="@id/phoneInputFragment"
             app:popUpToInclusive="true" />
     </fragment>
 
@@ -161,6 +161,22 @@
     <fragment
         android:id="@+id/cartFragment"
         android:name="com.agroSystem.app.features.cart.CartFragment"
-        android:label="Keranjang Belanja" />
+        android:label="Keranjang Belanja">
+        <action
+            android:id="@+id/action_cartFragment_to_checkoutFragment"
+            app:destination="@id/checkoutFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/checkoutFragment"
+        android:name="com.agroSystem.app.features.cart.CheckoutFragment"
+        android:label="Oformlenie zakaza"
+        tools:layout="@layout/fragment_checkout">
+        <action
+            android:id="@+id/action_checkoutFragment_to_homeFragment"
+            app:destination="@id/homeFragment"
+            app:popUpTo="@id/nav_graph"
+            app:popUpToInclusive="true" />
+    </fragment>
 
 </navigation>

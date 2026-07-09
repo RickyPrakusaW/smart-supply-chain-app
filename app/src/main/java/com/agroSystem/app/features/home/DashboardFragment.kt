@@ -206,6 +206,7 @@ class DashboardFragment : Fragment() {
         }
         sharedViewModel.favoriteProductIds.observe(viewLifecycleOwner) { runSearch() }
         sharedViewModel.cartItems.observe(viewLifecycleOwner) { runSearch() }
+
     }
 
     private fun runSearch() {
