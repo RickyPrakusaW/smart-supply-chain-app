@@ -31,7 +31,8 @@ class DashboardFragment : Fragment() {
     private val sharedViewModel: MainSharedViewModel by activityViewModels()
 
     private lateinit var textAddress: TextView
-    private lateinit var btnNotification: MaterialCardView
+    private lateinit var btnCart: MaterialCardView
+    private lateinit var textCartBadge: TextView
     private lateinit var editSearch: EditText
     private lateinit var btnClearSearch: ImageView
     private lateinit var btnFilter: MaterialCardView
@@ -56,7 +57,8 @@ class DashboardFragment : Fragment() {
         val view = inflater.inflate(R.layout.fragment_dashboard, container, false)
 
         textAddress = view.findViewById(R.id.text_address)
-        btnNotification = view.findViewById(R.id.btn_notification)
+        btnCart = view.findViewById(R.id.btn_cart)
+        textCartBadge = view.findViewById(R.id.text_cart_badge)
         editSearch = view.findViewById(R.id.edit_search)
         btnClearSearch = view.findViewById(R.id.btn_clear_search)
         btnFilter = view.findViewById(R.id.btn_filter)
@@ -78,8 +80,19 @@ class DashboardFragment : Fragment() {
     }
 
     private fun setupButtons() {
-        btnNotification.setOnClickListener {
-            Toast.makeText(requireContext(), "Tidak ada notifikasi baru", Toast.LENGTH_SHORT).show()
+        btnCart.setOnClickListener {
+            findNavController().navigate(R.id.action_homeFragment_to_cartFragment)
+        }
+
+        // Observe cart items to update top-right cart badge count
+        sharedViewModel.cartItems.observe(viewLifecycleOwner) { cartMap ->
+            val totalItemCount = cartMap.values.sum()
+            if (totalItemCount > 0) {
+                textCartBadge.visibility = View.VISIBLE
+                textCartBadge.text = totalItemCount.toString()
+            } else {
+                textCartBadge.visibility = View.GONE
+            }
         }
 
         view?.findViewById<TextView>(R.id.btn_see_all)?.setOnClickListener {

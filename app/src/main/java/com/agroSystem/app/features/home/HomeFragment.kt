@@ -58,21 +58,9 @@ class HomeFragment : Fragment() {
             true
         }
 
-        // Observe cart items to toggle overlay visibility
-        sharedViewModel.cartItems.observe(viewLifecycleOwner) { cartMap ->
-            val totalItemCount = cartMap.values.sum()
-            val totalPrice = cartMap.entries.sumOf { it.key.price * it.value }
-
-            if (totalItemCount > 0) {
-                layoutCartOverlay.visibility = View.VISIBLE
-                textCartInfo.text = "Rp $totalPrice ($totalItemCount Item)"
-            } else {
-                layoutCartOverlay.visibility = View.GONE
-            }
-        }
-
-        btnCheckout.setOnClickListener {
-            findNavController().navigate(R.id.action_homeFragment_to_cartFragment)
+        // Observe cart items to toggle overlay visibility (Permanently hidden to avoid blocking content; cart accessed via top-right menu)
+        sharedViewModel.cartItems.observe(viewLifecycleOwner) { _ ->
+            layoutCartOverlay.visibility = View.GONE
         }
 
         return view

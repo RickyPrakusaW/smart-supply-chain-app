@@ -51,24 +51,45 @@
 
         </LinearLayout>
 
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/btn_notification"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            app:cardCornerRadius="20dp"
-            app:cardElevation="0dp"
-            app:strokeColor="@color/color_border_grey"
-            app:strokeWidth="1dp"
-            app:cardBackgroundColor="@color/color_surface_warm">
+        <FrameLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
 
-            <ImageView
-                android:layout_width="22dp"
-                android:layout_height="22dp"
-                android:layout_gravity="center"
-                android:src="@android:drawable/ic_popup_reminder"
-                app:tint="@color/color_text_dark" />
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/btn_cart"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="0dp"
+                app:strokeColor="@color/color_border_grey"
+                app:strokeWidth="1dp"
+                app:cardBackgroundColor="@color/color_surface_warm">
 
-        </com.google.android.material.card.MaterialCardView>
+                <ImageView
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_shopping_cart"
+                    app:tint="@color/color_text_dark" />
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <TextView
+                android:id="@+id/text_cart_badge"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:layout_gravity="top|end"
+                android:layout_marginTop="-2dp"
+                android:layout_marginEnd="-2dp"
+                android:background="@drawable/bg_circle_red"
+                android:textColor="@color/white"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:text="0"
+                android:visibility="gone" />
+
+        </FrameLayout>
 
     </LinearLayout>
 
