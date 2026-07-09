@@ -49,7 +49,7 @@ class AddEditProductFragment : Fragment() {
     private lateinit var inputName: EditText
     
     private lateinit var layoutCategory: TextInputLayout
-    private lateinit var inputCategory: AutoCompleteTextView
+    private lateinit var inputCategory: EditText
     
     private lateinit var layoutPrice: TextInputLayout
     private lateinit var inputPrice: EditText
@@ -143,9 +143,16 @@ class AddEditProductFragment : Fragment() {
     }
 
     private fun setupCategoryDropdown() {
-        val items = listOf("Telur", "Susu", "Sayuran", "Daging", "Bahan Sup")
-        val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, items)
-        inputCategory.setAdapter(adapter)
+        inputCategory.setOnClickListener {
+            val items = arrayOf("Telur", "Susu", "Sayuran", "Daging", "Bahan Sup")
+            androidx.appcompat.app.AlertDialog.Builder(requireContext())
+                .setTitle("Pilih Kategori")
+                .setItems(items) { _, which ->
+                    inputCategory.setText(items[which])
+                    layoutCategory.error = null
+                }
+                .show()
+        }
     }
 
     private fun loadProductData() {
@@ -160,7 +167,7 @@ class AddEditProductFragment : Fragment() {
         }
 
         inputName.setText(product.name)
-        inputCategory.setText(product.category, false)
+        inputCategory.setText(product.category)
         inputPrice.setText(product.price.toString())
         inputUnit.setText(product.unit)
         inputDelivery.setText(product.deliveryDays.toString())

@@ -1,5 +1,7 @@
 package com.agroSystem.app.data.models
 
+import com.agroSystem.app.R
+
 data class Product(
     val id: Int,
     val name: String,
@@ -48,10 +50,17 @@ fun Product.bindImageTo(imageView: android.widget.ImageView) {
             val decodedString = android.util.Base64.decode(this.imageBytes, android.util.Base64.DEFAULT)
             val decodedByte = android.graphics.BitmapFactory.decodeByteArray(decodedString, 0, decodedString.size)
             imageView.setImageBitmap(decodedByte)
+            return
         } catch (e: Exception) {
-            imageView.setImageResource(this.imageResId)
+            e.printStackTrace()
         }
-    } else {
-        imageView.setImageResource(this.imageResId)
     }
+
+    val fallbackResId = when (this.category?.lowercase()) {
+        "susu" -> R.drawable.sapi
+        "sayuran" -> R.drawable.sayuran
+        "daging" -> R.drawable.sapi
+        else -> R.drawable.padi
+    }
+    imageView.setImageResource(fallbackResId)
 }

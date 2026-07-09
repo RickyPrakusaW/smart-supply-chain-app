@@ -156,11 +156,14 @@
             <!-- Kategori Dropdown -->
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/layout_product_category"
-                style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="Pilih Kategori"
                 android:layout_marginBottom="16dp"
+                app:endIconMode="custom"
+                app:endIconDrawable="@android:drawable/arrow_down_float"
+                app:endIconTint="@color/color_primary_green"
                 app:boxStrokeColor="@color/color_primary_green"
                 app:boxCornerRadiusTopStart="12dp"
                 app:boxCornerRadiusTopEnd="12dp"
@@ -168,12 +171,14 @@
                 app:boxCornerRadiusBottomEnd="12dp"
                 app:boxBackgroundColor="@color/color_surface_warm">
 
-                <AutoCompleteTextView
+                <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/input_product_category"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:textColor="@color/color_text_dark"
-                    android:inputType="none" />
+                    android:focusable="false"
+                    android:clickable="true"
+                    android:cursorVisible="false" />
 
             </com.google.android.material.textfield.TextInputLayout>
 

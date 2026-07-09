@@ -53,7 +53,9 @@ const ProductSchema = new mongoose.Schema({
   rating: String,
   price: Number,
   quantity: String,
+  unit: String,
   imageRes: Number,
+  imageResId: Number,
   category: String,
   isEcoFriendly: { type: Boolean, default: false },
   deliveryDays: Number,
@@ -62,6 +64,9 @@ const ProductSchema = new mongoose.Schema({
   carbs: String,
   calories: String,
   ingredients: String,
+  shelfLife: String,
+  storage: String,
+  packaging: String,
   ownerId: { type: String, default: null },
   imageBytes: { type: String, default: null }
 });
@@ -103,9 +108,9 @@ const Order = mongoose.model('Order', OrderSchema);
 let inMemoryUsers = [];
 let inMemoryOrders = [];
 let inMemoryProducts = [
-  { id: 1, name: "Telur Ayam Kampung Segar", location: "Peternakan Tani Jaya, Malang", rating: "5.0", price: 24000, quantity: "10 pcs", imageRes: 2131231015, category: "Telur", isEcoFriendly: true, deliveryDays: 1, protein: "13g", fat: "11g", carbs: "1.1g", calories: "155 Kcal", ingredients: "Telur ayam kampung organik segar hasil pakan jagung alami bebas antibiotik." },
-  { id: 2, name: "Keju Kambing Organik", location: "Koperasi Susu Pujon, Batu", rating: "4.9", price: 45000, quantity: "200 g", imageRes: 2131231014, category: "Susu", isEcoFriendly: false, deliveryDays: 2, protein: "22g", fat: "24g", carbs: "3g", calories: "360 Kcal", ingredients: "Keju artisan semi-hard buatan tangan dari 100% susu kambing murni berkualitas tinggi." },
-  { id: 3, name: "Bayam Hidroponik Bersih", location: "Agro Makmur, Batu", rating: "4.8", price: 12000, quantity: "250 g", imageRes: 2131231016, category: "Sayuran", isEcoFriendly: true, deliveryDays: 1, protein: "2.9g", fat: "0.4g", carbs: "3.6g", calories: "23 Kcal", ingredients: "Sayur bayam hijau segar hidroponik bebas pestisida kimia. Dikemas steril." }
+  { id: 1, name: "Telur Ayam Kampung Segar", location: "Peternakan Tani Jaya, Malang", rating: "5.0", price: 24000, quantity: "10 pcs", unit: "10 pcs", imageRes: 2131231015, imageResId: 2131231015, category: "Telur", isEcoFriendly: true, deliveryDays: 1, protein: "13g", fat: "11g", carbs: "1.1g", calories: "155 Kcal", ingredients: "Telur ayam kampung organik segar hasil pakan jagung alami bebas antibiotik.", shelfLife: "5 Hari", storage: "Suhu Dingin (+2°C s.d +6°C)", packaging: "Kemasan Karton Protektif" },
+  { id: 2, name: "Keju Kambing Organik", location: "Koperasi Susu Pujon, Batu", rating: "4.9", price: 45000, quantity: "200 g", unit: "200 g", imageRes: 2131231014, imageResId: 2131231014, category: "Susu", isEcoFriendly: false, deliveryDays: 2, protein: "22g", fat: "24g", carbs: "3g", calories: "360 Kcal", ingredients: "Keju artisan semi-hard buatan tangan dari 100% susu kambing murni berkualitas tinggi.", shelfLife: "14 Hari", storage: "Refrigerasi (2°C - 4°C)", packaging: "Kertas Lilin & Plastik Vakum" },
+  { id: 3, name: "Bayam Hidroponik Bersih", location: "Agro Makmur, Batu", rating: "4.8", price: 12000, quantity: "250 g", unit: "250 g", imageRes: 2131231016, imageResId: 2131231016, category: "Sayuran", isEcoFriendly: true, deliveryDays: 1, protein: "2.9g", fat: "0.4g", carbs: "3.6g", calories: "23 Kcal", ingredients: "Sayur bayam hijau segar hidroponik bebas pestisida kimia. Dikemas steril.", shelfLife: "3 Hari", storage: "Suhu Dingin", packaging: "Plastik Kemasan Berlubang Udara" }
 ];
 let inMemoryFarmers = [
   { id: 1, name: "Koperasi Susu & Keju Pujon", rating: "5.0", distance: "12 km", commodities: "Keju, Susu, Mentega", imageRes: 2131231014, location: "Pujon, Malang", description: "Koperasi susu terpercaya di wilayah Pujon. Kami mengelola ratusan sapi perah lokal secara berkelanjutan.", certs: ["Sertifikasi Organik Kementan", "Sertifikasi Halal MUI"] },
