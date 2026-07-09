@@ -198,6 +198,15 @@
             app:destination="@id/homeFragment"
             app:popUpTo="@id/nav_graph"
             app:popUpToInclusive="true" />
+        <action
+            android:id="@+id/action_checkoutFragment_to_paymentWebViewFragment"
+            app:destination="@id/paymentWebViewFragment" />
     </fragment>
+
+    <fragment
+        android:id="@+id/paymentWebViewFragment"
+        android:name="com.agroSystem.app.features.payment.PaymentWebViewFragment"
+        android:label="Pembayaran Midtrans"
+        tools:layout="@layout/fragment_payment_webview" />
 
 </navigation>

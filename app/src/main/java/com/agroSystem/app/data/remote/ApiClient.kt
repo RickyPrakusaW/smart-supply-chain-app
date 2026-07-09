@@ -10,7 +10,7 @@ object ApiClient {
 
     // Ganti ini dengan URL hosting backend Anda (Render/Railway) setelah di-deploy
     // Contoh: "https://agrimitra-backend.onrender.com/api/v1/"
-    private const val BACKEND_BASE_URL = "https://run.mocky.io/v3/"
+    private const val BACKEND_BASE_URL = "http://10.0.2.2:5001/api/v1/"
 
     private val logging = HttpLoggingInterceptor().apply {
         level = HttpLoggingInterceptor.Level.BODY

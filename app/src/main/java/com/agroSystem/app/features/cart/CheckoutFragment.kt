@@ -9,6 +9,7 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
@@ -19,10 +20,15 @@ import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.switchmaterial.SwitchMaterial
 import com.google.android.material.textfield.TextInputLayout
+import com.agroSystem.app.features.auth.AuthViewModel
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
+import android.util.Log
 
 class CheckoutFragment : Fragment() {
 
     private val sharedViewModel: MainSharedViewModel by activityViewModels()
+    private val authViewModel: AuthViewModel by activityViewModels()
 
     private lateinit var btnBack: MaterialCardView
     private lateinit var textAddress: TextView
@@ -133,6 +139,13 @@ class CheckoutFragment : Fragment() {
         renderDeliveryData()
         recalculatePricing()
 
+        val savedAddress = authViewModel.currentUser.value?.address
+        if (!savedAddress.isNullOrEmpty()) {
+            textAddress.text = savedAddress
+        } else {
+            textAddress.text = "Belum ada alamat, silakan atur di Profil."
+        }
+
         return view
     }
 
@@ -205,12 +218,12 @@ class CheckoutFragment : Fragment() {
             if (!isPromoApplied) {
                 isPromoApplied = true
                 textPromoCode.text = "Promo aktif: MX597TN (-10%)"
-                textPromoCode.setTextColor(resources.getColor(R.color.color_primary_green))
+                textPromoCode.setTextColor(ContextCompat.getColor(requireContext(), R.color.color_primary_green))
                 Toast.makeText(requireContext(), "Kode promo MX597TN berhasil digunakan!", Toast.LENGTH_SHORT).show()
             } else {
                 isPromoApplied = false
                 textPromoCode.text = "Kode Promo"
-                textPromoCode.setTextColor(resources.getColor(R.color.color_text_dark))
+                textPromoCode.setTextColor(ContextCompat.getColor(requireContext(), R.color.color_text_dark))
             }
             recalculatePricing()
         }
@@ -243,29 +256,89 @@ class CheckoutFragment : Fragment() {
             imagePricingArrow.rotation = if (isPricingExpanded) 270f else 90f
         }
 
-        // Place Order final action
+        // Place Order final action - Initiate Midtrans Payment
         btnPlaceOrder.setOnClickListener {
-            sharedViewModel.clearCart()
-            Toast.makeText(requireContext(), "Pesanan berhasil dikirim ke Mitra Tani!", Toast.LENGTH_LONG).show()
-            findNavController().navigate(R.id.action_checkoutFragment_to_homeFragment)
+            val currentUser = authViewModel.currentUser.value
+            if (currentUser == null) {
+                Toast.makeText(requireContext(), "Silakan login terlebih dahulu!", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            val cartMap = sharedViewModel.cartItems.value ?: emptyMap()
+            if (cartMap.isEmpty()) {
+                Toast.makeText(requireContext(), "Keranjang belanja Anda kosong!", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            // Recalculate total pricing including discounts and packaging
+            val itemsList = cartMap.entries.toList()
+            val subtotal = itemsList.sumOf { it.key.price * it.value }
+            
+            var discount = 0
+            if (isPromoApplied) {
+                discount += (subtotal * 0.1).toInt()
+            }
+            if (isBonusApplied) {
+                discount += 5000
+            }
+            val total = subtotal + packagingCost - discount
+
+            // Map cart products to API CheckoutItems
+            val checkoutItems = cartMap.map { (product, qty) ->
+                com.agroSystem.app.data.remote.CheckoutItem(
+                    id = product.id,
+                    name = product.name,
+                    price = product.price,
+                    quantity = qty
+                )
+            }
+
+            btnPlaceOrder.isEnabled = false
+            Toast.makeText(requireContext(), "Menghubungkan ke sistem pembayaran...", Toast.LENGTH_SHORT).show()
+
+            lifecycleScope.launch {
+                try {
+                    val response = com.agroSystem.app.data.remote.ApiClient.authApiService.checkout(
+                        com.agroSystem.app.data.remote.CheckoutRequest(
+                            userId = currentUser.id,
+                            amount = total,
+                            items = checkoutItems
+                        )
+                    )
+                    btnPlaceOrder.isEnabled = true
+                    val redirectUrl = response.data?.payment?.redirect_url
+                    if (response.success && !redirectUrl.isNullOrEmpty()) {
+                        val bundle = Bundle().apply {
+                            putString("payment_url", redirectUrl)
+                        }
+                        findNavController().navigate(R.id.action_checkoutFragment_to_paymentWebViewFragment, bundle)
+                    } else {
+                        Toast.makeText(requireContext(), "Gagal memproses transaksi pembayaran.", Toast.LENGTH_SHORT).show()
+                    }
+                } catch (e: Exception) {
+                    btnPlaceOrder.isEnabled = true
+                    Log.e("CheckoutFragment", "Error performing checkout", e)
+                    Toast.makeText(requireContext(), "Gagal terhubung ke server pembayaran: ${e.message}", Toast.LENGTH_LONG).show()
+                }
+            }
         }
     }
 
     private fun setSplitDeliveryOption(split: Boolean) {
         isSplitDelivery = split
         if (split) {
-            btnDeliverySplit.setBackgroundColor(resources.getColor(R.color.color_primary_green))
-            btnDeliverySplit.setTextColor(resources.getColor(R.color.white))
-            btnDeliveryAllOnce.setBackgroundColor(resources.getColor(R.color.transparent))
-            btnDeliveryAllOnce.setTextColor(resources.getColor(R.color.color_text_muted))
+            btnDeliverySplit.setBackgroundColor(ContextCompat.getColor(requireContext(), R.color.color_primary_green))
+            btnDeliverySplit.setTextColor(ContextCompat.getColor(requireContext(), R.color.white))
+            btnDeliveryAllOnce.setBackgroundColor(ContextCompat.getColor(requireContext(), R.color.transparent))
+            btnDeliveryAllOnce.setTextColor(ContextCompat.getColor(requireContext(), R.color.color_text_muted))
 
             layoutDeliverySingle.visibility = View.GONE
             layoutDeliverySplit.visibility = View.VISIBLE
         } else {
-            btnDeliveryAllOnce.setBackgroundColor(resources.getColor(R.color.color_primary_green))
-            btnDeliveryAllOnce.setTextColor(resources.getColor(R.color.white))
-            btnDeliverySplit.setBackgroundColor(resources.getColor(R.color.transparent))
-            btnDeliverySplit.setTextColor(resources.getColor(R.color.color_text_muted))
+            btnDeliveryAllOnce.setBackgroundColor(ContextCompat.getColor(requireContext(), R.color.color_primary_green))
+            btnDeliveryAllOnce.setTextColor(ContextCompat.getColor(requireContext(), R.color.white))
+            btnDeliverySplit.setBackgroundColor(ContextCompat.getColor(requireContext(), R.color.transparent))
+            btnDeliverySplit.setTextColor(ContextCompat.getColor(requireContext(), R.color.color_text_muted))
 
             layoutDeliverySingle.visibility = View.VISIBLE
             layoutDeliverySplit.visibility = View.GONE
@@ -275,13 +348,13 @@ class CheckoutFragment : Fragment() {
 
     private fun selectPayment(method: Int) {
         selectedPaymentMethod = method
-        btnPayCash.setStrokeColor(resources.getColorStateList(if (method == 0) R.color.color_primary_green else R.color.color_border_grey))
+        btnPayCash.setStrokeColor(ContextCompat.getColorStateList(requireContext(), if (method == 0) R.color.color_primary_green else R.color.color_border_grey))
         btnPayCash.setStrokeWidth(if (method == 0) 6 else 3)
 
-        btnPayCard1.setStrokeColor(resources.getColorStateList(if (method == 1) R.color.color_primary_green else R.color.color_border_grey))
+        btnPayCard1.setStrokeColor(ContextCompat.getColorStateList(requireContext(), if (method == 1) R.color.color_primary_green else R.color.color_border_grey))
         btnPayCard1.setStrokeWidth(if (method == 1) 6 else 3)
 
-        btnPayCard2.setStrokeColor(resources.getColorStateList(if (method == 2) R.color.color_primary_green else R.color.color_border_grey))
+        btnPayCard2.setStrokeColor(ContextCompat.getColorStateList(requireContext(), if (method == 2) R.color.color_primary_green else R.color.color_border_grey))
         btnPayCard2.setStrokeWidth(if (method == 2) 6 else 3)
     }
 
@@ -376,7 +449,7 @@ class CheckoutFragment : Fragment() {
                 radius = 24f
                 cardElevation = 0f
                 strokeWidth = 0
-                setCardBackgroundColor(resources.getColor(if (index == selectedIndex) R.color.color_primary_green else R.color.color_surface_warm))
+                setCardBackgroundColor(ContextCompat.getColor(requireContext(), if (index == selectedIndex) R.color.color_primary_green else R.color.color_surface_warm))
             }
 
             val inner = LinearLayout(requireContext()).apply {
@@ -389,13 +462,13 @@ class CheckoutFragment : Fragment() {
                 text = day
                 setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 14f)
                 typeface = android.graphics.Typeface.DEFAULT_BOLD
-                setTextColor(resources.getColor(if (index == selectedIndex) R.color.white else R.color.color_text_dark))
+                setTextColor(ContextCompat.getColor(requireContext(), if (index == selectedIndex) R.color.white else R.color.color_text_dark))
             }
 
             val textName = TextView(requireContext()).apply {
                 text = name
                 setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 10f)
-                setTextColor(resources.getColor(if (index == selectedIndex) R.color.color_olive_light else R.color.color_text_muted))
+                setTextColor(ContextCompat.getColor(requireContext(), if (index == selectedIndex) R.color.color_olive_light else R.color.color_text_muted))
             }
 
             inner.addView(textDay)
@@ -420,7 +493,7 @@ class CheckoutFragment : Fragment() {
                 radius = 16f
                 cardElevation = 0f
                 strokeWidth = 0
-                setCardBackgroundColor(resources.getColor(if (index == selectedIndex) R.color.color_primary_green else R.color.color_surface_warm))
+                setCardBackgroundColor(ContextCompat.getColor(requireContext(), if (index == selectedIndex) R.color.color_primary_green else R.color.color_surface_warm))
             }
 
             val textSlot = TextView(requireContext()).apply {
@@ -428,7 +501,7 @@ class CheckoutFragment : Fragment() {
                 setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 11f)
                 typeface = android.graphics.Typeface.DEFAULT_BOLD
                 setPadding(32, 20, 32, 20)
-                setTextColor(resources.getColor(if (index == selectedIndex) R.color.white else R.color.color_text_dark))
+                setTextColor(ContextCompat.getColor(requireContext(), if (index == selectedIndex) R.color.white else R.color.color_text_dark))
             }
 
             card.addView(textSlot)

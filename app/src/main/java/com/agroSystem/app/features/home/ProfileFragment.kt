@@ -50,7 +50,8 @@ class ProfileFragment : Fragment() {
                 tempPhotoBase64 = base64Str
                 val imageProfileAvatar: ImageView = requireView().findViewById(R.id.image_profile_avatar)
                 setAvatarImage(base64Str, imageProfileAvatar)
-                Toast.makeText(requireContext(), "Foto profil terpilih!", Toast.LENGTH_SHORT).show()
+                // Auto-save photo update
+                autoSaveProfileWithPhoto(base64Str)
             } else {
                 Toast.makeText(requireContext(), "Gagal memproses gambar.", Toast.LENGTH_SHORT).show()
             }
@@ -99,7 +100,8 @@ class ProfileFragment : Fragment() {
                         1 -> {
                             tempPhotoBase64 = ""
                             setAvatarImage(null, imageProfileAvatar)
-                            Toast.makeText(requireContext(), "Foto profil dihapus. Klik simpan untuk menyimpan.", Toast.LENGTH_SHORT).show()
+                            // Auto-save photo deletion
+                            autoSaveProfileWithPhoto("")
                         }
                     }
                 }
@@ -185,18 +187,16 @@ class ProfileFragment : Fragment() {
                 Toast.makeText(requireContext(), "Masukkan nomor HP terlebih dahulu!", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-            // Format phone to international format: prefix +62
             val formatted = if (rawPhone.startsWith("+")) rawPhone else if (rawPhone.startsWith("0")) "+62" + rawPhone.drop(1) else "+62$rawPhone"
             startPhoneVerification(formatted, btnVerifyPhone)
         }
 
-        // Action Save
+        // Action Save Manual
         btnSaveProfile.setOnClickListener {
             val name = inputName.text.toString().trim()
             val email = inputEmail.text.toString().trim().ifEmpty { null }
             val phone = inputPhone.text.toString().trim().ifEmpty { null }
             
-            // Construct composite address from inputs
             val detail = inputAddressDetail.text.toString().trim()
             val street = inputAddressStreet.text.toString().trim()
             val landmark = inputAddressLandmark.text.toString().trim()
@@ -219,7 +219,6 @@ class ProfileFragment : Fragment() {
                 hasError = true
             }
 
-            // Strict Validation on Address if user started filling it
             val isAddressEdited = street.isNotEmpty() || detail.isNotEmpty() || landmark.isNotEmpty() || postalCode.isNotEmpty()
             if (isAddressEdited) {
                 if (detail.length < 5) {
@@ -294,7 +293,6 @@ class ProfileFragment : Fragment() {
                     inputEmail.setText(user.email ?: "")
                     inputPhone.setText(user.phone ?: "")
                     
-                    // Parse composite address back into individual inputs
                     parseAndSetAddressFields(user.address, inputAddressStreet, inputAddressDetail, inputAddressLandmark, inputAddressPostalCode)
                     
                     setAvatarImage(tempPhotoBase64 ?: user.photoUrl, imageProfileAvatar)
@@ -316,6 +314,94 @@ class ProfileFragment : Fragment() {
         return view
     }
 
+    // Auto-save helper when phone is verified
+    private fun autoSaveProfileWithPhone(verifiedPhone: String) {
+        val view = view ?: return
+        val inputName: EditText = view.findViewById(R.id.input_profile_name)
+        val inputEmail: EditText = view.findViewById(R.id.input_profile_email)
+        
+        val inputAddressDetail: EditText = view.findViewById(R.id.input_profile_address_detail)
+        val inputAddressStreet: EditText = view.findViewById(R.id.input_profile_address_street)
+        val inputAddressPostalCode: EditText = view.findViewById(R.id.input_profile_address_postal_code)
+        val inputAddressLandmark: EditText = view.findViewById(R.id.input_profile_address_landmark)
+
+        val name = inputName.text.toString().trim()
+        val email = inputEmail.text.toString().trim().ifEmpty { null }
+        
+        val detail = inputAddressDetail.text.toString().trim()
+        val street = inputAddressStreet.text.toString().trim()
+        val landmark = inputAddressLandmark.text.toString().trim()
+        val postalCode = inputAddressPostalCode.text.toString().trim()
+
+        val isAddressEdited = street.isNotEmpty() || detail.isNotEmpty() || landmark.isNotEmpty() || postalCode.isNotEmpty()
+        val address = if (isAddressEdited) {
+            "$street, $detail (Patokan: $landmark, Kode Pos: $postalCode)"
+        } else {
+            null
+        }
+
+        val currentUser = authViewModel.currentUser.value
+        if (currentUser != null) {
+            authViewModel.updateProfile(
+                name = name.ifEmpty { currentUser.name },
+                email = email ?: currentUser.email,
+                phone = verifiedPhone,
+                address = address ?: currentUser.address,
+                photoUrl = tempPhotoBase64 ?: currentUser.photoUrl,
+                role = currentUser.role
+            ) {
+                tempVerifiedPhone = null
+                val btnVerifyPhone: Button = view.findViewById(R.id.btn_verify_phone)
+                btnVerifyPhone.visibility = View.GONE
+                updatePhoneStatusUI(verifiedPhone, verifiedPhone)
+                Toast.makeText(requireContext(), "Nomor HP diverifikasi & disimpan otomatis!", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    // Auto-save helper when photo is updated/deleted
+    private fun autoSaveProfileWithPhoto(photoBase64: String) {
+        val view = view ?: return
+        val inputName: EditText = view.findViewById(R.id.input_profile_name)
+        val inputEmail: EditText = view.findViewById(R.id.input_profile_email)
+        val inputPhone: EditText = view.findViewById(R.id.input_profile_phone)
+        
+        val inputAddressDetail: EditText = view.findViewById(R.id.input_profile_address_detail)
+        val inputAddressStreet: EditText = view.findViewById(R.id.input_profile_address_street)
+        val inputAddressPostalCode: EditText = view.findViewById(R.id.input_profile_address_postal_code)
+        val inputAddressLandmark: EditText = view.findViewById(R.id.input_profile_address_landmark)
+
+        val name = inputName.text.toString().trim()
+        val email = inputEmail.text.toString().trim().ifEmpty { null }
+        val phone = inputPhone.text.toString().trim().ifEmpty { null }
+        
+        val detail = inputAddressDetail.text.toString().trim()
+        val street = inputAddressStreet.text.toString().trim()
+        val landmark = inputAddressLandmark.text.toString().trim()
+        val postalCode = inputAddressPostalCode.text.toString().trim()
+
+        val isAddressEdited = street.isNotEmpty() || detail.isNotEmpty() || landmark.isNotEmpty() || postalCode.isNotEmpty()
+        val address = if (isAddressEdited) {
+            "$street, $detail (Patokan: $landmark, Kode Pos: $postalCode)"
+        } else {
+            null
+        }
+
+        val currentUser = authViewModel.currentUser.value
+        if (currentUser != null) {
+            authViewModel.updateProfile(
+                name = name.ifEmpty { currentUser.name },
+                email = email ?: currentUser.email,
+                phone = phone ?: currentUser.phone,
+                address = address ?: currentUser.address,
+                photoUrl = photoBase64,
+                role = currentUser.role
+            ) {
+                Toast.makeText(requireContext(), "Foto profil diperbarui & disimpan otomatis!", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
     private fun parseAndSetAddressFields(
         address: String?,
         inputStreet: EditText,
@@ -331,7 +417,6 @@ class ProfileFragment : Fragment() {
             return
         }
         try {
-            // Address format: "Street, Detail (Patokan: Landmark, Kode Pos: PostalCode)"
             var streetStr = ""
             var detailStr = ""
             var landmarkStr = ""
@@ -395,7 +480,7 @@ class ProfileFragment : Fragment() {
             .setActivity(requireActivity())
             .setCallbacks(object : PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
                 override fun onVerificationCompleted(credential: com.google.firebase.auth.PhoneAuthCredential) {
-                    // Auto-retrieved verification code (if any)
+                    // Auto-retrieved verification
                 }
 
                 override fun onVerificationFailed(e: FirebaseException) {
@@ -424,13 +509,12 @@ class ProfileFragment : Fragment() {
             .setMessage("Masukkan 6 digit kode OTP yang dikirimkan ke nomor $phoneNumber")
             .setView(dialogView)
             .setCancelable(false)
-            .setPositiveButton("Verifikasi", null) // Set null to override and prevent auto-close on invalid otp
+            .setPositiveButton("Verifikasi", null)
             .setNegativeButton("Batal", null)
             .create()
 
         dialog.show()
 
-        // Override positive button click to validate code
         dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
             val code = inputOtp.text.toString().trim()
             if (code.length != 6) {
@@ -442,35 +526,25 @@ class ProfileFragment : Fragment() {
             if (verificationId.isNullOrEmpty()) {
                 // Safety demo mode bypass
                 if (code == "123456") {
-                    tempVerifiedPhone = phoneNumber
-                    requireView().findViewById<EditText>(R.id.input_profile_phone).setText(phoneNumber)
-                    requireView().findViewById<Button>(R.id.btn_verify_phone).visibility = View.GONE
-                    Toast.makeText(requireContext(), "Nomor telepon berhasil diverifikasi (Mode Uji)!", Toast.LENGTH_SHORT).show()
                     dialog.dismiss()
+                    autoSaveProfileWithPhone(phoneNumber)
                 } else {
                     Toast.makeText(requireContext(), "Kode OTP salah!", Toast.LENGTH_SHORT).show()
                 }
                 return@setOnClickListener
             }
 
-            // Real Firebase Credentials Verification
             val credential = PhoneAuthProvider.getCredential(verificationId, code)
             FirebaseAuth.getInstance().currentUser?.linkWithCredential(credential)
                 ?.addOnCompleteListener { task ->
                     if (task.isSuccessful) {
-                        tempVerifiedPhone = phoneNumber
-                        requireView().findViewById<EditText>(R.id.input_profile_phone).setText(phoneNumber)
-                        requireView().findViewById<Button>(R.id.btn_verify_phone).visibility = View.GONE
-                        Toast.makeText(requireContext(), "Nomor telepon berhasil diverifikasi!", Toast.LENGTH_SHORT).show()
                         dialog.dismiss()
+                        autoSaveProfileWithPhone(phoneNumber)
                     } else {
                         // Fallback demo bypass safety check
                         if (code == "123456") {
-                            tempVerifiedPhone = phoneNumber
-                            requireView().findViewById<EditText>(R.id.input_profile_phone).setText(phoneNumber)
-                            requireView().findViewById<Button>(R.id.btn_verify_phone).visibility = View.GONE
-                            Toast.makeText(requireContext(), "Nomor telepon berhasil diverifikasi (Mode Uji)!", Toast.LENGTH_SHORT).show()
                             dialog.dismiss()
+                            autoSaveProfileWithPhone(phoneNumber)
                         } else {
                             Log.e("ProfileFragment", "OTP linking failed", task.exception)
                             Toast.makeText(requireContext(), "Verifikasi Gagal: ${task.exception?.message}", Toast.LENGTH_LONG).show()

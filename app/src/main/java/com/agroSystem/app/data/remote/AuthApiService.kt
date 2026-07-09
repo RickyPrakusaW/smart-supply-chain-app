@@ -12,7 +12,42 @@ interface AuthApiService {
 
     @POST("auth/update-profile")
     suspend fun updateProfile(@Body request: UpdateProfileRequest): AuthResponse
+
+    @POST("payment/checkout")
+    suspend fun checkout(@Body request: CheckoutRequest): CheckoutResponse
 }
+
+data class CheckoutRequest(
+    val userId: String,
+    val amount: Int,
+    val items: List<CheckoutItem>
+)
+
+data class CheckoutItem(
+    val id: Int,
+    val name: String,
+    val price: Int,
+    val quantity: Int
+)
+
+data class CheckoutResponse(
+    val success: Boolean,
+    val message: String?,
+    val data: CheckoutData?
+)
+
+data class CheckoutData(
+    val orderId: String?,
+    val topupId: String?,
+    val amount: Int,
+    val status: String?,
+    val payment: CheckoutPayment?
+)
+
+data class CheckoutPayment(
+    val token: String?,
+    val redirect_url: String?
+)
 
 data class GoogleLoginRequest(
     val idToken: String,
