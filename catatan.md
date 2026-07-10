@@ -95,3 +95,21 @@ Menghubungkan aplikasi Android dengan database cloud secara online.
 *   **Lokasi Kode**: Folder `/backend/` di root proyek Anda.
 *   **Berkas Utama**: `server.js` (Express REST APIs), `.env` (Midtrans & Gemini config).
 *   **Hosting**: Dideploy Live menggunakan **Render.com** (`https://smart-supply-chain-app.onrender.com`).
+
+---
+
+## 🔌 11. Integrasi Pihak Ketiga (3rd Party APIs)
+Aplikasi Anda menggunakan 6 integrasi pihak ketiga berikut untuk menambahkan fitur-fitur premium:
+
+1.  **Google Gemini AI API (gemini-3.5-flash)**
+    *   *Fungsi*: Mesin kecerdasan buatan (Generative AI) yang digunakan untuk menjawab chat dari pengguna seputar cara bertani, resep masakan, dan kandungan nutrisi sayuran di ruang obrolan Asisten Tani AI.
+2.  **Midtrans Payment Gateway**
+    *   *Fungsi*: Gerbang pembayaran online yang digunakan untuk memproses transaksi e-commerce secara otomatis (Snap Redirection), mendukung metode pembayaran transfer bank, gopay, shopeepay, kartu kredit, dll di lingkungan Sandbox.
+3.  **OpenStreetMap (OSMDroid API)**
+    *   *Fungsi*: Layanan pemetaan alternatif Google Maps yang gratis dan open-source untuk me-render peta interaktif, pin GPS koordinat lokasi, dan mengambil nama jalan (Reverse Geocoding) secara langsung di halaman pilih alamat.
+4.  **Google Identity / Credential Manager API**
+    *   *Fungsi*: Layanan otentikasi dari Google untuk masuk ke dalam aplikasi menggunakan akun Google yang terdaftar di handphone Android secara instan dengan satu kali ketukan (One-Tap Sign-In).
+5.  **Firebase Authentication**
+    *   *Fungsi*: Layanan dari Google Cloud Platform (GCP) yang mengelola database pendaftaran pengguna baru, masuk akun menggunakan E-mail & Sandi, dan verifikasi nomor telepon.
+6.  **Spoonacular Food & Groceries API**
+    *   *Fungsi*: API data makanan yang digunakan oleh server backend pada saat proses seeding untuk memperkaya info produk pangan (detail kandungan nutrisi, saran penyimpanan, dan masa kadaluarsa sayuran segar).
