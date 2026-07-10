@@ -63,6 +63,13 @@ class HomeFragment : Fragment() {
             layoutCartOverlay.visibility = View.GONE
         }
 
+        // Initialize and bind AI Assistant Floating Action Button
+        val fabAiAssistant: com.google.android.material.floatingactionbutton.FloatingActionButton = 
+            view.findViewById(R.id.fab_ai_assistant)
+        fabAiAssistant.setOnClickListener {
+            findNavController().navigate(R.id.action_homeFragment_to_chatAssistantFragment)
+        }
+
         return view
     }
 

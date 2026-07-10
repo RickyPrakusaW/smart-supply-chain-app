@@ -159,6 +159,9 @@
         <action
             android:id="@+id/action_homeFragment_to_sellerProductsFragment"
             app:destination="@id/sellerProductsFragment" />
+        <action
+            android:id="@+id/action_homeFragment_to_chatAssistantFragment"
+            app:destination="@id/chatAssistantFragment" />
     </fragment>
 
     <fragment
@@ -245,5 +248,11 @@
             app:argType="integer"
             android:defaultValue="-1" />
     </fragment>
+
+    <fragment
+        android:id="@+id/chatAssistantFragment"
+        android:name="com.agroSystem.app.features.chat.ChatAssistantFragment"
+        android:label="Asisten AI"
+        tools:layout="@layout/fragment_chat_assistant" />
 
 </navigation>

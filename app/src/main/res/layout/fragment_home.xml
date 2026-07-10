@@ -133,4 +133,17 @@
 
     </LinearLayout>
 
+    <!-- AI Chat Floating Action Button -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fab_ai_assistant"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:src="@android:drawable/ic_menu_help"
+        app:tint="@color/white"
+        app:backgroundTint="@color/color_primary_green"
+        app:elevation="4dp"
+        app:layout_constraintBottom_toTopOf="@id/layout_bottom_container"
+        app:layout_constraintEnd_toEndOf="parent" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

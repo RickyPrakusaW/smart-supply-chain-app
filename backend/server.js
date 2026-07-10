@@ -1067,6 +1067,64 @@ app.post('/api/v1/payment/notification', async (req, res) => {
   }
 });
 
+// AI Chat Assistant Proxy Route
+app.post('/api/v1/ai/chat', async (req, res) => {
+  const { message } = req.body;
+  if (!message) {
+    return res.status(400).json({ success: false, message: "Missing message field" });
+  }
+
+  const geminiApiKey = process.env.GEMINI_API_KEY || 'aeee52afea7e4669886561d48ea54557';
+  if (!process.env.GEMINI_API_KEY) {
+    console.warn("WARNING: GEMINI_API_KEY is not configured. Falling back to default.");
+  }
+
+  try {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${geminiApiKey}`;
+    
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        contents: [
+          {
+            role: "user",
+            parts: [
+              {
+                text: "Anda adalah Asisten Tani AI untuk aplikasi AgriMitra. Jawab pertanyaan pengguna mengenai pertanian, nutrisi makanan, resep, sayuran, dan cara bercocok tanam secara singkat (maksimal 3 paragraf), ramah, santun, dan solutif. Selalu gunakan Bahasa Indonesia yang baik dan mudah dipahami."
+              },
+              {
+                text: message
+              }
+            ]
+          }
+        ]
+      })
+    });
+
+    const data = await response.json();
+    
+    if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts[0]) {
+      const reply = data.candidates[0].content.parts[0].text;
+      res.json({ success: true, reply });
+    } else {
+      console.error("Gemini API Error Response:", JSON.stringify(data, null, 2));
+      res.status(502).json({ 
+        success: false, 
+        reply: "Maaf, Asisten Tani sedang istirahat sebentar. Silakan coba tanyakan beberapa saat lagi." 
+      });
+    }
+  } catch (err) {
+    console.error("Gemini Proxy Error:", err);
+    res.status(500).json({ 
+      success: false, 
+      reply: "Maaf, terjadi kesalahan koneksi. Pastikan koneksi internet Anda aktif dan silakan coba lagi." 
+    });
+  }
+});
+
 // Start Server
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);

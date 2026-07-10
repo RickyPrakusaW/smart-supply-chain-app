@@ -33,6 +33,11 @@ interface AuthApiService {
         @Body body: UpdateStatusRequest
     ): GeneralStatusResponse
 
+    @POST("ai/chat")
+    suspend fun sendChatMessage(
+        @Body request: ChatRequest
+    ): ChatResponse
+
     @POST("products")
     suspend fun createProduct(@Body product: Product): CreateUpdateProductResponse
 
@@ -141,4 +146,13 @@ data class GeneralStatusResponse(
 
 data class UpdateStatusRequest(
     val status: String
+)
+
+data class ChatRequest(
+    val message: String
+)
+
+data class ChatResponse(
+    val success: Boolean,
+    val reply: String
 )
