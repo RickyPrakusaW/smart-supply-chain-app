@@ -297,8 +297,8 @@ class MainSharedViewModel(application: Application) : AndroidViewModel(applicati
 
         val sourceList = productsList.value ?: allProducts
         return sourceList.filter { product ->
-            val matchesSearch = product.name.contains(query, ignoreCase = true) ||
-                    product.farmer.contains(query, ignoreCase = true)
+            val matchesSearch = (product.name ?: "").contains(query, ignoreCase = true) ||
+                    (product.farmer ?: "").contains(query, ignoreCase = true)
             val matchesCategory = category == "Semua" || product.category == category
 
             val matchesDelivery = delivery == 0 || product.deliveryDays <= delivery
