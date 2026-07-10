@@ -154,5 +154,6 @@ data class ChatRequest(
 
 data class ChatResponse(
     val success: Boolean,
-    val reply: String
+    val reply: String,
+    val recommendedProducts: List<Product>? = null
 )

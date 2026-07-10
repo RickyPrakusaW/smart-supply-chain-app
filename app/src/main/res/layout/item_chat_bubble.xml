@@ -54,7 +54,7 @@
     <!-- AI MESSAGE CONTAINER (Left-Aligned) -->
     <LinearLayout
         android:id="@+id/layout_ai_bubble"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="start"
         android:gravity="start"
@@ -83,6 +83,15 @@
                 android:lineSpacingExtra="2dp" />
 
         </com.google.android.material.card.MaterialCardView>
+
+        <!-- Horizontal Recommendation RecyclerView -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv_recommended_products"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="horizontal"
+            android:visibility="gone" />
 
         <TextView
             android:id="@+id/text_ai_time"

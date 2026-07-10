@@ -53,11 +53,18 @@ class ChatAssistantFragment : Fragment() {
     }
 
     private fun setupRecyclerView() {
-        chatAdapter = ChatAdapter(messagesList)
+        chatAdapter = ChatAdapter(messagesList) { product ->
+            navigateToProductDetail(product)
+        }
         val layoutManager = LinearLayoutManager(requireContext())
         layoutManager.stackFromEnd = true // scroll to bottom as content grows
         rvChatMessages.layoutManager = layoutManager
         rvChatMessages.adapter = chatAdapter
+    }
+
+    private fun navigateToProductDetail(product: com.agroSystem.app.data.models.Product) {
+        val bundle = androidx.core.os.bundleOf("productId" to product.id)
+        findNavController().navigate(R.id.action_chatAssistantFragment_to_productDetailFragment, bundle)
     }
 
     private fun setupListeners() {
@@ -89,7 +96,7 @@ class ChatAssistantFragment : Fragment() {
                 layoutTypingIndicator.visibility = View.GONE
                 
                 if (response.success) {
-                    addAiMessage(response.reply)
+                    addAiMessage(response.reply, response.recommendedProducts)
                 } else {
                     addAiMessage("Maaf, Asisten Tani sedang istirahat sebentar. Silakan coba tanyakan beberapa saat lagi.")
                 }
@@ -107,8 +114,8 @@ class ChatAssistantFragment : Fragment() {
         scrollToBottom()
     }
 
-    private fun addAiMessage(text: String) {
-        messagesList.add(ChatMessage(text = text, isUser = false))
+    private fun addAiMessage(text: String, recommendedProducts: List<com.agroSystem.app.data.models.Product>? = null) {
+        messagesList.add(ChatMessage(text = text, isUser = false, recommendedProducts = recommendedProducts))
         chatAdapter.updateMessages(messagesList)
         scrollToBottom()
     }

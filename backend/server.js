@@ -1108,7 +1108,33 @@ app.post('/api/v1/ai/chat', async (req, res) => {
     
     if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts[0]) {
       const reply = data.candidates[0].content.parts[0].text;
-      res.json({ success: true, reply });
+
+      // Keyword scanning for product recommendation
+      let recommendedProducts = [];
+      const lowerMsg = message.toLowerCase();
+      
+      let allProducts = [];
+      if (mongoose.connection.readyState === 1) {
+        allProducts = await Product.find({});
+      } else {
+        allProducts = inMemoryProducts;
+      }
+
+      if (lowerMsg.includes('telur') || lowerMsg.includes('egg')) {
+        recommendedProducts = allProducts.filter(p => p.name.toLowerCase().includes('telur') || p.name.toLowerCase().includes('egg'));
+      } else if (lowerMsg.includes('susu') || lowerMsg.includes('milk')) {
+        recommendedProducts = allProducts.filter(p => p.name.toLowerCase().includes('susu') || p.name.toLowerCase().includes('milk'));
+      } else if (lowerMsg.includes('sayur') || lowerMsg.includes('bayam') || lowerMsg.includes('kangkung') || lowerMsg.includes('vegetable')) {
+        recommendedProducts = allProducts.filter(p => p.category.toLowerCase().includes('sayur') || p.name.toLowerCase().includes('bayam') || p.name.toLowerCase().includes('kangkung'));
+      } else if (lowerMsg.includes('buah') || lowerMsg.includes('apel') || lowerMsg.includes('pisang') || lowerMsg.includes('fruit')) {
+        recommendedProducts = allProducts.filter(p => p.category.toLowerCase().includes('buah') || p.name.toLowerCase().includes('apel') || p.name.toLowerCase().includes('pisang'));
+      } else if (lowerMsg.includes('beras') || lowerMsg.includes('rice') || lowerMsg.includes('padi')) {
+        recommendedProducts = allProducts.filter(p => p.name.toLowerCase().includes('beras') || p.name.toLowerCase().includes('rice') || p.name.toLowerCase().includes('padi'));
+      }
+      
+      recommendedProducts = recommendedProducts.slice(0, 3);
+
+      res.json({ success: true, reply, recommendedProducts });
     } else {
       console.error("Gemini API Error Response:", JSON.stringify(data, null, 2));
       res.status(502).json({ 
