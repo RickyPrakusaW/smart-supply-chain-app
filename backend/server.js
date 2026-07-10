@@ -357,7 +357,7 @@ app.delete('/api/v1/products/:id', async (req, res) => {
 });
 // Spoonacular Seeder API
 app.post('/api/v1/spoonacular/seed', async (req, res) => {
-  const apiKey = 'aeee52afea7e4669886561d48ea54557';
+  const apiKey = process.env.SPOONACULAR_API_KEY || 'de0e148105804adab9e1f44caf9cd599';
   
   // Queries mapped to category
   const categoriesMap = [
