@@ -1074,7 +1074,7 @@ app.post('/api/v1/ai/chat', async (req, res) => {
     return res.status(400).json({ success: false, message: "Missing message field" });
   }
 
-  const geminiApiKey = process.env.GEMINI_API_KEY || 'aeee52afea7e4669886561d48ea54557';
+  const geminiApiKey = process.env.GEMINI_API_KEY || 'AQ.Ab8RN6JDn0PFbYjClPkbnLKKTeCWHyWsCiMNB6QqRHzLFT-uwg';
   if (!process.env.GEMINI_API_KEY) {
     console.warn("WARNING: GEMINI_API_KEY is not configured. Falling back to default.");
   }
