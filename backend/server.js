@@ -1074,18 +1074,19 @@ app.post('/api/v1/ai/chat', async (req, res) => {
     return res.status(400).json({ success: false, message: "Missing message field" });
   }
 
-  const geminiApiKey = process.env.GEMINI_API_KEY || 'AQ.Ab8RN6JDn0PFbYjClPkbnLKKTeCWHyWsCiMNB6QqRHzLFT-uwg';
+  const geminiApiKey = process.env.GEMINI_API_KEY || 'PLACEHOLDER_KEY';
   if (!process.env.GEMINI_API_KEY) {
     console.warn("WARNING: GEMINI_API_KEY is not configured. Falling back to default.");
   }
 
   try {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${geminiApiKey}`;
+    const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent';
     
     const response = await fetch(url, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'X-goog-api-key': geminiApiKey
       },
       body: JSON.stringify({
         contents: [
