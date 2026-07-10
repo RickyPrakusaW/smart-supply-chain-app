@@ -16,12 +16,21 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import com.google.gson.Gson
+import androidx.fragment.app.activityViewModels
+import com.agroSystem.app.features.shared.MainSharedViewModel
+import com.agroSystem.app.features.auth.AuthViewModel
+import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
+import android.content.DialogInterface
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.TimeZone
 
 class OrderDetailBottomSheetFragment : BottomSheetDialogFragment() {
+
+    private val sharedViewModel: MainSharedViewModel by activityViewModels()
+    private val authViewModel: AuthViewModel by activityViewModels()
 
     private lateinit var order: OrderItemResponse
 
@@ -48,15 +57,27 @@ class OrderDetailBottomSheetFragment : BottomSheetDialogFragment() {
         val textSubtotal: TextView = view.findViewById(R.id.text_subtotal)
         val textGrandTotal: TextView = view.findViewById(R.id.text_grand_total)
         val btnPayNow: MaterialButton = view.findViewById(R.id.btn_pay_now)
+        val btnConfirmReceive: MaterialButton = view.findViewById(R.id.btn_confirm_receive)
 
         // Bind basic details
         textOrderId.text = order.orderId
         textOrderDate.text = formatTimestamp(order.createdAt)
 
         // Bind status and badge styling
-        when (order.status.lowercase(Locale.getDefault())) {
+        val normalizedStatus = order.status.lowercase(Locale.getDefault())
+        when (normalizedStatus) {
             "success", "settlement" -> {
-                textStatus.text = "SUKSES"
+                textStatus.text = "PERLU DIKIRIM"
+                textStatus.setTextColor(Color.parseColor("#2E7D32"))
+                cardStatusBadge.setCardBackgroundColor(ColorStateList.valueOf(Color.parseColor("#E8F5E9")))
+            }
+            "shipped" -> {
+                textStatus.text = "SEDANG DIKIRIM"
+                textStatus.setTextColor(Color.parseColor("#E65100"))
+                cardStatusBadge.setCardBackgroundColor(ColorStateList.valueOf(Color.parseColor("#FFF3E0")))
+            }
+            "completed" -> {
+                textStatus.text = "SELESAI"
                 textStatus.setTextColor(Color.parseColor("#2E7D32"))
                 cardStatusBadge.setCardBackgroundColor(ColorStateList.valueOf(Color.parseColor("#E8F5E9")))
             }
@@ -91,9 +112,13 @@ class OrderDetailBottomSheetFragment : BottomSheetDialogFragment() {
         textSubtotal.text = "Rp ${formatPrice(finalSubtotal)}"
         textGrandTotal.text = "Rp ${formatPrice(order.amount)}"
 
+        // Check if the current user is the buyer of this order
+        val currentUser = authViewModel.currentUser.value
+        val isBuyer = currentUser != null && currentUser.id == order.userId
+
         // Payment continuation (if status is pending and redirect URL is provided)
         val redirectUrl = order.payment?.redirect_url
-        if (order.status.lowercase(Locale.getDefault()) == "pending" && !redirectUrl.isNullOrEmpty()) {
+        if (normalizedStatus == "pending" && !redirectUrl.isNullOrEmpty() && isBuyer) {
             btnPayNow.visibility = View.VISIBLE
             btnPayNow.setOnClickListener {
                 dismiss()
@@ -102,6 +127,30 @@ class OrderDetailBottomSheetFragment : BottomSheetDialogFragment() {
             }
         } else {
             btnPayNow.visibility = View.GONE
+        }
+
+        // Receipt confirmation action (if status is shipped)
+        if (normalizedStatus == "shipped" && isBuyer) {
+            btnConfirmReceive.visibility = View.VISIBLE
+            btnConfirmReceive.setOnClickListener {
+                AlertDialog.Builder(requireContext())
+                    .setTitle("Konfirmasi Terima Barang")
+                    .setMessage("Apakah Anda yakin pesanan sudah sampai dan ingin menyelesaikan transaksi?")
+                    .setPositiveButton("Ya, Selesai") { _, _ ->
+                        sharedViewModel.updateOrderStatus(order.orderId, "completed") { success ->
+                            if (success) {
+                                Toast.makeText(requireContext(), "Transaksi selesai!", Toast.LENGTH_SHORT).show()
+                                dismiss()
+                            } else {
+                                Toast.makeText(requireContext(), "Gagal menyelesaikan transaksi.", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    }
+                    .setNegativeButton("Batal", null)
+                    .show()
+            }
+        } else {
+            btnConfirmReceive.visibility = View.GONE
         }
 
         return view
@@ -122,6 +171,14 @@ class OrderDetailBottomSheetFragment : BottomSheetDialogFragment() {
             outputFormat.format(date)
         } catch (e: Exception) {
             timestampStr
+        }
+    }
+
+    override fun onDismiss(dialog: DialogInterface) {
+        super.onDismiss(dialog)
+        val parent = parentFragment
+        if (parent is TransactionHistoryFragment) {
+            parent.loadTransactionHistory()
         }
     }
 

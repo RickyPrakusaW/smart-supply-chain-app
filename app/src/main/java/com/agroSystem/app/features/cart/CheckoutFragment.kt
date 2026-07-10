@@ -290,7 +290,8 @@ class CheckoutFragment : Fragment() {
                     id = product.id,
                     name = product.name,
                     price = product.price,
-                    quantity = qty
+                    quantity = qty,
+                    ownerId = product.ownerId
                 )
             }
 

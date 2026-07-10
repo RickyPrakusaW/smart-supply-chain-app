@@ -14,6 +14,8 @@ import com.google.gson.reflect.TypeToken
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
 import com.agroSystem.app.data.remote.ApiClient
+import com.agroSystem.app.data.remote.OrderItemResponse
+import com.agroSystem.app.data.remote.UpdateStatusRequest
 
 class MainSharedViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -72,6 +74,7 @@ class MainSharedViewModel(application: Application) : AndroidViewModel(applicati
     private val gson = Gson()
 
     val productsList = MutableLiveData<List<Product>>(allProducts)
+    val sellerOrders = MutableLiveData<List<OrderItemResponse>>(emptyList())
 
     init {
         loadCartFromPrefs()
@@ -139,6 +142,35 @@ class MainSharedViewModel(application: Application) : AndroidViewModel(applicati
                 if (res.success) {
                     allProducts.removeAll { it.id == productId }
                     productsList.value = allProducts
+                    onResult(true)
+                } else {
+                    onResult(false)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                onResult(false)
+            }
+        }
+    }
+
+    fun fetchSellerOrders(sellerId: String) {
+        viewModelScope.launch {
+            try {
+                val response = ApiClient.authApiService.getSellerOrders(sellerId)
+                if (response.success && response.data != null) {
+                    sellerOrders.value = response.data
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    fun updateOrderStatus(orderId: String, status: String, onResult: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val response = ApiClient.authApiService.updateOrderStatus(orderId, UpdateStatusRequest(status))
+                if (response.success) {
                     onResult(true)
                 } else {
                     onResult(false)

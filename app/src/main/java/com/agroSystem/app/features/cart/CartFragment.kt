@@ -174,8 +174,15 @@ class CartFragment : Fragment() {
                 layoutActiveCart.visibility = View.VISIBLE
                 layoutEmptyCart.visibility = View.GONE
 
-                // Group entries by farmer name
-                val grouped = cartMap.entries.groupBy { it.key.farmer.split(",").first().trim() }
+                // Group entries by farmer name safely
+                val grouped = cartMap.entries.groupBy { entry ->
+                    val farmerName = entry.key.farmer ?: "Petani Mitra"
+                    if (farmerName.contains(",")) {
+                        farmerName.split(",").first().trim()
+                    } else {
+                        farmerName.trim()
+                    }
+                }
                 val mapped = grouped.mapValues { entry ->
                     entry.value.map { Pair(it.key, it.value) }
                 }

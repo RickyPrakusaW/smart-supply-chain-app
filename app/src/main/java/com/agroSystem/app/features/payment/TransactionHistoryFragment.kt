@@ -60,7 +60,7 @@ class TransactionHistoryFragment : Fragment() {
         rvTransactions.adapter = transactionAdapter
     }
 
-    private fun loadTransactionHistory() {
+    fun loadTransactionHistory() {
         val currentUser = authViewModel.currentUser.value
         if (currentUser == null) {
             Toast.makeText(requireContext(), "Silakan login terlebih dahulu!", Toast.LENGTH_SHORT).show()

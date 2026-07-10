@@ -60,7 +60,17 @@ class TransactionHistoryAdapter(
             // Color status badge dynamically
             when (order.status.lowercase(Locale.getDefault())) {
                 "success", "settlement" -> {
-                    textStatus.text = "SUKSES"
+                    textStatus.text = "PERLU DIKIRIM"
+                    textStatus.setTextColor(Color.parseColor("#2E7D32")) // Dark green text
+                    cardStatusBadge.setCardBackgroundColor(ColorStateList.valueOf(Color.parseColor("#E8F5E9"))) // Light green card
+                }
+                "shipped" -> {
+                    textStatus.text = "SEDANG DIKIRIM"
+                    textStatus.setTextColor(Color.parseColor("#E65100")) // Dark orange text
+                    cardStatusBadge.setCardBackgroundColor(ColorStateList.valueOf(Color.parseColor("#FFF3E0"))) // Light orange card
+                }
+                "completed" -> {
+                    textStatus.text = "SELESAI"
                     textStatus.setTextColor(Color.parseColor("#2E7D32")) // Dark green text
                     cardStatusBadge.setCardBackgroundColor(ColorStateList.valueOf(Color.parseColor("#E8F5E9"))) // Light green card
                 }

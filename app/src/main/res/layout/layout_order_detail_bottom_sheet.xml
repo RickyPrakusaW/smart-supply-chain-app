@@ -263,6 +263,20 @@
             app:cornerRadius="12dp"
             android:visibility="gone" />
 
+        <!-- Confirm Received button for shipped orders -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_confirm_receive"
+            android:layout_width="match_parent"
+            android:layout_height="54dp"
+            android:layout_marginTop="8dp"
+            android:text="Konfirmasi Terima Barang"
+            android:textColor="@color/white"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            app:backgroundTint="@color/color_primary_green"
+            app:cornerRadius="12dp"
+            android:visibility="gone" />
+
     </LinearLayout>
 
 </androidx.core.widget.NestedScrollView>

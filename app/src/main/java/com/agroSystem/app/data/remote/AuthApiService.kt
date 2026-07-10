@@ -24,6 +24,15 @@ interface AuthApiService {
     @GET("payment/orders/{userId}")
     suspend fun getUserOrders(@Path("userId") userId: String): OrdersListResponse
 
+    @GET("payment/seller-orders/{sellerId}")
+    suspend fun getSellerOrders(@Path("sellerId") sellerId: String): OrdersListResponse
+
+    @PUT("payment/orders/{orderId}/status")
+    suspend fun updateOrderStatus(
+        @Path("orderId") orderId: String,
+        @Body body: UpdateStatusRequest
+    ): GeneralStatusResponse
+
     @POST("products")
     suspend fun createProduct(@Body product: Product): CreateUpdateProductResponse
 
@@ -44,7 +53,8 @@ data class CheckoutItem(
     val id: Int,
     val name: String,
     val price: Int,
-    val quantity: Int
+    val quantity: Int,
+    val ownerId: String? = null
 )
 
 data class CheckoutResponse(
@@ -106,6 +116,7 @@ data class OrdersListResponse(
 
 data class OrderItemResponse(
     val orderId: String,
+    val userId: String? = null,
     val amount: Int,
     val status: String,
     val createdAt: String,
@@ -126,4 +137,8 @@ data class CreateUpdateProductResponse(
 data class GeneralStatusResponse(
     val success: Boolean,
     val message: String? = null
+)
+
+data class UpdateStatusRequest(
+    val status: String
 )

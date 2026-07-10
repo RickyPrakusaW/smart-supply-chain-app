@@ -47,13 +47,35 @@
 
     </LinearLayout>
 
+    <com.google.android.material.tabs.TabLayout
+        android:id="@+id/tab_seller"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/color_surface_warm"
+        app:tabSelectedTextColor="@color/color_primary_green"
+        app:tabTextColor="@color/color_text_muted"
+        app:tabIndicatorColor="@color/color_primary_green"
+        app:layout_constraintTop_toBottomOf="@id/layout_header">
+
+        <com.google.android.material.tabs.TabItem
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Produk Saya" />
+
+        <com.google.android.material.tabs.TabItem
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Pesanan Masuk" />
+
+    </com.google.android.material.tabs.TabLayout>
+
     <!-- Progress Indicator -->
     <ProgressBar
         android:id="@+id/progress_loader"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:visibility="gone"
-        app:layout_constraintTop_toBottomOf="@id/layout_header"
+        app:layout_constraintTop_toBottomOf="@id/tab_seller"
         app:layout_constraintBottom_toTopOf="@id/btn_add_product"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
@@ -65,7 +87,7 @@
         android:layout_height="0dp"
         android:padding="12dp"
         android:clipToPadding="false"
-        app:layout_constraintTop_toBottomOf="@id/layout_header"
+        app:layout_constraintTop_toBottomOf="@id/tab_seller"
         app:layout_constraintBottom_toTopOf="@id/btn_add_product" />
 
     <!-- Empty State -->
@@ -77,7 +99,7 @@
         android:gravity="center"
         android:padding="24dp"
         android:visibility="gone"
-        app:layout_constraintTop_toBottomOf="@id/layout_header"
+        app:layout_constraintTop_toBottomOf="@id/tab_seller"
         app:layout_constraintBottom_toTopOf="@id/btn_add_product">
 
         <ImageView

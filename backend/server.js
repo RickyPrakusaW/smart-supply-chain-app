@@ -97,7 +97,8 @@ const OrderSchema = new mongoose.Schema({
       id: Number,
       name: String,
       price: Number,
-      quantity: Number
+      quantity: Number,
+      ownerId: String
     }
   ],
   createdAt: { type: Date, default: Date.now }
@@ -910,6 +911,56 @@ app.get('/api/v1/payment/orders/:userId', async (req, res) => {
       success: true,
       data: list
     });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+// Get Seller Incoming Orders API
+app.get('/api/v1/payment/seller-orders/:sellerId', async (req, res) => {
+  const { sellerId } = req.params;
+  try {
+    let list = [];
+    if (mongoose.connection.readyState === 1) {
+      list = await Order.find({ "items.ownerId": sellerId }).sort({ createdAt: -1 });
+    } else {
+      list = inMemoryOrders
+        .filter(o => o.items && o.items.some(item => item.ownerId === sellerId))
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    }
+    res.json({
+      success: true,
+      data: list
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Update Order Status API
+app.put('/api/v1/payment/orders/:orderId/status', async (req, res) => {
+  const { orderId } = req.params;
+  const { status } = req.body;
+  try {
+    let updatedOrder = null;
+    if (mongoose.connection.readyState === 1) {
+      updatedOrder = await Order.findOneAndUpdate(
+        { orderId },
+        { status },
+        { new: true }
+      );
+    } else {
+      const idx = inMemoryOrders.findIndex(o => o.orderId === orderId);
+      if (idx !== -1) {
+        inMemoryOrders[idx].status = status;
+        updatedOrder = inMemoryOrders[idx];
+      }
+    }
+    
+    if (updatedOrder) {
+      res.json({ success: true, data: updatedOrder });
+    } else {
+      res.status(404).json({ success: false, message: "Order not found" });
+    }
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }

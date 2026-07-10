@@ -8,6 +8,18 @@
             <LayoutPositions>
               <option name="myPositions">
                 <map>
+                  <entry key="addEditProductFragment">
+                    <value>
+                      <LayoutPositions>
+                        <option name="myPosition">
+                          <Point>
+                            <option name="x" value="256" />
+                            <option name="y" value="368" />
+                          </Point>
+                        </option>
+                      </LayoutPositions>
+                    </value>
+                  </entry>
                   <entry key="addressDetailFragment">
                     <value>
                       <LayoutPositions>
@@ -71,6 +83,11 @@
                                 <LayoutPositions />
                               </value>
                             </entry>
+                            <entry key="action_checkoutFragment_to_paymentWebViewFragment">
+                              <value>
+                                <LayoutPositions />
+                              </value>
+                            </entry>
                           </map>
                         </option>
                       </LayoutPositions>
@@ -118,12 +135,32 @@
                                 <LayoutPositions />
                               </value>
                             </entry>
+                            <entry key="action_homeFragment_to_locationPermissionFragment">
+                              <value>
+                                <LayoutPositions />
+                              </value>
+                            </entry>
                             <entry key="action_homeFragment_to_onboardingFragment">
                               <value>
                                 <LayoutPositions />
                               </value>
                             </entry>
+                            <entry key="action_homeFragment_to_phoneInputFragment">
+                              <value>
+                                <LayoutPositions />
+                              </value>
+                            </entry>
                             <entry key="action_homeFragment_to_productDetailFragment">
+                              <value>
+                                <LayoutPositions />
+                              </value>
+                            </entry>
+                            <entry key="action_homeFragment_to_sellerProductsFragment">
+                              <value>
+                                <LayoutPositions />
+                              </value>
+                            </entry>
+                            <entry key="action_homeFragment_to_transactionHistoryFragment">
                               <value>
                                 <LayoutPositions />
                               </value>
@@ -144,6 +181,11 @@
                         </option>
                         <option name="myPositions">
                           <map>
+                            <entry key="action_locationPermissionFragment_to_addressDetailFragment">
+                              <value>
+                                <LayoutPositions />
+                              </value>
+                            </entry>
                             <entry key="action_locationPermissionFragment_to_profileSetupFragment">
                               <value>
                                 <LayoutPositions />
@@ -170,6 +212,11 @@
                         </option>
                         <option name="myPositions">
                           <map>
+                            <entry key="action_onboardingFragment_to_homeFragment">
+                              <value>
+                                <LayoutPositions />
+                              </value>
+                            </entry>
                             <entry key="action_onboardingFragment_to_phoneInputFragment">
                               <value>
                                 <LayoutPositions />
@@ -202,6 +249,18 @@
                               </value>
                             </entry>
                           </map>
+                        </option>
+                      </LayoutPositions>
+                    </value>
+                  </entry>
+                  <entry key="paymentWebViewFragment">
+                    <value>
+                      <LayoutPositions>
+                        <option name="myPosition">
+                          <Point>
+                            <option name="x" value="256" />
+                            <option name="y" value="12" />
+                          </Point>
                         </option>
                       </LayoutPositions>
                     </value>
@@ -300,7 +359,54 @@
                                 <LayoutPositions />
                               </value>
                             </entry>
+                            <entry key="action_selectAddressFragment_to_homeFragment">
+                              <value>
+                                <LayoutPositions />
+                              </value>
+                            </entry>
                             <entry key="action_selectAddressFragment_to_locationPermissionFragment">
+                              <value>
+                                <LayoutPositions />
+                              </value>
+                            </entry>
+                          </map>
+                        </option>
+                      </LayoutPositions>
+                    </value>
+                  </entry>
+                  <entry key="sellerProductsFragment">
+                    <value>
+                      <LayoutPositions>
+                        <option name="myPosition">
+                          <Point>
+                            <option name="x" value="12" />
+                            <option name="y" value="368" />
+                          </Point>
+                        </option>
+                        <option name="myPositions">
+                          <map>
+                            <entry key="action_sellerProductsFragment_to_addEditProductFragment">
+                              <value>
+                                <LayoutPositions />
+                              </value>
+                            </entry>
+                          </map>
+                        </option>
+                      </LayoutPositions>
+                    </value>
+                  </entry>
+                  <entry key="transactionHistoryFragment">
+                    <value>
+                      <LayoutPositions>
+                        <option name="myPosition">
+                          <Point>
+                            <option name="x" value="12" />
+                            <option name="y" value="12" />
+                          </Point>
+                        </option>
+                        <option name="myPositions">
+                          <map>
+                            <entry key="action_transactionHistoryFragment_to_paymentWebViewFragment">
                               <value>
                                 <LayoutPositions />
                               </value>
