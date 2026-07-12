@@ -25,6 +25,9 @@ import com.agroSystem.app.features.auth.AuthViewModel
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import android.util.Log
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.RequestBody.Companion.toRequestBody
+import kotlinx.coroutines.Dispatchers
 
 class CheckoutFragment : Fragment() {
 
@@ -298,24 +301,60 @@ class CheckoutFragment : Fragment() {
             btnPlaceOrder.isEnabled = false
             Toast.makeText(requireContext(), "Menghubungkan ke sistem pembayaran...", Toast.LENGTH_SHORT).show()
 
-            lifecycleScope.launch {
+            // Map checkouts items to plain maps for JSON serialization
+            val itemsJson = checkoutItems.map { item ->
+                mapOf(
+                    "id" to item.id,
+                    "name" to item.name,
+                    "price" to item.price,
+                    "quantity" to item.quantity,
+                    "ownerId" to item.ownerId
+                )
+            }
+
+            val requestBodyMap = mapOf(
+                "userId" to currentUser.id,
+                "amount" to total,
+                "items" to itemsJson
+            )
+
+            val requestBodyJson = com.google.gson.Gson().toJson(requestBodyMap)
+            val requestBody = requestBodyJson.toRequestBody("application/json; charset=utf-8".toMediaTypeOrNull())
+
+            lifecycleScope.launch(Dispatchers.IO) {
                 try {
-                    val request = com.agroSystem.app.data.remote.CheckoutRequest(
-                        userId = currentUser.id,
-                        amount = total,
-                        items = checkoutItems
-                    )
+                    val client = okhttp3.OkHttpClient()
+                    val request = okhttp3.Request.Builder()
+                        .url("https://smart-supply-chain-app.onrender.com/api/v1/payment/checkout")
+                        .post(requestBody)
+                        .build()
+
+                    val response = client.newCall(request).execute()
+                    val responseBody = response.body?.string()
                     
-                    val response = com.agroSystem.app.data.remote.ApiClient.authApiService.checkout(request)
-                    btnPlaceOrder.isEnabled = true
-                    
-                    if (response.success && response.data?.payment?.redirect_url != null) {
-                        val bundle = Bundle().apply {
-                            putString("payment_url", response.data.payment.redirect_url)
+                    activity?.runOnUiThread {
+                        btnPlaceOrder.isEnabled = true
+                        if (response.isSuccessful && responseBody != null) {
+                            try {
+                                val jsonObject = com.google.gson.JsonParser.parseString(responseBody).asJsonObject
+                                val success = jsonObject.get("success")?.asBoolean ?: false
+                                val dataObj = jsonObject.getAsJsonObject("data")
+                                val paymentObj = dataObj?.getAsJsonObject("payment")
+                                val redirectUrl = paymentObj?.get("redirect_url")?.asString
+
+                                if (success && !redirectUrl.isNullOrEmpty()) {
+                                    val bundle = Bundle().apply {
+                                        putString("payment_url", redirectUrl)
+                                    }
+                                    findNavController().navigate(R.id.action_checkoutFragment_to_paymentWebViewFragment, bundle)
+                                    return@runOnUiThread
+                                }
+                            } catch (e: Exception) {
+                                e.printStackTrace()
+                            }
                         }
-                        findNavController().navigate(R.id.action_checkoutFragment_to_paymentWebViewFragment, bundle)
-                    } else {
-                        // Fallback to local simulation if response is not successful
+                        
+                        // Fallback to local simulation if server responds with error
                         val mockOrderId = "TRX-" + System.currentTimeMillis() + "-" + (100..999).random()
                         val redirectUrl = "mock://payment?orderId=$mockOrderId&amount=$total"
                         val bundle = Bundle().apply {
@@ -325,13 +364,15 @@ class CheckoutFragment : Fragment() {
                     }
                 } catch (e: Exception) {
                     Log.e("CheckoutFragment", "Backend checkout failed, falling back to local simulation", e)
-                    btnPlaceOrder.isEnabled = true
-                    val mockOrderId = "TRX-" + System.currentTimeMillis() + "-" + (100..999).random()
-                    val redirectUrl = "mock://payment?orderId=$mockOrderId&amount=$total"
-                    val bundle = Bundle().apply {
-                        putString("payment_url", redirectUrl)
+                    activity?.runOnUiThread {
+                        btnPlaceOrder.isEnabled = true
+                        val mockOrderId = "TRX-" + System.currentTimeMillis() + "-" + (100..999).random()
+                        val redirectUrl = "mock://payment?orderId=$mockOrderId&amount=$total"
+                        val bundle = Bundle().apply {
+                            putString("payment_url", redirectUrl)
+                        }
+                        findNavController().navigate(R.id.action_checkoutFragment_to_paymentWebViewFragment, bundle)
                     }
-                    findNavController().navigate(R.id.action_checkoutFragment_to_paymentWebViewFragment, bundle)
                 }
             }
         }
