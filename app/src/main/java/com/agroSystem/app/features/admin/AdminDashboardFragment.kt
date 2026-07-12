@@ -177,18 +177,18 @@ class AdminDashboardFragment : Fragment() {
                     .addOnSuccessListener { productsResult ->
                         val productsList = productsResult.map { doc ->
                             Product(
-                                id = doc.getLong("id")?.toInt() ?: 0,
+                                id = (doc.get("id") as? Number)?.toInt() ?: 0,
                                 name = doc.getString("name") ?: "",
                                 farmer = doc.getString("farmer") ?: "",
                                 rating = doc.getString("rating") ?: "5.0",
-                                price = doc.getLong("price")?.toInt() ?: 0,
+                                price = (doc.get("price") as? Number)?.toInt() ?: 0,
                                 unit = doc.getString("unit") ?: "1 kg",
-                                imageResId = doc.getLong("imageResId")?.toInt() ?: R.drawable.padi,
+                                imageResId = (doc.get("imageResId") as? Number)?.toInt() ?: R.drawable.padi,
                                 category = doc.getString("category") ?: "Lainnya",
                                 isDiscounted = doc.getBoolean("isDiscounted") ?: false,
-                                originalPrice = doc.getLong("originalPrice")?.toInt() ?: 0,
+                                originalPrice = (doc.get("originalPrice") as? Number)?.toInt() ?: 0,
                                 isEcoFriendly = doc.getBoolean("isEcoFriendly") ?: false,
-                                deliveryDays = doc.getLong("deliveryDays")?.toInt() ?: 1,
+                                deliveryDays = (doc.get("deliveryDays") as? Number)?.toInt() ?: 1,
                                 protein = doc.getString("protein") ?: "3g",
                                 fat = doc.getString("fat") ?: "5g",
                                 carbs = doc.getString("carbs") ?: "4.7g",
@@ -211,20 +211,27 @@ class AdminDashboardFragment : Fragment() {
                                     val itemsRaw = doc.get("items") as? List<Map<String, Any>>
                                     val checkoutItems = itemsRaw?.map { itemMap ->
                                         com.agroSystem.app.data.remote.CheckoutItem(
-                                            id = (itemMap["id"] as? Long)?.toInt() ?: 0,
+                                            id = (itemMap["id"] as? Number)?.toInt() ?: 0,
                                             name = itemMap["name"] as? String ?: "",
-                                            price = (itemMap["price"] as? Long)?.toInt() ?: 0,
-                                            quantity = (itemMap["quantity"] as? Long)?.toInt() ?: 0,
+                                            price = (itemMap["price"] as? Number)?.toInt() ?: 0,
+                                            quantity = (itemMap["quantity"] as? Number)?.toInt() ?: 0,
                                             ownerId = itemMap["ownerId"] as? String
                                         )
                                     }
                                     
+                                    val createdAtRaw = doc.get("createdAt")
+                                    val createdAt = when (createdAtRaw) {
+                                        is com.google.firebase.Timestamp -> createdAtRaw.toDate().toString()
+                                        is String -> createdAtRaw
+                                        else -> createdAtRaw?.toString() ?: ""
+                                    }
+
                                     com.agroSystem.app.data.remote.OrderItemResponse(
                                         orderId = doc.getString("orderId") ?: doc.id,
                                         userId = doc.getString("userId"),
-                                        amount = doc.getLong("amount")?.toInt() ?: 0,
+                                        amount = (doc.get("amount") as? Number)?.toInt() ?: 0,
                                         status = doc.getString("status") ?: "pending",
-                                        createdAt = doc.getString("createdAt") ?: doc.getTimestamp("createdAt")?.toDate()?.toString() ?: "",
+                                        createdAt = createdAt,
                                         items = checkoutItems,
                                         payment = null
                                     )
