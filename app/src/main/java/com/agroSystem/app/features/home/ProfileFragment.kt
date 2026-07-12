@@ -324,16 +324,11 @@ class ProfileFragment : Fragment() {
                         spaceAdminPanel.visibility = View.VISIBLE
                         btnManageProducts.visibility = View.GONE
                         spaceManageProducts.visibility = View.GONE
-                    } else if (user.role == "Petani") {
+                    } else { // "Petani" or "Pembeli"
                         btnAdminPanel.visibility = View.GONE
                         spaceAdminPanel.visibility = View.GONE
                         btnManageProducts.visibility = View.VISIBLE
                         spaceManageProducts.visibility = View.VISIBLE
-                    } else { // "Pembeli"
-                        btnAdminPanel.visibility = View.GONE
-                        spaceAdminPanel.visibility = View.GONE
-                        btnManageProducts.visibility = View.GONE
-                        spaceManageProducts.visibility = View.GONE
                     }
                 } else {
                     inputName.setText("")
