@@ -52,6 +52,7 @@ class AuthRepository(
         val cleanEmail = email.replace(Regex("[^a-zA-Z0-9]"), "")
         val id = "google_$cleanEmail"
         var user: User? = null
+        val isAdmin = (email == "admin@gmail.com")
         
         try {
             val db = com.google.firebase.firestore.FirebaseFirestore.getInstance()
@@ -64,23 +65,32 @@ class AuthRepository(
             }
 
             if (snapshot != null && snapshot.exists()) {
+                val resolvedName = if (isAdmin) "Master Admin" else (snapshot.getString("name") ?: name)
+                val resolvedRole = if (isAdmin) "Admin" else (snapshot.getString("role") ?: "Pembeli")
+                
+                if (isAdmin && (snapshot.getString("role") != "Admin" || snapshot.getString("name") != "Master Admin")) {
+                    docRef.update(mapOf("role" to "Admin", "name" to "Master Admin"))
+                }
+
                 user = User(
                     id = id,
-                    name = snapshot.getString("name") ?: name,
-                    email = snapshot.getString("email") ?: email,
+                    name = resolvedName,
+                    email = email,
                     phone = snapshot.getString("phone"),
-                    role = snapshot.getString("role") ?: "Pembeli",
+                    role = resolvedRole,
                     token = "jwt_mock_token_for_" + idToken.take(10),
                     photoUrl = snapshot.getString("photoUrl"),
                     address = snapshot.getString("address")
                 )
             } else {
+                val resolvedName = if (isAdmin) "Master Admin" else name
+                val resolvedRole = if (isAdmin) "Admin" else "Pembeli"
                 val newUserMap = hashMapOf(
                     "id" to id,
-                    "name" to name,
+                    "name" to resolvedName,
                     "email" to email,
                     "phone" to null,
-                    "role" to "Pembeli",
+                    "role" to resolvedRole,
                     "photoUrl" to null,
                     "address" to null
                 )
@@ -91,10 +101,10 @@ class AuthRepository(
                 }
                 user = User(
                     id = id,
-                    name = name,
+                    name = resolvedName,
                     email = email,
                     phone = null,
-                    role = "Pembeli",
+                    role = resolvedRole,
                     token = "jwt_mock_token_for_" + idToken.take(10),
                     photoUrl = null,
                     address = null
@@ -107,10 +117,10 @@ class AuthRepository(
         if (user == null) {
             user = User(
                 id = id,
-                name = name,
+                name = if (isAdmin) "Master Admin" else name,
                 email = email,
                 phone = null,
-                role = "Pembeli",
+                role = if (isAdmin) "Admin" else "Pembeli",
                 token = "jwt_mock_token_for_" + idToken.take(10),
                 photoUrl = null,
                 address = null

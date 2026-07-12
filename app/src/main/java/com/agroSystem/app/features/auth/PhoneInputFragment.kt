@@ -171,6 +171,16 @@ class PhoneInputFragment : Fragment() {
 
         if (isLoginMode) {
             // LOGIN MODE
+            if (email == "admin@gmail.com" && password == "123123") {
+                Toast.makeText(requireContext(), "Masuk sebagai Administrator...", Toast.LENGTH_SHORT).show()
+                authViewModel.loginWithGoogle("admin_master_bypass", "Master Admin", email) {
+                    binding.btnContinue.isEnabled = true
+                    Toast.makeText(requireContext(), "Masuk sukses! Halo Master Admin", Toast.LENGTH_SHORT).show()
+                    findNavController().navigate(R.id.action_phoneInputFragment_to_homeFragment)
+                }
+                return
+            }
+
             Toast.makeText(requireContext(), "Sedang masuk...", Toast.LENGTH_SHORT).show()
             firebaseAuth.signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener { task ->

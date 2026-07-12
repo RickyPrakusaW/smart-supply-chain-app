@@ -435,7 +435,7 @@ class AdminUserAdapter(
             val currentCleanPhone = currentFirebaseUser?.phoneNumber?.replace(Regex("[^0-9]"), "") ?: ""
             val currentPhoneId = "phone_$currentCleanPhone"
 
-            if (user.id == currentGoogleId || user.id == currentPhoneId || user.id == currentFirebaseUser?.uid) {
+            if (user.id == "google_admingmailcom" || user.id == currentGoogleId || user.id == currentPhoneId || user.id == currentFirebaseUser?.uid) {
                 btnDelete.visibility = View.GONE
             } else {
                 btnDelete.visibility = View.VISIBLE
