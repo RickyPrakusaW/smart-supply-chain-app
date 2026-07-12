@@ -226,8 +226,33 @@ class CatalogFragment : Fragment() {
         val btnClose: View = dialogView.findViewById(R.id.btn_close_dialog)
         val btnBuy: View = dialogView.findViewById(R.id.btn_buy_edamam)
 
+        val rawCategoryForMapping = food.category?.lowercase() ?: ""
+        val categoryMapped = when {
+            rawCategoryForMapping.contains("dairy") || rawCategoryForMapping.contains("susu") -> "Susu"
+            rawCategoryForMapping.contains("vegetable") || rawCategoryForMapping.contains("sayuran") || rawCategoryForMapping.contains("bayam") || rawCategoryForMapping.contains("tomat") || rawCategoryForMapping.contains("kentang") -> "Sayuran"
+            rawCategoryForMapping.contains("meat") || rawCategoryForMapping.contains("daging") || rawCategoryForMapping.contains("chicken") || rawCategoryForMapping.contains("poultry") -> "Daging"
+            rawCategoryForMapping.contains("egg") || rawCategoryForMapping.contains("telur") -> "Telur"
+            else -> "Bahan Sup"
+        }
+
+        // Calculate dynamic realistic price based on food category and deterministic name variance
+        val basePrice = when (categoryMapped) {
+            "Daging" -> 85000
+            "Susu" -> 35000
+            "Telur" -> 22000
+            "Sayuran" -> 12000
+            else -> 18000
+        }
+        val variance = ((food.label ?: "").length * 500) % 8000
+        val calculatedPrice = basePrice + variance
+        val formattedPrice = java.text.NumberFormat.getNumberInstance(java.util.Locale("id", "ID")).format(calculatedPrice)
+
         txtTitle.text = food.label ?: "-"
         txtCategory.text = food.category ?: "Umum"
+
+        if (btnBuy is com.google.android.material.button.MaterialButton) {
+            btnBuy.text = "Beli Bahan Ini (Rp $formattedPrice)"
+        }
 
         val nutrients = food.nutrients
         val df = java.text.DecimalFormat("#.#")
@@ -244,21 +269,12 @@ class CatalogFragment : Fragment() {
             val rawId = (food.foodId ?: "").hashCode()
             val finalId = if (rawId == Int.MIN_VALUE) 99999 else Math.abs(rawId)
 
-            val rawCategory = food.category?.lowercase() ?: ""
-            val categoryMapped = when {
-                rawCategory.contains("dairy") || rawCategory.contains("susu") -> "Susu"
-                rawCategory.contains("vegetable") || rawCategory.contains("sayuran") || rawCategory.contains("bayam") || rawCategory.contains("tomat") || rawCategory.contains("kentang") -> "Sayuran"
-                rawCategory.contains("meat") || rawCategory.contains("daging") || rawCategory.contains("chicken") || rawCategory.contains("poultry") -> "Daging"
-                rawCategory.contains("egg") || rawCategory.contains("telur") -> "Telur"
-                else -> "Bahan Sup"
-            }
-
             val product = Product(
                 id = finalId,
                 name = food.label ?: "Makanan Edamam",
                 farmer = "Mitra Tani Edamam",
                 rating = "4.9",
-                price = 15000,
+                price = calculatedPrice,
                 unit = "1 kg",
                 imageResId = R.drawable.sayuran,
                 category = categoryMapped,
