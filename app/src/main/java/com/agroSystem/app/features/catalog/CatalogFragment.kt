@@ -18,6 +18,8 @@ import com.agroSystem.app.R
 import com.agroSystem.app.data.models.Farmer
 import com.agroSystem.app.data.models.Product
 import com.agroSystem.app.data.models.Recipe
+import com.agroSystem.app.data.local.AppDatabase
+import com.agroSystem.app.data.local.entities.EdamamFoodEntity
 import com.agroSystem.app.features.home.DashboardFragment
 import com.agroSystem.app.features.shared.MainSharedViewModel
 import com.google.android.material.tabs.TabLayout
@@ -279,6 +281,7 @@ class CatalogFragment : Fragment() {
         edamamAdapter.updateItems(emptyList())
 
         lifecycleScope.launch(Dispatchers.IO) {
+            val localDb = AppDatabase.getDatabase(requireContext())
             try {
                 val client = okhttp3.OkHttpClient()
                 val url = "https://edamam-food-and-grocery-database.p.rapidapi.com/api/food-database/v2/parser?ingr=" + java.net.URLEncoder.encode(query, "UTF-8")
@@ -297,11 +300,36 @@ class CatalogFragment : Fragment() {
                 
                 Log.d("CatalogFragment", "Edamam response code: ${response.code}, body: $responseBody")
 
-                withContext(Dispatchers.Main) {
-                    progressEdamam.visibility = View.GONE
-                    if (response.isSuccessful && responseBody != null) {
-                        val edamamResponse = com.google.gson.Gson().fromJson(responseBody, EdamamResponse::class.java)
-                        val hints = edamamResponse.hints ?: emptyList()
+                if (response.isSuccessful && responseBody != null) {
+                    val edamamResponse = com.google.gson.Gson().fromJson(responseBody, EdamamResponse::class.java)
+                    val hints = edamamResponse.hints ?: emptyList()
+                    
+                    // Offline Cache Logic: Save successfully fetched foods into Room Cache
+                    if (hints.isNotEmpty()) {
+                        val entitiesToCache = hints.mapNotNull { hint ->
+                            val food = hint.food ?: return@mapNotNull null
+                            val foodId = food.foodId ?: return@mapNotNull null
+                            val label = food.label ?: ""
+                            val category = food.category ?: ""
+                            val nutrients = food.nutrients
+                            
+                            EdamamFoodEntity(
+                                foodId = foodId,
+                                label = label,
+                                category = category,
+                                imageUrl = food.image,
+                                calories = nutrients?.ENERC_KCAL ?: 0.0,
+                                protein = nutrients?.PROCNT ?: 0.0,
+                                fat = nutrients?.FAT ?: 0.0,
+                                carbs = nutrients?.CHOCDF ?: 0.0,
+                                queryTerm = query.lowercase().trim()
+                            )
+                        }
+                        localDb.edamamFoodDao().insertFoods(entitiesToCache)
+                    }
+
+                    withContext(Dispatchers.Main) {
+                        progressEdamam.visibility = View.GONE
                         edamamAdapter.updateItems(hints)
                         if (hints.isEmpty()) {
                             textEmptyEdamam.visibility = View.VISIBLE
@@ -309,19 +337,47 @@ class CatalogFragment : Fragment() {
                         } else {
                             textEmptyEdamam.visibility = View.GONE
                         }
-                    } else {
-                        Log.e("CatalogFragment", "Edamam API failed: Code = ${response.code}, Body = $responseBody")
-                        textEmptyEdamam.visibility = View.VISIBLE
-                        textEmptyEdamam.text = "Gagal memuat data dari Edamam API (Error: ${response.code})"
                     }
+                } else {
+                    // Fail fallback: read from Room DB Cache if possible
+                    loadCachedDataOrShowError(localDb, query, "Gagal memuat data dari Edamam API (Error: ${response.code})")
                 }
             } catch (e: Exception) {
                 Log.e("CatalogFragment", "Edamam network exception occurred", e)
-                withContext(Dispatchers.Main) {
-                    progressEdamam.visibility = View.GONE
-                    textEmptyEdamam.visibility = View.VISIBLE
-                    textEmptyEdamam.text = "Terjadi kesalahan koneksi ke Edamam API: ${e.message}"
+                // Network error fallback: read from Room DB Cache
+                loadCachedDataOrShowError(localDb, query, "Terjadi kesalahan koneksi ke Edamam API: ${e.message}")
+            }
+        }
+    }
+
+    private suspend fun loadCachedDataOrShowError(localDb: AppDatabase, query: String, networkErrorMessage: String) {
+        val cachedEntities = localDb.edamamFoodDao().getCachedFoods(query.lowercase().trim())
+        
+        withContext(Dispatchers.Main) {
+            progressEdamam.visibility = View.GONE
+            if (cachedEntities.isNotEmpty()) {
+                val hints = cachedEntities.map { entity ->
+                    EdamamHint(
+                        food = EdamamFood(
+                            foodId = entity.foodId,
+                            label = entity.label,
+                            category = entity.category,
+                            image = entity.imageUrl,
+                            nutrients = EdamamNutrients(
+                                ENERC_KCAL = entity.calories,
+                                PROCNT = entity.protein,
+                                FAT = entity.fat,
+                                CHOCDF = entity.carbs
+                            )
+                        )
+                    )
                 }
+                edamamAdapter.updateItems(hints)
+                Toast.makeText(requireContext(), "Menampilkan data dari cache offline lokal.", Toast.LENGTH_SHORT).show()
+                textEmptyEdamam.visibility = View.GONE
+            } else {
+                textEmptyEdamam.visibility = View.VISIBLE
+                textEmptyEdamam.text = "$networkErrorMessage (Tidak ada data di cache offline)."
             }
         }
     }

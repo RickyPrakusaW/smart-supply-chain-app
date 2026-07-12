@@ -22,10 +22,14 @@ Semua fitur dipisahkan secara ketat berdasarkan tanggung jawabnya untuk memastik
 ---
 
 ## 💾 2. Offline-First Caching (Room Database)
-Menyimpan sesi login pengguna secara lokal di perangkat Android agar tidak perlu login ulang saat aplikasi dibuka kembali.
+Menyimpan sesi login pengguna dan riwayat pencarian gizi secara lokal di perangkat Android.
 *   **Database Config**: `app/src/main/java/com/agroSystem/app/data/local/AppDatabase.kt`
-*   **Entity (Struktur Tabel)**: `app/src/main/java/com/agroSystem/app/data/local/entities/UserEntity.kt`
-*   **DAO (Data Access Object / Query)**: `app/src/main/java/com/agroSystem/app/data/local/dao/UserDao.kt`
+*   **Sesi Pengguna**:
+    *   Entity: `UserEntity.kt`
+    *   DAO: `UserDao.kt`
+*   **Penyimpanan Cache Edamam (Offline-First)**:
+    *   Entity: `EdamamFoodEntity.kt` (Menyimpan label, kategori gizi, gambar, dan kata kunci kueri).
+    *   DAO: `EdamamFoodDao.kt` (Mengambil cache lokal secara instan apabila perangkat sedang offline).
 
 ---
 

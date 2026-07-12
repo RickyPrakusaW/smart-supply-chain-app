@@ -12,13 +12,16 @@ import com.agroSystem.app.data.local.dao.UserDao
 import com.agroSystem.app.data.local.entities.FarmerEntity
 import com.agroSystem.app.data.local.entities.ProductEntity
 import com.agroSystem.app.data.local.entities.UserEntity
+import com.agroSystem.app.data.local.entities.EdamamFoodEntity
+import com.agroSystem.app.data.local.dao.EdamamFoodDao
 
-@Database(entities = [ProductEntity::class, FarmerEntity::class, UserEntity::class], version = 4, exportSchema = false)
+@Database(entities = [ProductEntity::class, FarmerEntity::class, UserEntity::class, EdamamFoodEntity::class], version = 5, exportSchema = false)
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun productDao(): ProductDao
     abstract fun farmerDao(): FarmerDao
     abstract fun userDao(): UserDao
+    abstract fun edamamFoodDao(): EdamamFoodDao
 
     companion object {
         @Volatile
