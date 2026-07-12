@@ -20,7 +20,7 @@
             android:id="@+id/img_user_avatar"
             android:layout_width="48dp"
             android:layout_height="48dp"
-            android:src="@drawable/ic_menu_myplaces"
+            android:src="@android:drawable/ic_menu_myplaces"
             app:tint="@color/color_primary_green"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"

@@ -19,6 +19,8 @@ import com.google.android.material.card.MaterialCardView
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.RequestBody.Companion.toRequestBody
 
 class ChatAssistantFragment : Fragment() {
 
@@ -109,10 +111,7 @@ class ChatAssistantFragment : Fragment() {
             }
         """.trimIndent()
 
-        val requestBody = okhttp3.RequestBody.create(
-            okhttp3.MediaType.parse("application/json; charset=utf-8"),
-            requestBodyJson
-        )
+        val requestBody = requestBodyJson.toRequestBody("application/json; charset=utf-8".toMediaTypeOrNull())
 
         // API Key placeholder - if empty, will gracefully execute the local smart fallback chatbot
         val geminiApiKey = ""
@@ -128,18 +127,22 @@ class ChatAssistantFragment : Fragment() {
                 }
                 
                 val response = client.newCall(request).execute()
-                val responseBody = response.body()?.string()
+                val responseBody = response.body?.string()
 
                 withContext(Dispatchers.Main) {
                     layoutTypingIndicator.visibility = View.GONE
                     if (response.isSuccessful && !responseBody.isNullOrEmpty()) {
-                        val jsonObject = com.google.gson.JsonParser.parseString(responseBody).asJsonObject
-                        val reply = jsonObject.getAsJsonArray("candidates")
-                            ?.get(0)?.asJsonObject
-                            ?.getAsJsonObject("content")
-                            ?.getAsJsonArray("parts")
-                            ?.get(0)?.asJsonObject
-                            ?.get("text")?.asString ?: "Maaf, Asisten Tani tidak memahami respon tersebut."
+                        @Suppress("UNCHECKED_CAST")
+                        val responseMap = com.google.gson.Gson().fromJson(responseBody, Map::class.java) as? Map<String, Any>
+                        @Suppress("UNCHECKED_CAST")
+                        val candidates = responseMap?.get("candidates") as? List<Map<String, Any>>
+                        val firstCandidate = candidates?.firstOrNull()
+                        @Suppress("UNCHECKED_CAST")
+                        val content = firstCandidate?.get("content") as? Map<String, Any>
+                        @Suppress("UNCHECKED_CAST")
+                        val parts = content?.get("parts") as? List<Map<String, Any>>
+                        val firstPart = parts?.firstOrNull()
+                        val reply = firstPart?.get("text") as? String ?: "Maaf, Asisten Tani tidak memahami respon tersebut."
 
                         val recommended = sharedViewModel.productsList.value?.filter { product ->
                             reply.contains(product.name, ignoreCase = true) || reply.contains(product.category, ignoreCase = true)

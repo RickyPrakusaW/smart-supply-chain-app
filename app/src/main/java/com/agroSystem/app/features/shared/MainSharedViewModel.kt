@@ -8,6 +8,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.AndroidViewModel
 import com.agroSystem.app.R
 import com.agroSystem.app.data.local.AppDatabase
+import com.agroSystem.app.data.local.entities.toEntity
 import com.agroSystem.app.data.models.Product
 import com.agroSystem.app.data.models.Farmer
 import com.agroSystem.app.data.models.Recipe
@@ -95,21 +96,21 @@ class MainSharedViewModel(application: Application) : AndroidViewModel(applicati
                                 farmer = doc.getString("farmer") ?: "",
                                 rating = doc.getString("rating") ?: "5.0",
                                 price = doc.getLong("price")?.toInt() ?: 0,
-                                quantity = doc.getString("quantity") ?: "1 kg",
-                                imageRes = doc.getLong("imageRes")?.toInt() ?: R.drawable.padi,
+                                unit = doc.getString("unit") ?: "1 kg",
+                                imageResId = doc.getLong("imageResId")?.toInt() ?: R.drawable.padi,
                                 category = doc.getString("category") ?: "Lainnya",
-                                isEcoFriendly = doc.getBoolean("isEcoFriendly") ?: false,
                                 isDiscounted = doc.getBoolean("isDiscounted") ?: false,
                                 originalPrice = doc.getLong("originalPrice")?.toInt() ?: 0,
+                                isEcoFriendly = doc.getBoolean("isEcoFriendly") ?: false,
                                 deliveryDays = doc.getLong("deliveryDays")?.toInt() ?: 1,
-                                protein = doc.getString("protein"),
-                                fat = doc.getString("fat"),
-                                carbs = doc.getString("carbs"),
-                                calories = doc.getString("calories"),
-                                ingredients = doc.getString("ingredients"),
-                                shelfLife = doc.getString("shelfLife"),
-                                storage = doc.getString("storage"),
-                                packaging = doc.getString("packaging"),
+                                protein = doc.getString("protein") ?: "3g",
+                                fat = doc.getString("fat") ?: "5g",
+                                carbs = doc.getString("carbs") ?: "4.7g",
+                                calories = doc.getString("calories") ?: "64 Kcal",
+                                ingredients = doc.getString("ingredients") ?: "",
+                                shelfLife = doc.getString("shelfLife") ?: "5 Hari",
+                                storage = doc.getString("storage") ?: "Suhu Dingin (+2°C s.d +6°C)",
+                                packaging = doc.getString("packaging") ?: "Botol Kaca steril 1 Liter (Ramah Lingkungan)",
                                 ownerId = doc.getString("ownerId"),
                                 imageBytes = doc.getString("imageBytes")
                             )

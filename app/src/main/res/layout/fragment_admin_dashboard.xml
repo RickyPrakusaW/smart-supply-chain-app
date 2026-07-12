@@ -18,9 +18,7 @@
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
-            android:layout_height="parent"
-            android:layout_height_max="match_parent"
-            android:layout_height_min="match_parent"
+            android:layout_height="match_parent"
             android:paddingHorizontal="16dp">
 
             <com.google.android.material.card.MaterialCardView
