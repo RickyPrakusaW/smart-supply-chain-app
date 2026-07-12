@@ -126,7 +126,7 @@ class DashboardFragment : Fragment() {
     private fun setupNormalDashboard() {
         rvProductsHome.layoutManager = GridLayoutManager(requireContext(), 2)
         productsAdapter = ProductGridAdapter(
-            products = sharedViewModel.allProducts.take(4),
+            products = sharedViewModel.allProducts,
             favoriteIds = sharedViewModel.favoriteProductIds.value ?: emptyList(),
             cartQuantities = sharedViewModel.cartItems.value ?: emptyMap(),
             onProductClick = { product -> navigateToProductDetail(product) },
@@ -150,21 +150,21 @@ class DashboardFragment : Fragment() {
         // Observe main states
         sharedViewModel.productsList.observe(viewLifecycleOwner) { prods ->
             productsAdapter.updateData(
-                prods.take(4),
+                prods,
                 sharedViewModel.favoriteProductIds.value ?: emptyList(),
                 sharedViewModel.cartItems.value ?: emptyMap()
             )
         }
         sharedViewModel.favoriteProductIds.observe(viewLifecycleOwner) { favs ->
             productsAdapter.updateData(
-                (sharedViewModel.productsList.value ?: sharedViewModel.allProducts).take(4),
+                sharedViewModel.productsList.value ?: sharedViewModel.allProducts,
                 favs,
                 sharedViewModel.cartItems.value ?: emptyMap()
             )
         }
         sharedViewModel.cartItems.observe(viewLifecycleOwner) { cart ->
             productsAdapter.updateData(
-                (sharedViewModel.productsList.value ?: sharedViewModel.allProducts).take(4),
+                sharedViewModel.productsList.value ?: sharedViewModel.allProducts,
                 sharedViewModel.favoriteProductIds.value ?: emptyList(),
                 cart
             )

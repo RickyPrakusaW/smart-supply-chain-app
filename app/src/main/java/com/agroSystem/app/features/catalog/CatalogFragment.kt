@@ -330,7 +330,8 @@ class CatalogFragment : Fragment() {
 
                     withContext(Dispatchers.Main) {
                         progressEdamam.visibility = View.GONE
-                        edamamAdapter.updateItems(hints)
+                        val sortedHints = hints.sortedWith(compareByDescending { !it.food?.image.isNullOrEmpty() })
+                        edamamAdapter.updateItems(sortedHints)
                         if (hints.isEmpty()) {
                             textEmptyEdamam.visibility = View.VISIBLE
                             textEmptyEdamam.text = "Makanan '$query' tidak ditemukan di database Edamam."
@@ -372,7 +373,8 @@ class CatalogFragment : Fragment() {
                         )
                     )
                 }
-                edamamAdapter.updateItems(hints)
+                val sortedHints = hints.sortedWith(compareByDescending { !it.food?.image.isNullOrEmpty() })
+                edamamAdapter.updateItems(sortedHints)
                 Toast.makeText(requireContext(), "Menampilkan data dari cache offline lokal.", Toast.LENGTH_SHORT).show()
                 textEmptyEdamam.visibility = View.GONE
             } else {
