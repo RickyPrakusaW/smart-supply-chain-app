@@ -16,7 +16,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
     init {
         val database = AppDatabase.getDatabase(application)
-        authRepository = AuthRepository(database.userDao(), com.agroSystem.app.data.remote.ApiClient.authApiService, application)
+        authRepository = AuthRepository(database.userDao(), application)
         
         viewModelScope.launch {
             authRepository.loadSession()

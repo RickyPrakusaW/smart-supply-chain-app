@@ -1,52 +1,6 @@
 package com.agroSystem.app.data.remote
 
-import retrofit2.http.Body
-import retrofit2.http.POST
-import retrofit2.http.GET
-import retrofit2.http.Path
-import retrofit2.http.PUT
-import retrofit2.http.DELETE
 import com.agroSystem.app.data.models.Product
-
-interface AuthApiService {
-    @POST("auth/google")
-    suspend fun loginWithGoogle(@Body request: GoogleLoginRequest): AuthResponse
-
-    @POST("auth/phone")
-    suspend fun loginWithPhone(@Body request: PhoneLoginRequest): AuthResponse
-
-    @POST("auth/update-profile")
-    suspend fun updateProfile(@Body request: UpdateProfileRequest): AuthResponse
-
-    @POST("payment/checkout")
-    suspend fun checkout(@Body request: CheckoutRequest): CheckoutResponse
-
-    @GET("payment/orders/{userId}")
-    suspend fun getUserOrders(@Path("userId") userId: String): OrdersListResponse
-
-    @GET("payment/seller-orders/{sellerId}")
-    suspend fun getSellerOrders(@Path("sellerId") sellerId: String): OrdersListResponse
-
-    @PUT("payment/orders/{orderId}/status")
-    suspend fun updateOrderStatus(
-        @Path("orderId") orderId: String,
-        @Body body: UpdateStatusRequest
-    ): GeneralStatusResponse
-
-    @POST("ai/chat")
-    suspend fun sendChatMessage(
-        @Body request: ChatRequest
-    ): ChatResponse
-
-    @POST("products")
-    suspend fun createProduct(@Body product: Product): CreateUpdateProductResponse
-
-    @PUT("products/{id}")
-    suspend fun updateProduct(@Path("id") id: Int, @Body product: Product): CreateUpdateProductResponse
-
-    @DELETE("products/{id}")
-    suspend fun deleteProduct(@Path("id") id: Int): GeneralStatusResponse
-}
 
 data class CheckoutRequest(
     val userId: String,

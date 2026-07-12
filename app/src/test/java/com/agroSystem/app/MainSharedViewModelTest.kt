@@ -45,7 +45,7 @@ class MainSharedViewModelTest {
         `when`(repository.defaultProducts).thenReturn(emptyList())
         `when`(repository.defaultFarmers).thenReturn(emptyList())
 
-        viewModel = MainSharedViewModel()
+        viewModel = MainSharedViewModel(application)
     }
 
     @After

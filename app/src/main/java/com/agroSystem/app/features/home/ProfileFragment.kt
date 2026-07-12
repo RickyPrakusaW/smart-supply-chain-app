@@ -90,6 +90,7 @@ class ProfileFragment : Fragment() {
         val btnLogout: Button = view.findViewById(R.id.btn_logout)
         val btnTransactionHistory: Button = view.findViewById(R.id.btn_transaction_history)
         val btnManageProducts: Button = view.findViewById(R.id.btn_manage_products)
+        val btnAdminPanel: Button = view.findViewById(R.id.btn_admin_panel)
 
         btnTransactionHistory.setOnClickListener {
             val navController = parentFragment?.findNavController()
@@ -99,6 +100,11 @@ class ProfileFragment : Fragment() {
         btnManageProducts.setOnClickListener {
             val navController = parentFragment?.findNavController()
             navController?.navigate(R.id.action_homeFragment_to_sellerProductsFragment)
+        }
+
+        btnAdminPanel.setOnClickListener {
+            val navController = parentFragment?.findNavController()
+            navController?.navigate(R.id.action_homeFragment_to_adminDashboardFragment)
         }
 
         // Show edit options (Ubah/Hapus) in a clean dialog popup
@@ -309,6 +315,26 @@ class ProfileFragment : Fragment() {
                     
                     setAvatarImage(tempPhotoBase64 ?: user.photoUrl, imageProfileAvatar)
                     updatePhoneStatusUI(user.phone ?: "", user.phone)
+
+                    val spaceManageProducts: View = view.findViewById(R.id.space_manage_products)
+                    val spaceAdminPanel: View = view.findViewById(R.id.space_admin_panel)
+                    
+                    if (user.role == "Admin") {
+                        btnAdminPanel.visibility = View.VISIBLE
+                        spaceAdminPanel.visibility = View.VISIBLE
+                        btnManageProducts.visibility = View.GONE
+                        spaceManageProducts.visibility = View.GONE
+                    } else if (user.role == "Petani") {
+                        btnAdminPanel.visibility = View.GONE
+                        spaceAdminPanel.visibility = View.GONE
+                        btnManageProducts.visibility = View.VISIBLE
+                        spaceManageProducts.visibility = View.VISIBLE
+                    } else { // "Pembeli"
+                        btnAdminPanel.visibility = View.GONE
+                        spaceAdminPanel.visibility = View.GONE
+                        btnManageProducts.visibility = View.GONE
+                        spaceManageProducts.visibility = View.GONE
+                    }
                 } else {
                     inputName.setText("")
                     inputEmail.setText("")

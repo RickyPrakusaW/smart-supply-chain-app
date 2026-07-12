@@ -3,6 +3,7 @@ package com.agroSystem.app.features.payment
 import android.annotation.SuppressLint
 import android.os.Bundle
 import android.util.Log
+import java.util.Locale
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -27,6 +28,7 @@ class PaymentWebViewFragment : Fragment() {
     private lateinit var webView: WebView
     private lateinit var progressLoader: ProgressBar
     private lateinit var btnClose: MaterialCardView
+    private var currentOrderId: String = ""
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -46,7 +48,15 @@ class PaymentWebViewFragment : Fragment() {
         }
 
         setupWebView()
-        webView.loadUrl(paymentUrl)
+        if (paymentUrl.startsWith("mock://payment")) {
+            val uri = android.net.Uri.parse(paymentUrl)
+            currentOrderId = uri.getQueryParameter("orderId") ?: "TRX-UNKNOWN"
+            val amount = uri.getQueryParameter("amount") ?: "0"
+            val html = getMockPaymentHtml(currentOrderId, amount)
+            webView.loadDataWithBaseURL("https://app.sandbox.midtrans.com", html, "text/html", "utf-8", null)
+        } else {
+            webView.loadUrl(paymentUrl)
+        }
 
         btnClose.setOnClickListener {
             showExitConfirmationDialog()
@@ -107,6 +117,7 @@ class PaymentWebViewFragment : Fragment() {
 
     private fun handlePaymentResult(status: String) {
         activity?.runOnUiThread {
+            sharedViewModel.updateOrderStatus(currentOrderId, status) { }
             when (status) {
                 "success" -> {
                     sharedViewModel.clearCart() // Clear cart on success!
@@ -154,5 +165,61 @@ class PaymentWebViewFragment : Fragment() {
             }
             .setNegativeButton("Batal", null)
             .show()
+    }
+
+    private fun getMockPaymentHtml(orderId: String, amount: String): String {
+        val formattedPrice = java.text.NumberFormat.getNumberInstance(Locale("id", "ID")).format(amount.toDoubleOrNull() ?: 0.0)
+        return """
+            <html>
+              <head>
+                <title>Midtrans Secure Payment (Simulasi)</title>
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <style>
+                  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #F5F3EE; color: #333333; margin: 0; padding: 12px; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+                  .container { background: white; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); max-width: 420px; width: 100%; overflow: hidden; display: flex; flex-direction: column; border: 1px solid #D3CEC6; }
+                  .header { background: #475B40; color: white; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; }
+                  .header-title { font-size: 16px; font-weight: bold; letter-spacing: 0.5px; }
+                  .header-subtitle { font-size: 11px; color: #D6D9D0; }
+                  .amount-box { text-align: right; }
+                  .amount-val { font-size: 18px; font-weight: 800; color: #10B981; }
+                  .order-id { font-size: 10px; color: #E8E8E2; text-align: right; margin-top: 2px; }
+                  .banner { background: #EEEDE3; border-bottom: 1px solid #D3CEC6; padding: 12px 20px; font-size: 12px; color: #475B40; display: flex; align-items: center; gap: 8px; }
+                  .content { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+                  .info-text { font-size: 13px; color: #6b7280; line-height: 1.4; text-align: center; }
+                  .actions { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+                  .btn-action { display: block; width: 100%; padding: 12px; border-radius: 8px; border: none; font-size: 14px; font-weight: bold; cursor: pointer; text-align: center; box-sizing: border-box; }
+                  .btn-primary { background: #475B40; color: white; }
+                  .btn-primary:hover { background: #374632; }
+                  .btn-danger { background: #EF4444; color: white; }
+                  .btn-danger:hover { background: #DC2626; }
+                </style>
+              </head>
+              <body>
+                <div class="container">
+                  <div class="header">
+                    <div>
+                      <div class="header-title">AgriMitra Secure Pay</div>
+                      <div class="header-subtitle">Mode Uji Simulasi</div>
+                    </div>
+                    <div class="amount-box">
+                      <div class="amount-val">Rp ${formattedPrice}</div>
+                      <div class="order-id">${orderId}</div>
+                    </div>
+                  </div>
+                  <div class="banner">
+                    <span>🛡️</span>
+                    <span>Simulator Pembayaran Midtrans (AgriMitra Offline)</span>
+                  </div>
+                  <div class="content">
+                    <p class="info-text">Ini adalah simulator pembayaran terintegrasi untuk aplikasi AgriMitra. Pilih salah satu tombol di bawah untuk menyimulasikan hasil transaksi.</p>
+                    <div class="actions">
+                      <button class="btn-action btn-primary" onclick="window.location.href='agrimitra://payment_result?status=success&orderId=${orderId}'">BAYAR SEKARANG (SUKSES)</button>
+                      <button class="btn-action btn-danger" onclick="window.location.href='agrimitra://payment_result?status=failed&orderId=${orderId}'">BATALKAN TRANSAKSI (GAGAL)</button>
+                    </div>
+                  </div>
+                </div>
+              </body>
+            </html>
+        """.trimIndent()
     }
 }

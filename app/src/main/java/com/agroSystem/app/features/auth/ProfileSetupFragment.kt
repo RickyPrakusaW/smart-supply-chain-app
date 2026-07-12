@@ -30,6 +30,7 @@ class ProfileSetupFragment : Fragment() {
         inputName = view.findViewById(R.id.input_name)
         inputEmail = view.findViewById(R.id.input_email)
         btnContinue = view.findViewById(R.id.btn_continue)
+        val rgRole: android.widget.RadioGroup = view.findViewById(R.id.rg_role)
 
         // Back action
         view.findViewById<MaterialCardView>(R.id.btn_back).setOnClickListener {
@@ -62,6 +63,13 @@ class ProfileSetupFragment : Fragment() {
             val name = inputName.text.toString().trim()
             val email = inputEmail.text.toString().trim().ifEmpty { null }
 
+            val selectedRoleId = rgRole.checkedRadioButtonId
+            val role = when (selectedRoleId) {
+                R.id.rb_seller -> "Petani"
+                R.id.rb_admin -> "Admin"
+                else -> "Pembeli"
+            }
+
             // Sinkronkan Nama dan Email ke akun Firebase Auth
             val firebaseUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
             if (firebaseUser != null) {
@@ -82,7 +90,7 @@ class ProfileSetupFragment : Fragment() {
                 }
             }
 
-            authViewModel.updateProfile(name, email, null, null, null, "Pembeli") {
+            authViewModel.updateProfile(name, email, null, null, null, role) {
                 findNavController().navigate(R.id.action_profileSetupFragment_to_locationPermissionFragment)
             }
         }

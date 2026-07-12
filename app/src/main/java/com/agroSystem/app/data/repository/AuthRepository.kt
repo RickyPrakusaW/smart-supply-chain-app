@@ -4,18 +4,15 @@ import android.util.Log
 import com.agroSystem.app.data.local.dao.UserDao
 import com.agroSystem.app.data.local.entities.toEntity
 import com.agroSystem.app.data.models.User
-import com.agroSystem.app.data.remote.AuthApiService
-import com.agroSystem.app.data.remote.GoogleLoginRequest
-import com.agroSystem.app.data.remote.PhoneLoginRequest
-import com.agroSystem.app.data.remote.UpdateProfileRequest
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlin.coroutines.resume
 
 class AuthRepository(
     private val userDao: UserDao,
-    private val authApiService: AuthApiService,
     private val context: android.content.Context
 ) {
     private val _currentUser = MutableStateFlow<User?>(null)
@@ -52,40 +49,74 @@ class AuthRepository(
     }
 
     suspend fun loginWithGoogle(idToken: String, name: String, email: String): User = withContext(Dispatchers.IO) {
+        val cleanEmail = email.replace(Regex("[^a-zA-Z0-9]"), "")
+        val id = "google_$cleanEmail"
         var user: User? = null
+        
         try {
-            val response = authApiService.loginWithGoogle(GoogleLoginRequest(idToken, name, email))
-            if (response.success) {
+            val db = com.google.firebase.firestore.FirebaseFirestore.getInstance()
+            val docRef = db.collection("users").document(id)
+            val snapshot = suspendCancellableCoroutine<com.google.firebase.firestore.DocumentSnapshot?> { cont ->
+                docRef.get().addOnCompleteListener { task ->
+                    if (task.isSuccessful) cont.resume(task.result)
+                    else cont.resume(null)
+                }
+            }
+
+            if (snapshot != null && snapshot.exists()) {
                 user = User(
-                    id = response.id,
-                    name = response.name,
-                    email = response.email,
-                    phone = response.phone,
-                    role = response.role,
-                    token = response.token,
-                    photoUrl = response.photoUrl,
-                    address = response.address
+                    id = id,
+                    name = snapshot.getString("name") ?: name,
+                    email = snapshot.getString("email") ?: email,
+                    phone = snapshot.getString("phone"),
+                    role = snapshot.getString("role") ?: "Pembeli",
+                    token = "jwt_mock_token_for_" + idToken.take(10),
+                    photoUrl = snapshot.getString("photoUrl"),
+                    address = snapshot.getString("address")
+                )
+            } else {
+                val newUserMap = hashMapOf(
+                    "id" to id,
+                    "name" to name,
+                    "email" to email,
+                    "phone" to null,
+                    "role" to "Pembeli",
+                    "photoUrl" to null,
+                    "address" to null
+                )
+                suspendCancellableCoroutine<Void?> { cont ->
+                    docRef.set(newUserMap).addOnCompleteListener { task ->
+                        cont.resume(null)
+                    }
+                }
+                user = User(
+                    id = id,
+                    name = name,
+                    email = email,
+                    phone = null,
+                    role = "Pembeli",
+                    token = "jwt_mock_token_for_" + idToken.take(10),
+                    photoUrl = null,
+                    address = null
                 )
             }
         } catch (e: Exception) {
-            Log.e("AuthRepository", "Remote Google Login failed, using local fallback", e)
+            Log.e("AuthRepository", "Firestore Google Login failed, using local fallback", e)
         }
 
         if (user == null) {
-            val cleanEmail = email.replace(Regex("[^a-zA-Z0-9]"), "")
             user = User(
-                id = "google_$cleanEmail",
+                id = id,
                 name = name,
                 email = email,
                 phone = null,
-                role = "Pembeli", // Default role
+                role = "Pembeli",
                 token = "jwt_mock_token_for_" + idToken.take(10),
                 photoUrl = null,
                 address = null
             )
         }
 
-        // Restore local profile backup (photo, address, phone) if missing from server response
         user = restoreProfileBackup(user)
         backupProfile(user)
 
@@ -96,29 +127,65 @@ class AuthRepository(
     }
 
     suspend fun loginWithPhone(phone: String, name: String): User = withContext(Dispatchers.IO) {
+        val cleanPhone = phone.replace(Regex("[^0-9]"), "")
+        val id = "phone_$cleanPhone"
         var user: User? = null
+        
         try {
-            val response = authApiService.loginWithPhone(PhoneLoginRequest(phone, name))
-            if (response.success) {
+            val db = com.google.firebase.firestore.FirebaseFirestore.getInstance()
+            val docRef = db.collection("users").document(id)
+            val snapshot = suspendCancellableCoroutine<com.google.firebase.firestore.DocumentSnapshot?> { cont ->
+                docRef.get().addOnCompleteListener { task ->
+                    if (task.isSuccessful) cont.resume(task.result)
+                    else cont.resume(null)
+                }
+            }
+
+            if (snapshot != null && snapshot.exists()) {
                 user = User(
-                    id = response.id,
-                    name = response.name,
-                    email = response.email,
-                    phone = response.phone,
-                    role = response.role,
-                    token = response.token,
-                    photoUrl = response.photoUrl,
-                    address = response.address
+                    id = id,
+                    name = snapshot.getString("name") ?: (if (name.isNotEmpty()) name else "User Telpon"),
+                    email = snapshot.getString("email"),
+                    phone = snapshot.getString("phone") ?: phone,
+                    role = snapshot.getString("role") ?: "Pembeli",
+                    token = "jwt_mock_token_for_" + phone,
+                    photoUrl = snapshot.getString("photoUrl"),
+                    address = snapshot.getString("address")
+                )
+            } else {
+                val displayName = if (name.isNotEmpty()) name else "User Telpon"
+                val newUserMap = hashMapOf(
+                    "id" to id,
+                    "name" to displayName,
+                    "email" to null,
+                    "phone" to phone,
+                    "role" to "Pembeli",
+                    "photoUrl" to null,
+                    "address" to null
+                )
+                suspendCancellableCoroutine<Void?> { cont ->
+                    docRef.set(newUserMap).addOnCompleteListener { task ->
+                        cont.resume(null)
+                    }
+                }
+                user = User(
+                    id = id,
+                    name = displayName,
+                    email = null,
+                    phone = phone,
+                    role = "Pembeli",
+                    token = "jwt_mock_token_for_" + phone,
+                    photoUrl = null,
+                    address = null
                 )
             }
         } catch (e: Exception) {
-            Log.e("AuthRepository", "Remote Phone Login failed, using local fallback", e)
+            Log.e("AuthRepository", "Firestore Phone Login failed, using local fallback", e)
         }
 
         if (user == null) {
-            val cleanPhone = phone.replace(Regex("[^0-9]"), "")
             user = User(
-                id = "phone_$cleanPhone",
+                id = id,
                 name = name.ifEmpty { "User Telpon" },
                 email = null,
                 phone = phone,
@@ -129,7 +196,6 @@ class AuthRepository(
             )
         }
 
-        // Restore local profile backup (photo, address, phone) if missing from server response
         user = restoreProfileBackup(user)
         backupProfile(user)
 
@@ -150,23 +216,42 @@ class AuthRepository(
         val current = _currentUser.value ?: return@withContext null
         var updated: User? = null
         try {
-            val response = authApiService.updateProfile(
-                UpdateProfileRequest(current.id, name, email, phone, address, photoUrl, role)
+            val db = com.google.firebase.firestore.FirebaseFirestore.getInstance()
+            val docRef = db.collection("users").document(current.id)
+            
+            val updateMap = hashMapOf<String, Any?>(
+                "name" to name,
+                "role" to role
             )
-            if (response.success) {
-                updated = User(
-                    id = response.id,
-                    name = response.name,
-                    email = response.email,
-                    phone = response.phone,
-                    role = response.role,
-                    token = response.token,
-                    photoUrl = response.photoUrl,
-                    address = response.address
-                )
+            if (email != null) updateMap["email"] = email
+            if (phone != null) updateMap["phone"] = phone
+            if (address != null) updateMap["address"] = address
+            if (photoUrl != null) updateMap["photoUrl"] = photoUrl
+
+            suspendCancellableCoroutine<Void?> { cont ->
+                docRef.update(updateMap).addOnCompleteListener { task ->
+                    if (task.isSuccessful) {
+                        cont.resume(null)
+                    } else {
+                        docRef.set(updateMap, com.google.firebase.firestore.SetOptions.merge()).addOnCompleteListener {
+                            cont.resume(null)
+                        }
+                    }
+                }
             }
+            
+            updated = User(
+                id = current.id,
+                name = name,
+                email = email ?: current.email,
+                phone = phone ?: current.phone,
+                role = role,
+                token = current.token,
+                photoUrl = photoUrl ?: current.photoUrl,
+                address = address ?: current.address
+            )
         } catch (e: Exception) {
-            Log.e("AuthRepository", "Remote Profile Update failed, using local fallback", e)
+            Log.e("AuthRepository", "Firestore Profile Update failed, using local fallback", e)
         }
 
         if (updated == null) {
@@ -180,7 +265,6 @@ class AuthRepository(
             )
         }
 
-        // Keep local backups fresh
         backupProfile(updated)
 
         userDao.insertUser(updated.toEntity())

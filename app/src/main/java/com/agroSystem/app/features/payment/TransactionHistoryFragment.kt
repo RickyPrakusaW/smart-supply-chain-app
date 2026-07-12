@@ -14,7 +14,6 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.agroSystem.app.R
-import com.agroSystem.app.data.remote.ApiClient
 import com.agroSystem.app.features.auth.AuthViewModel
 import com.google.android.material.card.MaterialCardView
 import kotlinx.coroutines.launch
@@ -72,13 +71,34 @@ class TransactionHistoryFragment : Fragment() {
         rvTransactions.visibility = View.GONE
         layoutEmptyHistory.visibility = View.GONE
 
-        lifecycleScope.launch {
-            try {
-                val response = ApiClient.authApiService.getUserOrders(currentUser.id)
+        val db = com.google.firebase.firestore.FirebaseFirestore.getInstance()
+        db.collection("orders").whereEqualTo("userId", currentUser.id).get()
+            .addOnSuccessListener { result ->
                 progressLoader.visibility = View.GONE
+                try {
+                    val ordersList = result.map { doc ->
+                        val itemsRaw = doc.get("items") as? List<Map<String, Any>>
+                        val checkoutItems = itemsRaw?.map { itemMap ->
+                            com.agroSystem.app.data.remote.CheckoutItem(
+                                id = (itemMap["id"] as? Long)?.toInt() ?: 0,
+                                name = itemMap["name"] as? String ?: "",
+                                price = (itemMap["price"] as? Long)?.toInt() ?: 0,
+                                quantity = (itemMap["quantity"] as? Long)?.toInt() ?: 0,
+                                ownerId = itemMap["ownerId"] as? String
+                            )
+                        }
+                        
+                        com.agroSystem.app.data.remote.OrderItemResponse(
+                            orderId = doc.getString("orderId") ?: doc.id,
+                            userId = doc.getString("userId"),
+                            amount = doc.getLong("amount")?.toInt() ?: 0,
+                            status = doc.getString("status") ?: "pending",
+                            createdAt = doc.getString("createdAt") ?: doc.getTimestamp("createdAt")?.toDate()?.toString() ?: "",
+                            items = checkoutItems,
+                            payment = null
+                        )
+                    }
 
-                if (response.success && response.data != null) {
-                    val ordersList = response.data
                     if (ordersList.isEmpty()) {
                         layoutEmptyHistory.visibility = View.VISIBLE
                         rvTransactions.visibility = View.GONE
@@ -87,16 +107,16 @@ class TransactionHistoryFragment : Fragment() {
                         rvTransactions.visibility = View.VISIBLE
                         layoutEmptyHistory.visibility = View.GONE
                     }
-                } else {
+                } catch (e: Exception) {
+                    Log.e("TransactionHistory", "Error mapping orders list", e)
                     layoutEmptyHistory.visibility = View.VISIBLE
-                    Toast.makeText(requireContext(), "Gagal memuat riwayat transaksi.", Toast.LENGTH_SHORT).show()
                 }
-            } catch (e: Exception) {
+            }
+            .addOnFailureListener { e ->
                 progressLoader.visibility = View.GONE
                 layoutEmptyHistory.visibility = View.VISIBLE
                 Log.e("TransactionHistory", "Error fetching orders list", e)
-                Toast.makeText(requireContext(), "Gagal menghubungkan ke server: ${e.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Gagal menghubungkan ke database: ${e.message}", Toast.LENGTH_SHORT).show()
             }
-        }
     }
 }

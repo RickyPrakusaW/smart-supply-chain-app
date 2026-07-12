@@ -162,6 +162,9 @@
         <action
             android:id="@+id/action_homeFragment_to_chatAssistantFragment"
             app:destination="@id/chatAssistantFragment" />
+        <action
+            android:id="@+id/action_homeFragment_to_adminDashboardFragment"
+            app:destination="@id/adminDashboardFragment" />
     </fragment>
 
     <fragment
@@ -257,6 +260,18 @@
         <action
             android:id="@+id/action_chatAssistantFragment_to_productDetailFragment"
             app:destination="@id/productDetailFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/adminDashboardFragment"
+        android:name="com.agroSystem.app.features.admin.AdminDashboardFragment"
+        android:label="Panel Admin"
+        tools:layout="@layout/fragment_admin_dashboard">
+        <action
+            android:id="@+id/action_adminDashboardFragment_to_homeFragment"
+            app:destination="@id/homeFragment"
+            app:popUpTo="@id/nav_graph"
+            app:popUpToInclusive="true" />
     </fragment>
 
 </navigation>

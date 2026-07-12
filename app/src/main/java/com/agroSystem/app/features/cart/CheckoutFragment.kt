@@ -298,29 +298,44 @@ class CheckoutFragment : Fragment() {
             btnPlaceOrder.isEnabled = false
             Toast.makeText(requireContext(), "Menghubungkan ke sistem pembayaran...", Toast.LENGTH_SHORT).show()
 
+            val orderId = "TRX-" + System.currentTimeMillis() + "-" + (100..999).random()
+            val newOrder = hashMapOf(
+                "orderId" to orderId,
+                "userId" to currentUser.id,
+                "amount" to total,
+                "status" to "pending",
+                "createdAt" to com.google.firebase.Timestamp.now(),
+                "items" to checkoutItems.map { item ->
+                    mapOf(
+                        "id" to item.id,
+                        "name" to item.name,
+                        "price" to item.price,
+                        "quantity" to item.quantity,
+                        "ownerId" to item.ownerId
+                    )
+                }
+            )
+
             lifecycleScope.launch {
                 try {
-                    val response = com.agroSystem.app.data.remote.ApiClient.authApiService.checkout(
-                        com.agroSystem.app.data.remote.CheckoutRequest(
-                            userId = currentUser.id,
-                            amount = total,
-                            items = checkoutItems
-                        )
-                    )
-                    btnPlaceOrder.isEnabled = true
-                    val redirectUrl = response.data?.payment?.redirect_url
-                    if (response.success && !redirectUrl.isNullOrEmpty()) {
-                        val bundle = Bundle().apply {
-                            putString("payment_url", redirectUrl)
+                    val db = com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                    db.collection("orders").document(orderId).set(newOrder)
+                        .addOnSuccessListener {
+                            btnPlaceOrder.isEnabled = true
+                            val redirectUrl = "mock://payment?orderId=$orderId&amount=$total"
+                            val bundle = Bundle().apply {
+                                putString("payment_url", redirectUrl)
+                            }
+                            findNavController().navigate(R.id.action_checkoutFragment_to_paymentWebViewFragment, bundle)
                         }
-                        findNavController().navigate(R.id.action_checkoutFragment_to_paymentWebViewFragment, bundle)
-                    } else {
-                        Toast.makeText(requireContext(), "Gagal memproses transaksi pembayaran.", Toast.LENGTH_SHORT).show()
-                    }
+                        .addOnFailureListener { e ->
+                            btnPlaceOrder.isEnabled = true
+                            Toast.makeText(requireContext(), "Gagal memproses pesanan di cloud: ${e.message}", Toast.LENGTH_SHORT).show()
+                        }
                 } catch (e: Exception) {
                     btnPlaceOrder.isEnabled = true
                     Log.e("CheckoutFragment", "Error performing checkout", e)
-                    Toast.makeText(requireContext(), "Gagal terhubung ke server pembayaran: ${e.message}", Toast.LENGTH_LONG).show()
+                    Toast.makeText(requireContext(), "Gagal terhubung ke database: ${e.message}", Toast.LENGTH_LONG).show()
                 }
             }
         }

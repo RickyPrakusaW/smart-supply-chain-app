@@ -2,10 +2,12 @@ package com.agroSystem.app.features.shared
 
 import android.app.Application
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.AndroidViewModel
 import com.agroSystem.app.R
+import com.agroSystem.app.data.local.AppDatabase
 import com.agroSystem.app.data.models.Product
 import com.agroSystem.app.data.models.Farmer
 import com.agroSystem.app.data.models.Recipe
@@ -13,9 +15,8 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
-import com.agroSystem.app.data.remote.ApiClient
+import kotlinx.coroutines.Dispatchers
 import com.agroSystem.app.data.remote.OrderItemResponse
-import com.agroSystem.app.data.remote.UpdateStatusRequest
 
 class MainSharedViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -84,29 +85,104 @@ class MainSharedViewModel(application: Application) : AndroidViewModel(applicati
     fun fetchProductsFromServer() {
         viewModelScope.launch {
             try {
-                val list = ApiClient.apiService.getProducts()
-                if (list.isNotEmpty()) {
-                    allProducts.clear()
-                    allProducts.addAll(list)
-                    productsList.value = allProducts
-                }
+                val db = com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                db.collection("products").get()
+                    .addOnSuccessListener { result ->
+                        val list = result.map { doc ->
+                            Product(
+                                id = doc.getLong("id")?.toInt() ?: 0,
+                                name = doc.getString("name") ?: "",
+                                farmer = doc.getString("farmer") ?: "",
+                                rating = doc.getString("rating") ?: "5.0",
+                                price = doc.getLong("price")?.toInt() ?: 0,
+                                quantity = doc.getString("quantity") ?: "1 kg",
+                                imageRes = doc.getLong("imageRes")?.toInt() ?: R.drawable.padi,
+                                category = doc.getString("category") ?: "Lainnya",
+                                isEcoFriendly = doc.getBoolean("isEcoFriendly") ?: false,
+                                isDiscounted = doc.getBoolean("isDiscounted") ?: false,
+                                originalPrice = doc.getLong("originalPrice")?.toInt() ?: 0,
+                                deliveryDays = doc.getLong("deliveryDays")?.toInt() ?: 1,
+                                protein = doc.getString("protein"),
+                                fat = doc.getString("fat"),
+                                carbs = doc.getString("carbs"),
+                                calories = doc.getString("calories"),
+                                ingredients = doc.getString("ingredients"),
+                                shelfLife = doc.getString("shelfLife"),
+                                storage = doc.getString("storage"),
+                                packaging = doc.getString("packaging"),
+                                ownerId = doc.getString("ownerId"),
+                                imageBytes = doc.getString("imageBytes")
+                            )
+                        }
+                        
+                        if (list.isNotEmpty()) {
+                            viewModelScope.launch(Dispatchers.IO) {
+                                val localDb = AppDatabase.getDatabase(getApplication())
+                                localDb.productDao().clearAllProducts()
+                                localDb.productDao().insertProducts(list.map { it.toEntity() })
+                            }
+                            
+                            allProducts.clear()
+                            allProducts.addAll(list)
+                            productsList.value = allProducts
+                        } else {
+                            seedProductsToFirestore()
+                        }
+                    }
+                    .addOnFailureListener { e ->
+                        Log.e("MainSharedViewModel", "Firestore fetch failed, reading from Room", e)
+                        loadProductsFromLocalRoom()
+                    }
             } catch (e: Exception) {
                 e.printStackTrace()
+                loadProductsFromLocalRoom()
             }
+        }
+    }
+
+    private fun loadProductsFromLocalRoom() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val localDb = AppDatabase.getDatabase(getApplication())
+            val localProducts = localDb.productDao().getAllProducts().map { it.toDomain() }
+            if (localProducts.isNotEmpty()) {
+                viewModelScope.launch(Dispatchers.Main) {
+                    allProducts.clear()
+                    allProducts.addAll(localProducts)
+                    productsList.value = allProducts
+                }
+            }
+        }
+    }
+
+    private fun seedProductsToFirestore() {
+        val db = com.google.firebase.firestore.FirebaseFirestore.getInstance()
+        val batch = db.batch()
+        allProducts.forEach { product ->
+            val docRef = db.collection("products").document(product.id.toString())
+            batch.set(docRef, product)
+        }
+        batch.commit().addOnSuccessListener {
+            productsList.value = allProducts
         }
     }
 
     fun createProduct(product: Product, onResult: (Boolean) -> Unit) {
         viewModelScope.launch {
             try {
-                val res = ApiClient.authApiService.createProduct(product)
-                if (res.success && res.data != null) {
-                    allProducts.add(res.data)
-                    productsList.value = allProducts
-                    onResult(true)
-                } else {
-                    onResult(false)
-                }
+                val db = com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                db.collection("products").document(product.id.toString()).set(product)
+                    .addOnSuccessListener {
+                        viewModelScope.launch(Dispatchers.IO) {
+                            val localDb = AppDatabase.getDatabase(getApplication())
+                            localDb.productDao().insertProducts(listOf(product.toEntity()))
+                        }
+                        allProducts.add(product)
+                        productsList.value = allProducts
+                        onResult(true)
+                    }
+                    .addOnFailureListener {
+                        onResult(false)
+                    }
             } catch (e: Exception) {
                 e.printStackTrace()
                 onResult(false)
@@ -117,17 +193,23 @@ class MainSharedViewModel(application: Application) : AndroidViewModel(applicati
     fun updateProduct(product: Product, onResult: (Boolean) -> Unit) {
         viewModelScope.launch {
             try {
-                val res = ApiClient.authApiService.updateProduct(product.id, product)
-                if (res.success && res.data != null) {
-                    val idx = allProducts.indexOfFirst { it.id == product.id }
-                    if (idx != -1) {
-                        allProducts[idx] = res.data
-                        productsList.value = allProducts
+                val db = com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                db.collection("products").document(product.id.toString()).set(product)
+                    .addOnSuccessListener {
+                        viewModelScope.launch(Dispatchers.IO) {
+                            val localDb = AppDatabase.getDatabase(getApplication())
+                            localDb.productDao().insertProducts(listOf(product.toEntity()))
+                        }
+                        val idx = allProducts.indexOfFirst { it.id == product.id }
+                        if (idx != -1) {
+                            allProducts[idx] = product
+                            productsList.value = allProducts
+                        }
+                        onResult(true)
                     }
-                    onResult(true)
-                } else {
-                    onResult(false)
-                }
+                    .addOnFailureListener {
+                        onResult(false)
+                    }
             } catch (e: Exception) {
                 e.printStackTrace()
                 onResult(false)
@@ -138,14 +220,20 @@ class MainSharedViewModel(application: Application) : AndroidViewModel(applicati
     fun deleteProduct(productId: Int, onResult: (Boolean) -> Unit) {
         viewModelScope.launch {
             try {
-                val res = ApiClient.authApiService.deleteProduct(productId)
-                if (res.success) {
-                    allProducts.removeAll { it.id == productId }
-                    productsList.value = allProducts
-                    onResult(true)
-                } else {
-                    onResult(false)
-                }
+                val db = com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                db.collection("products").document(productId.toString()).delete()
+                    .addOnSuccessListener {
+                        viewModelScope.launch(Dispatchers.IO) {
+                            val localDb = AppDatabase.getDatabase(getApplication())
+                            localDb.productDao().deleteProductById(productId)
+                        }
+                        allProducts.removeAll { it.id == productId }
+                        productsList.value = allProducts
+                        onResult(true)
+                    }
+                    .addOnFailureListener {
+                        onResult(false)
+                    }
             } catch (e: Exception) {
                 e.printStackTrace()
                 onResult(false)
@@ -156,10 +244,36 @@ class MainSharedViewModel(application: Application) : AndroidViewModel(applicati
     fun fetchSellerOrders(sellerId: String) {
         viewModelScope.launch {
             try {
-                val response = ApiClient.authApiService.getSellerOrders(sellerId)
-                if (response.success && response.data != null) {
-                    sellerOrders.value = response.data
-                }
+                val db = com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                db.collection("orders").get()
+                    .addOnSuccessListener { result ->
+                        val orders = result.map { doc ->
+                            val itemsRaw = doc.get("items") as? List<Map<String, Any>>
+                            val checkoutItems = itemsRaw?.map { itemMap ->
+                                com.agroSystem.app.data.remote.CheckoutItem(
+                                    id = (itemMap["id"] as? Long)?.toInt() ?: 0,
+                                    name = itemMap["name"] as? String ?: "",
+                                    price = (itemMap["price"] as? Long)?.toInt() ?: 0,
+                                    quantity = (itemMap["quantity"] as? Long)?.toInt() ?: 0,
+                                    ownerId = itemMap["ownerId"] as? String
+                                )
+                            }
+                            
+                            com.agroSystem.app.data.remote.OrderItemResponse(
+                                orderId = doc.getString("orderId") ?: doc.id,
+                                userId = doc.getString("userId"),
+                                amount = doc.getLong("amount")?.toInt() ?: 0,
+                                status = doc.getString("status") ?: "pending",
+                                createdAt = doc.getString("createdAt") ?: doc.getTimestamp("createdAt")?.toDate()?.toString() ?: "",
+                                items = checkoutItems,
+                                payment = null
+                            )
+                        }
+                        val filteredOrders = orders.filter { order ->
+                            order.items?.any { it.ownerId == sellerId } == true
+                        }
+                        sellerOrders.value = filteredOrders
+                    }
             } catch (e: Exception) {
                 e.printStackTrace()
             }
@@ -169,12 +283,14 @@ class MainSharedViewModel(application: Application) : AndroidViewModel(applicati
     fun updateOrderStatus(orderId: String, status: String, onResult: (Boolean) -> Unit) {
         viewModelScope.launch {
             try {
-                val response = ApiClient.authApiService.updateOrderStatus(orderId, UpdateStatusRequest(status))
-                if (response.success) {
-                    onResult(true)
-                } else {
-                    onResult(false)
-                }
+                val db = com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                db.collection("orders").document(orderId).update("status", status)
+                    .addOnSuccessListener {
+                        onResult(true)
+                    }
+                    .addOnFailureListener {
+                        onResult(false)
+                    }
             } catch (e: Exception) {
                 e.printStackTrace()
                 onResult(false)

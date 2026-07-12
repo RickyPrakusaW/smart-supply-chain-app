@@ -136,6 +136,59 @@
 
     </com.google.android.material.textfield.TextInputLayout>
 
+    <!-- Label Role -->
+    <TextView
+        android:id="@+id/lbl_role"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:text="Pilih Peran Akun (Role)"
+        android:textColor="@color/color_text_dark"
+        android:textSize="12sp"
+        android:textStyle="bold"
+        app:layout_constraintTop_toBottomOf="@id/layout_input_email"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <!-- RadioGroup Role -->
+    <RadioGroup
+        android:id="@+id/rg_role"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:orientation="horizontal"
+        app:layout_constraintTop_toBottomOf="@id/lbl_role"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <RadioButton
+            android:id="@+id/rb_buyer"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Pembeli"
+            android:textColor="@color/color_text_dark"
+            android:checked="true"
+            android:buttonTint="@color/color_primary_green" />
+
+        <RadioButton
+            android:id="@+id/rb_seller"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Petani"
+            android:textColor="@color/color_text_dark"
+            android:buttonTint="@color/color_primary_green" />
+
+        <RadioButton
+            android:id="@+id/rb_admin"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Admin"
+            android:textColor="@color/color_text_dark"
+            android:buttonTint="@color/color_primary_green" />
+
+    </RadioGroup>
+
     <!-- Description Muted -->
     <TextView
         android:id="@+id/text_desc"
@@ -147,7 +200,7 @@
         android:alpha="0.7"
         android:textSize="11sp"
         android:lineSpacingMultiplier="1.2"
-        app:layout_constraintTop_toBottomOf="@id/layout_input_email" />
+        app:layout_constraintTop_toBottomOf="@id/rg_role" />
 
     <!-- Continue Button -->
     <com.google.android.material.button.MaterialButton

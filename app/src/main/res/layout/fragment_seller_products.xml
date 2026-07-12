@@ -142,4 +142,19 @@
         app:cornerRadius="12dp"
         app:layout_constraintBottom_toBottomOf="parent" />
 
+    <!-- Export Sales Report Button at the bottom -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_export_sales"
+        style="@style/Widget.Material3.Button.ElevatedButton"
+        android:layout_width="match_parent"
+        android:layout_height="54dp"
+        android:layout_margin="16dp"
+        android:text="Ekspor Data Penjualan (Excel/CSV)"
+        android:textColor="@color/color_primary_green"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        android:visibility="gone"
+        app:cornerRadius="12dp"
+        app:layout_constraintBottom_toBottomOf="parent" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

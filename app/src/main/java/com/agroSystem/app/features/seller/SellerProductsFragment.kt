@@ -21,8 +21,8 @@ import com.agroSystem.app.features.shared.MainSharedViewModel
 import com.agroSystem.app.features.payment.OrderDetailBottomSheetFragment
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
-
 import com.google.android.material.tabs.TabLayout
+import androidx.activity.result.contract.ActivityResultContracts
 
 class SellerProductsFragment : Fragment() {
 
@@ -35,10 +35,19 @@ class SellerProductsFragment : Fragment() {
     private lateinit var rvSellerProducts: RecyclerView
     private lateinit var layoutEmptySeller: View
     private lateinit var btnAddProduct: MaterialButton
+    private lateinit var btnExportSales: MaterialButton
 
     private lateinit var sellerAdapter: SellerProductsAdapter
     private lateinit var ordersAdapter: SellerOrdersAdapter
     private var currentTab = 0 // 0 for Products, 1 for Incoming Orders
+
+    private val exportSalesLauncher = registerForActivityResult(
+        ActivityResultContracts.CreateDocument("text/csv")
+    ) { uri ->
+        if (uri != null) {
+            writeSalesCsvToUri(uri)
+        }
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -52,6 +61,7 @@ class SellerProductsFragment : Fragment() {
         rvSellerProducts = view.findViewById(R.id.rv_seller_products)
         layoutEmptySeller = view.findViewById(R.id.layout_empty_seller)
         btnAddProduct = view.findViewById(R.id.btn_add_product)
+        btnExportSales = view.findViewById(R.id.btn_export_sales)
 
         setupRecyclerViews()
         setupTabListener()
@@ -63,6 +73,10 @@ class SellerProductsFragment : Fragment() {
 
         btnAddProduct.setOnClickListener {
             navigateToAddEdit(-1)
+        }
+
+        btnExportSales.setOnClickListener {
+            exportSalesLauncher.launch("laporan_penjualan_saya_${System.currentTimeMillis()}.csv")
         }
 
         return view
@@ -98,6 +112,7 @@ class SellerProductsFragment : Fragment() {
         val currentUser = authViewModel.currentUser.value ?: return
         if (currentTab == 0) {
             btnAddProduct.visibility = View.VISIBLE
+            btnExportSales.visibility = View.GONE
             rvSellerProducts.adapter = sellerAdapter
             // Force refresh products list mapping
             val prodsList = sharedViewModel.productsList.value ?: emptyList()
@@ -105,6 +120,7 @@ class SellerProductsFragment : Fragment() {
             toggleEmptyState(sellerProducts.isEmpty())
         } else {
             btnAddProduct.visibility = View.GONE
+            btnExportSales.visibility = View.VISIBLE
             rvSellerProducts.adapter = ordersAdapter
             // Fetch seller orders
             progressLoader.visibility = View.VISIBLE
@@ -202,5 +218,38 @@ class SellerProductsFragment : Fragment() {
     private fun showOrderDetail(order: com.agroSystem.app.data.remote.OrderItemResponse) {
         val bottomSheet = OrderDetailBottomSheetFragment.newInstance(order)
         bottomSheet.show(childFragmentManager, "OrderDetailSheet")
+    }
+
+    private fun writeSalesCsvToUri(uri: android.net.Uri) {
+        try {
+            val outputStream = requireContext().contentResolver.openOutputStream(uri) ?: return
+            val writer = java.io.BufferedWriter(java.io.OutputStreamWriter(outputStream, "UTF-8"))
+            
+            // Write BOM
+            writer.write("\uFEFF")
+            
+            // CSV Header
+            writer.write("ID Transaksi,ID Pembeli,Daftar Item Terjual,Total Harga,Status Pesanan,Tanggal Pembuatan\n")
+            
+            val ordersList = ordersAdapter.getOrdersList()
+            ordersList.forEach { order ->
+                val orderId = order.orderId.replace("\"", "\"\"")
+                val userId = (order.userId ?: "").replace("\"", "\"\"")
+                val itemsSummary = order.items?.joinToString("; ") { "${it.name} (${it.quantity}x)" }?.replace("\"", "\"\"") ?: ""
+                val amount = order.amount
+                val status = order.status.replace("\"", "\"\"")
+                val createdAt = order.createdAt.replace("\"", "\"\"")
+                
+                writer.write("\"$orderId\",\"$userId\",\"$itemsSummary\",$amount,\"$status\",\"$createdAt\"\n")
+            }
+            
+            writer.flush()
+            writer.close()
+            outputStream.close()
+            Toast.makeText(requireContext(), "Data penjualan berhasil diekspor ke CSV/Excel!", Toast.LENGTH_SHORT).show()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Toast.makeText(requireContext(), "Gagal mengekspor data: ${e.message}", Toast.LENGTH_LONG).show()
+        }
     }
 }

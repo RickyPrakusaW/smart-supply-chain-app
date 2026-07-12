@@ -25,6 +25,8 @@ class TransactionHistoryAdapter(
         notifyDataSetChanged()
     }
 
+    fun getOrdersList(): List<OrderItemResponse> = orders
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.item_transaction, parent, false)
         return ViewHolder(view)

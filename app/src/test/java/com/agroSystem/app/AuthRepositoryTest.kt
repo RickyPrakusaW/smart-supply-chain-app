@@ -1,5 +1,7 @@
 package com.agroSystem.app
 
+import android.content.Context
+import android.content.SharedPreferences
 import com.agroSystem.app.data.local.dao.UserDao
 import com.agroSystem.app.data.local.entities.UserEntity
 import com.agroSystem.app.data.local.entities.toEntity
@@ -15,8 +17,9 @@ import org.mockito.Mock
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.verify
 import org.mockito.MockitoAnnotations
-
-import com.agroSystem.app.data.remote.AuthApiService
+import org.mockito.ArgumentMatchers.anyString
+import org.mockito.ArgumentMatchers.anyInt
+import org.mockito.ArgumentMatchers.nullable
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class AuthRepositoryTest {
@@ -25,14 +28,24 @@ class AuthRepositoryTest {
     private lateinit var userDao: UserDao
 
     @Mock
-    private lateinit var authApiService: AuthApiService
+    private lateinit var context: Context
+
+    @Mock
+    private lateinit var sharedPreferences: SharedPreferences
+
+    @Mock
+    private lateinit var sharedPreferencesEditor: SharedPreferences.Editor
 
     private lateinit var authRepository: AuthRepository
 
     @Before
     fun setUp() {
         MockitoAnnotations.openMocks(this)
-        authRepository = AuthRepository(userDao, authApiService)
+        `when`(context.getSharedPreferences(anyString(), anyInt())).thenReturn(sharedPreferences)
+        `when`(sharedPreferences.edit()).thenReturn(sharedPreferencesEditor)
+        `when`(sharedPreferencesEditor.putString(anyString(), nullable(String::class.java))).thenReturn(sharedPreferencesEditor)
+        `when`(sharedPreferences.getString(anyString(), nullable(String::class.java))).thenReturn(null)
+        authRepository = AuthRepository(userDao, context)
     }
 
     @Test
