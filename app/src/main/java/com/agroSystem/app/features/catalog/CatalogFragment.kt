@@ -24,6 +24,7 @@ import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import android.util.Log
 
 class CatalogFragment : Fragment() {
 
@@ -210,15 +211,20 @@ class CatalogFragment : Fragment() {
             try {
                 val client = okhttp3.OkHttpClient()
                 val url = "https://edamam-food-and-grocery-database.p.rapidapi.com/api/food-database/v2/parser?ingr=" + java.net.URLEncoder.encode(query, "UTF-8")
+                
+                Log.d("CatalogFragment", "Searching Edamam food URL: $url")
+                
                 val request = okhttp3.Request.Builder()
                     .url(url)
                     .get()
-                    .addHeader("x-rapidapi-host", "edamam-food-and-grocery-database.p.rapidapi.com")
-                    .addHeader("x-rapidapi-key", "d0cb222ccfmshdb370c52ef78688p171408jsn420b6036d587")
+                    .addHeader("X-RapidAPI-Host", "edamam-food-and-grocery-database.p.rapidapi.com")
+                    .addHeader("X-RapidAPI-Key", "d0cb222ccfmshdb370c52ef78688p171408jsn420b6036d587")
                     .build()
 
                 val response = client.newCall(request).execute()
                 val responseBody = response.body?.string()
+                
+                Log.d("CatalogFragment", "Edamam response code: ${response.code}, body: $responseBody")
 
                 withContext(Dispatchers.Main) {
                     progressEdamam.visibility = View.GONE
@@ -233,16 +239,17 @@ class CatalogFragment : Fragment() {
                             textEmptyEdamam.visibility = View.GONE
                         }
                     } else {
+                        Log.e("CatalogFragment", "Edamam API failed: Code = ${response.code}, Body = $responseBody")
                         textEmptyEdamam.visibility = View.VISIBLE
                         textEmptyEdamam.text = "Gagal memuat data dari Edamam API (Error: ${response.code})"
                     }
                 }
             } catch (e: Exception) {
-                e.printStackTrace()
+                Log.e("CatalogFragment", "Edamam network exception occurred", e)
                 withContext(Dispatchers.Main) {
                     progressEdamam.visibility = View.GONE
                     textEmptyEdamam.visibility = View.VISIBLE
-                    textEmptyEdamam.text = "Terjadi kesalahan koneksi ke Edamam API."
+                    textEmptyEdamam.text = "Terjadi kesalahan koneksi ke Edamam API: ${e.message}"
                 }
             }
         }

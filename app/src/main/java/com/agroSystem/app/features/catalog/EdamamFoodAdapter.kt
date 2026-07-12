@@ -17,26 +17,26 @@ import java.net.URL
 import java.text.DecimalFormat
 
 data class EdamamResponse(
-    val hints: List<EdamamHint>?
+    @com.google.gson.annotations.SerializedName("hints") val hints: List<EdamamHint>?
 )
 
 data class EdamamHint(
-    val food: EdamamFood?
+    @com.google.gson.annotations.SerializedName("food") val food: EdamamFood?
 )
 
 data class EdamamFood(
-    val foodId: String?,
-    val label: String?,
-    val category: String?,
-    val image: String?,
-    val nutrients: EdamamNutrients?
+    @com.google.gson.annotations.SerializedName("foodId") val foodId: String?,
+    @com.google.gson.annotations.SerializedName("label") val label: String?,
+    @com.google.gson.annotations.SerializedName("category") val category: String?,
+    @com.google.gson.annotations.SerializedName("image") val image: String?,
+    @com.google.gson.annotations.SerializedName("nutrients") val nutrients: EdamamNutrients?
 )
 
 data class EdamamNutrients(
-    val ENERC_KCAL: Double? = 0.0,
-    val PROCNT: Double? = 0.0,
-    val FAT: Double? = 0.0,
-    val CHOCDF: Double? = 0.0
+    @com.google.gson.annotations.SerializedName("ENERC_KCAL") val ENERC_KCAL: Double? = 0.0,
+    @com.google.gson.annotations.SerializedName("PROCNT") val PROCNT: Double? = 0.0,
+    @com.google.gson.annotations.SerializedName("FAT") val FAT: Double? = 0.0,
+    @com.google.gson.annotations.SerializedName("CHOCDF") val CHOCDF: Double? = 0.0
 )
 
 class EdamamFoodAdapter(
@@ -90,13 +90,19 @@ class EdamamFoodAdapter(
                 return
             }
 
+            val secureUrlStr = if (urlStr.startsWith("http://")) {
+                urlStr.replace("http://", "https://")
+            } else {
+                urlStr
+            }
+
             // Bind to lifecycle scope of view to avoid leaks
             val lifecycleOwner = itemView.findViewTreeLifecycleOwner()
             val scope = lifecycleOwner?.lifecycleScope ?: kotlinx.coroutines.GlobalScope
 
             scope.launch(Dispatchers.IO) {
                 try {
-                    val connection = URL(urlStr).openConnection() as HttpURLConnection
+                    val connection = URL(secureUrlStr).openConnection() as HttpURLConnection
                     connection.doInput = true
                     connection.connect()
                     val input = connection.inputStream
