@@ -336,11 +336,11 @@ class CheckoutFragment : Fragment() {
                         btnPlaceOrder.isEnabled = true
                         if (response.isSuccessful && responseBody != null) {
                             try {
-                                val jsonObject = com.google.gson.JsonParser.parseString(responseBody).asJsonObject
-                                val success = jsonObject.get("success")?.asBoolean ?: false
-                                val dataObj = jsonObject.getAsJsonObject("data")
-                                val paymentObj = dataObj?.getAsJsonObject("payment")
-                                val redirectUrl = paymentObj?.get("redirect_url")?.asString
+                                val responseMap = com.google.gson.Gson().fromJson(responseBody, Map::class.java)
+                                val success = responseMap["success"] as? Boolean ?: false
+                                val dataObj = responseMap["data"] as? Map<*, *>
+                                val paymentObj = dataObj?.get("payment") as? Map<*, *>
+                                val redirectUrl = paymentObj?.get("redirect_url") as? String
 
                                 if (success && !redirectUrl.isNullOrEmpty()) {
                                     val bundle = Bundle().apply {
