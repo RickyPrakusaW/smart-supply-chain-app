@@ -224,6 +224,7 @@ class CatalogFragment : Fragment() {
         val txtFat: TextView = dialogView.findViewById(R.id.txt_dialog_fat)
         val txtCarbs: TextView = dialogView.findViewById(R.id.txt_dialog_carbs)
         val btnClose: View = dialogView.findViewById(R.id.btn_close_dialog)
+        val btnBuy: View = dialogView.findViewById(R.id.btn_buy_edamam)
 
         txtTitle.text = food.label ?: "-"
         txtCategory.text = food.category ?: "Umum"
@@ -237,6 +238,48 @@ class CatalogFragment : Fragment() {
 
         btnClose.setOnClickListener {
             dialog.dismiss()
+        }
+
+        btnBuy.setOnClickListener {
+            val rawId = (food.foodId ?: "").hashCode()
+            val finalId = if (rawId == Int.MIN_VALUE) 99999 else Math.abs(rawId)
+
+            val rawCategory = food.category?.lowercase() ?: ""
+            val categoryMapped = when {
+                rawCategory.contains("dairy") || rawCategory.contains("susu") -> "Susu"
+                rawCategory.contains("vegetable") || rawCategory.contains("sayuran") || rawCategory.contains("bayam") || rawCategory.contains("tomat") || rawCategory.contains("kentang") -> "Sayuran"
+                rawCategory.contains("meat") || rawCategory.contains("daging") || rawCategory.contains("chicken") || rawCategory.contains("poultry") -> "Daging"
+                rawCategory.contains("egg") || rawCategory.contains("telur") -> "Telur"
+                else -> "Bahan Sup"
+            }
+
+            val product = Product(
+                id = finalId,
+                name = food.label ?: "Makanan Edamam",
+                farmer = "Mitra Tani Edamam",
+                rating = "4.9",
+                price = 15000,
+                unit = "1 kg",
+                imageResId = R.drawable.sayuran,
+                category = categoryMapped,
+                isEcoFriendly = true,
+                deliveryDays = 2,
+                protein = "${df.format(nutrients?.PROCNT ?: 0.0)}g",
+                fat = "${df.format(nutrients?.FAT ?: 0.0)}g",
+                carbs = "${df.format(nutrients?.CHOCDF ?: 0.0)}g",
+                calories = "${df.format(nutrients?.ENERC_KCAL ?: 0.0)} Kcal",
+                ingredients = "Bahan segar bersumber dari Edamam Global Database.",
+                ownerId = "google_admingmailcom",
+                imageBytes = food.image
+            )
+
+            sharedViewModel.createProduct(product) { success ->
+                activity?.runOnUiThread {
+                    sharedViewModel.addProductToCart(product)
+                    Toast.makeText(requireContext(), "${product.name} ditambahkan ke keranjang!", Toast.LENGTH_SHORT).show()
+                    dialog.dismiss()
+                }
+            }
         }
 
         // Load image URL securely

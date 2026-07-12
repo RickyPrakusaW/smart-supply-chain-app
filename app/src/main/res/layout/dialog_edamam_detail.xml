@@ -268,10 +268,21 @@
     </com.google.android.material.card.MaterialCardView>
 
     <com.google.android.material.button.MaterialButton
-        android:id="@+id/btn_close_dialog"
+        android:id="@+id/btn_buy_edamam"
         android:layout_width="match_parent"
         android:layout_height="50dp"
         android:layout_marginTop="20dp"
+        android:text="Beli Bahan Ini (Rp 15.000)"
+        android:textColor="@color/white"
+        android:textStyle="bold"
+        app:backgroundTint="@color/color_accent_terracotta"
+        app:cornerRadius="12dp" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_close_dialog"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_marginTop="10dp"
         android:text="Tutup Detail"
         android:textColor="@color/white"
         android:textStyle="bold"
