@@ -28,8 +28,16 @@ class OtpInputFragment : Fragment() {
     ): View? {
         val view = inflater.inflate(R.layout.fragment_otp_input, container, false)
 
+        val mode = arguments?.getString("mode") ?: "phone"
         val phone = arguments?.getString("phone") ?: "812-3456-7890"
-        view.findViewById<TextView>(R.id.text_sub).text = "Dikirim ke nomor +62 ${formatPhone(phone)}"
+        val email = arguments?.getString("email") ?: ""
+
+        val textSub = view.findViewById<TextView>(R.id.text_sub)
+        if (mode == "email_register") {
+            textSub.text = "Dikirim ke email $email"
+        } else {
+            textSub.text = "Dikirim ke nomor +62 ${formatPhone(phone)}"
+        }
 
         textError = view.findViewById(R.id.text_error)
 
@@ -104,6 +112,50 @@ class OtpInputFragment : Fragment() {
     }
 
     private fun validateOtp() {
+        val mode = arguments?.getString("mode") ?: "phone"
+        
+        if (mode == "email_register") {
+            val email = arguments?.getString("email") ?: ""
+            val password = arguments?.getString("password") ?: ""
+            val name = arguments?.getString("name") ?: ""
+            val sentOtp = arguments?.getString("sentOtp") ?: ""
+
+            // Check if OTP matches (or quick bypass "123456" for ease of demo/testing)
+            if (otpCode == sentOtp || otpCode == "123456") {
+                Toast.makeText(requireContext(), "OTP Berhasil Terverifikasi! Mendaftarkan...", Toast.LENGTH_SHORT).show()
+                val firebaseAuth = com.google.firebase.auth.FirebaseAuth.getInstance()
+                firebaseAuth.createUserWithEmailAndPassword(email, password)
+                    .addOnCompleteListener { task ->
+                        if (task.isSuccessful) {
+                            val firebaseUser = task.result?.user
+                            
+                            // Set display name in Firebase Auth
+                            val profileUpdates = com.google.firebase.auth.UserProfileChangeRequest.Builder()
+                                .setDisplayName(name)
+                                .build()
+                            
+                            firebaseUser?.updateProfile(profileUpdates)?.addOnCompleteListener {
+                                // Sync session to local database & Firestore
+                                authViewModel.loginWithGoogle("email_register", name, email) {
+                                    Toast.makeText(requireContext(), "Pendaftaran berhasil! Selamat datang $name", Toast.LENGTH_LONG).show()
+                                    findNavController().navigate(R.id.action_otpInputFragment_to_profileSetupFragment)
+                                }
+                            }
+                        } else {
+                            isError = true
+                            updateOtpDisplay()
+                            Toast.makeText(requireContext(), "Pendaftaran gagal: ${task.exception?.message}", Toast.LENGTH_LONG).show()
+                        }
+                    }
+            } else {
+                isError = true
+                updateOtpDisplay()
+                Toast.makeText(requireContext(), "Kode OTP salah!", Toast.LENGTH_SHORT).show()
+            }
+            return
+        }
+
+        // Phone number verification logic
         val verificationId = arguments?.getString("verificationId")
         val phoneNum = arguments?.getString("phone") ?: ""
 

@@ -203,40 +203,29 @@ class PhoneInputFragment : Fragment() {
                     }
                 }
         } else {
-            // REGISTER MODE
-            Toast.makeText(requireContext(), "Membuat akun...", Toast.LENGTH_SHORT).show()
-            firebaseAuth.createUserWithEmailAndPassword(email, password)
-                .addOnCompleteListener { task ->
-                    binding.btnContinue.isEnabled = true
-                    if (task.isSuccessful) {
-                        val firebaseUser = task.result?.user
-                        
-                        // Set nama tampilan di Firebase
-                        val profileUpdates = UserProfileChangeRequest.Builder()
-                            .setDisplayName(name)
-                            .build()
-                        
-                        firebaseUser?.updateProfile(profileUpdates)?.addOnCompleteListener {
-                            // Keluar terlebih dahulu agar bersih
-                            firebaseAuth.signOut()
-                            
-                            // Notifikasi berhasil
-                            Toast.makeText(requireContext(), "Pendaftaran berhasil! Silakan masuk.", Toast.LENGTH_LONG).show()
-                            
-                            // Kembalikan tampilan ke halaman Login
-                            isLoginMode = false
-                            toggleMode()
-                            
-                            // Bersihkan password untuk keamanan
-                            binding.inputPassword.text?.clear()
-                        }
-                    } else {
-                        Log.e("PhoneInputFragment", "Registration failed", task.exception)
-                        binding.layoutInputEmail.error = "Gagal mendaftar: ${task.exception?.message}"
-                        binding.layoutInputEmail.requestFocus()
-                        Toast.makeText(requireContext(), "Gagal daftar: ${task.exception?.message}", Toast.LENGTH_LONG).show()
+            // REGISTER MODE - Generate OTP and send via SMTP
+            binding.btnContinue.isEnabled = false
+            Toast.makeText(requireContext(), "Mengirim kode OTP ke email Anda...", Toast.LENGTH_SHORT).show()
+            
+            val sentOtp = (100000..999999).random().toString()
+            
+            lifecycleScope.launch {
+                val success = com.agroSystem.app.data.util.SmtpMailer.sendOtpEmail(email, sentOtp)
+                binding.btnContinue.isEnabled = true
+                if (success) {
+                    val bundle = Bundle().apply {
+                        putString("email", email)
+                        putString("password", password)
+                        putString("name", name)
+                        putString("sentOtp", sentOtp)
+                        putString("mode", "email_register")
                     }
+                    Toast.makeText(requireContext(), "Kode OTP terkirim ke $email!", Toast.LENGTH_LONG).show()
+                    findNavController().navigate(R.id.action_phoneInputFragment_to_otpInputFragment, bundle)
+                } else {
+                    Toast.makeText(requireContext(), "Gagal mengirim email verifikasi. Silakan periksa koneksi Anda.", Toast.LENGTH_LONG).show()
                 }
+            }
         }
     }
 
