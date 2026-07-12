@@ -252,20 +252,27 @@ class MainSharedViewModel(application: Application) : AndroidViewModel(applicati
                             val itemsRaw = doc.get("items") as? List<Map<String, Any>>
                             val checkoutItems = itemsRaw?.map { itemMap ->
                                 com.agroSystem.app.data.remote.CheckoutItem(
-                                    id = (itemMap["id"] as? Long)?.toInt() ?: 0,
+                                    id = (itemMap["id"] as? Number)?.toInt() ?: 0,
                                     name = itemMap["name"] as? String ?: "",
-                                    price = (itemMap["price"] as? Long)?.toInt() ?: 0,
-                                    quantity = (itemMap["quantity"] as? Long)?.toInt() ?: 0,
+                                    price = (itemMap["price"] as? Number)?.toInt() ?: 0,
+                                    quantity = (itemMap["quantity"] as? Number)?.toInt() ?: 0,
                                     ownerId = itemMap["ownerId"] as? String
                                 )
                             }
                             
+                            val createdAtRaw = doc.get("createdAt")
+                            val createdAt = when (createdAtRaw) {
+                                is com.google.firebase.Timestamp -> createdAtRaw.toDate().toString()
+                                is String -> createdAtRaw
+                                else -> createdAtRaw?.toString() ?: ""
+                            }
+
                             com.agroSystem.app.data.remote.OrderItemResponse(
                                 orderId = doc.getString("orderId") ?: doc.id,
                                 userId = doc.getString("userId"),
-                                amount = doc.getLong("amount")?.toInt() ?: 0,
+                                amount = (doc.get("amount") as? Number)?.toInt() ?: 0,
                                 status = doc.getString("status") ?: "pending",
-                                createdAt = doc.getString("createdAt") ?: doc.getTimestamp("createdAt")?.toDate()?.toString() ?: "",
+                                createdAt = createdAt,
                                 items = checkoutItems,
                                 payment = null
                             )
