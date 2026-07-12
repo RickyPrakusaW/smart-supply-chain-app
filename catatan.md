@@ -99,7 +99,7 @@ Menghubungkan aplikasi Android dengan database cloud secara online.
 ---
 
 ## 🔌 11. Integrasi Pihak Ketiga (3rd Party APIs)
-Aplikasi Anda menggunakan 6 integrasi pihak ketiga berikut untuk menambahkan fitur-fitur premium:
+Aplikasi Anda menggunakan 7 integrasi pihak ketiga berikut untuk menambahkan fitur-fitur premium:
 
 1.  **Google Gemini AI API (gemini-3.5-flash)**
     *   *Fungsi*: Mesin kecerdasan buatan (Generative AI) yang digunakan untuk menjawab chat dari pengguna seputar cara bertani, resep masakan, dan kandungan nutrisi sayuran di ruang obrolan Asisten Tani AI.
@@ -113,3 +113,5 @@ Aplikasi Anda menggunakan 6 integrasi pihak ketiga berikut untuk menambahkan fit
     *   *Fungsi*: Layanan dari Google Cloud Platform (GCP) yang mengelola database pendaftaran pengguna baru, masuk akun menggunakan E-mail & Sandi, dan verifikasi nomor telepon.
 6.  **Spoonacular Food & Groceries API**
     *   *Fungsi*: API data makanan yang digunakan oleh server backend pada saat proses seeding untuk memperkaya info produk pangan (detail kandungan nutrisi, saran penyimpanan, dan masa kadaluarsa sayuran segar).
+7.  **Edamam Food and Grocery Database API (RapidAPI)**
+    *   *Fungsi*: API data gizi pangan terintegrasi di tab Edamam halaman katalog untuk mencari detail kalori, kandungan protein, lemak, dan karbohidrat secara real-time dari jutaan basis data makanan secara instan.
