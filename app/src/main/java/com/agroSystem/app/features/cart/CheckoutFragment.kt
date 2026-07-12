@@ -25,6 +25,8 @@ import com.agroSystem.app.features.auth.AuthViewModel
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import android.util.Log
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.Timestamp
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
 import kotlinx.coroutines.Dispatchers
@@ -341,8 +343,12 @@ class CheckoutFragment : Fragment() {
                                 val dataObj = responseMap["data"] as? Map<*, *>
                                 val paymentObj = dataObj?.get("payment") as? Map<*, *>
                                 val redirectUrl = paymentObj?.get("redirect_url") as? String
+                                val serverOrderId = dataObj?.get("orderId") as? String
 
                                 if (success && !redirectUrl.isNullOrEmpty()) {
+                                    val finalOrderId = serverOrderId ?: ("TRX-" + System.currentTimeMillis())
+                                    saveOrderToFirestore(finalOrderId, total, checkoutItems)
+
                                     val bundle = Bundle().apply {
                                         putString("payment_url", redirectUrl)
                                     }
@@ -356,6 +362,8 @@ class CheckoutFragment : Fragment() {
                         
                         // Fallback to local simulation if server responds with error
                         val mockOrderId = "TRX-" + System.currentTimeMillis() + "-" + (100..999).random()
+                        saveOrderToFirestore(mockOrderId, total, checkoutItems)
+
                         val redirectUrl = "mock://payment?orderId=$mockOrderId&amount=$total"
                         val bundle = Bundle().apply {
                             putString("payment_url", redirectUrl)
@@ -367,6 +375,8 @@ class CheckoutFragment : Fragment() {
                     activity?.runOnUiThread {
                         btnPlaceOrder.isEnabled = true
                         val mockOrderId = "TRX-" + System.currentTimeMillis() + "-" + (100..999).random()
+                        saveOrderToFirestore(mockOrderId, total, checkoutItems)
+
                         val redirectUrl = "mock://payment?orderId=$mockOrderId&amount=$total"
                         val bundle = Bundle().apply {
                             putString("payment_url", redirectUrl)
@@ -606,6 +616,34 @@ class CheckoutFragment : Fragment() {
 
         val total = subtotal + packagingCost - discount
         textCheckoutTotalPrice.text = "Rp $total"
+    }
+
+    private fun saveOrderToFirestore(orderId: String, amount: Int, items: List<com.agroSystem.app.data.remote.CheckoutItem>) {
+        val db = FirebaseFirestore.getInstance()
+        val itemsMap = items.map { item ->
+            mapOf(
+                "id" to item.id,
+                "name" to item.name,
+                "price" to item.price,
+                "quantity" to item.quantity,
+                "ownerId" to item.ownerId
+            )
+        }
+        val orderMap = hashMapOf(
+            "orderId" to orderId,
+            "userId" to (authViewModel.currentUser.value?.id ?: "guest_mode_id"),
+            "amount" to amount,
+            "status" to "pending",
+            "createdAt" to Timestamp.now(),
+            "items" to itemsMap
+        )
+        db.collection("orders").document(orderId).set(orderMap)
+            .addOnSuccessListener {
+                Log.d("CheckoutFragment", "Order $orderId successfully saved to Firestore.")
+            }
+            .addOnFailureListener { e ->
+                Log.e("CheckoutFragment", "Failed to save order $orderId", e)
+            }
     }
 
     // Helper syntax conversion
