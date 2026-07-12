@@ -40,7 +40,8 @@ data class EdamamNutrients(
 )
 
 class EdamamFoodAdapter(
-    private var items: List<EdamamHint>
+    private var items: List<EdamamHint>,
+    private val onItemClick: (EdamamHint) -> Unit
 ) : RecyclerView.Adapter<EdamamFoodAdapter.ViewHolder>() {
 
     fun updateItems(newItems: List<EdamamHint>) {
@@ -56,6 +57,9 @@ class EdamamFoodAdapter(
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val hint = items[position]
         holder.bind(hint)
+        holder.itemView.setOnClickListener {
+            onItemClick(hint)
+        }
     }
 
     override fun getItemCount(): Int = items.size

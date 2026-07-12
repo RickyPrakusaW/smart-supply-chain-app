@@ -6,6 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import android.widget.Toast
+import android.widget.ImageView
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -189,7 +190,9 @@ class CatalogFragment : Fragment() {
 
     private fun setupEdamamTab() {
         rvEdamam.layoutManager = LinearLayoutManager(requireContext())
-        edamamAdapter = EdamamFoodAdapter(emptyList())
+        edamamAdapter = EdamamFoodAdapter(emptyList()) { hint ->
+            showEdamamDetailBottomSheet(hint)
+        }
         rvEdamam.adapter = edamamAdapter
 
         btnSearchEdamam.setOnClickListener {
@@ -200,6 +203,74 @@ class CatalogFragment : Fragment() {
             }
             searchEdamamFood(query)
         }
+
+        // Trigger default query: fresh vegetables to populate the food catalog on start
+        searchEdamamFood("fresh vegetables")
+    }
+
+    private fun showEdamamDetailBottomSheet(hint: EdamamHint) {
+        val food = hint.food ?: return
+        val dialog = com.google.android.material.bottomsheet.BottomSheetDialog(requireContext())
+        val dialogView = layoutInflater.inflate(R.layout.dialog_edamam_detail, null)
+        dialog.setContentView(dialogView)
+
+        val imgFood: ImageView = dialogView.findViewById(R.id.img_dialog_food)
+        val txtTitle: TextView = dialogView.findViewById(R.id.txt_dialog_title)
+        val txtCategory: TextView = dialogView.findViewById(R.id.txt_dialog_category)
+        val txtCalories: TextView = dialogView.findViewById(R.id.txt_dialog_calories)
+        val txtProtein: TextView = dialogView.findViewById(R.id.txt_dialog_protein)
+        val txtFat: TextView = dialogView.findViewById(R.id.txt_dialog_fat)
+        val txtCarbs: TextView = dialogView.findViewById(R.id.txt_dialog_carbs)
+        val btnClose: View = dialogView.findViewById(R.id.btn_close_dialog)
+
+        txtTitle.text = food.label ?: "-"
+        txtCategory.text = food.category ?: "Umum"
+
+        val nutrients = food.nutrients
+        val df = java.text.DecimalFormat("#.#")
+        txtCalories.text = "${df.format(nutrients?.ENERC_KCAL ?: 0.0)} kcal"
+        txtProtein.text = "${df.format(nutrients?.PROCNT ?: 0.0)}g"
+        txtFat.text = "${df.format(nutrients?.FAT ?: 0.0)}g"
+        txtCarbs.text = "${df.format(nutrients?.CHOCDF ?: 0.0)}g"
+
+        btnClose.setOnClickListener {
+            dialog.dismiss()
+        }
+
+        // Load image URL securely
+        val urlStr = food.image
+        if (!urlStr.isNullOrEmpty()) {
+            val secureUrlStr = if (urlStr.startsWith("http://")) {
+                urlStr.replace("http://", "https://")
+            } else {
+                urlStr
+            }
+            lifecycleScope.launch(Dispatchers.IO) {
+                try {
+                    val connection = java.net.URL(secureUrlStr).openConnection() as java.net.HttpURLConnection
+                    connection.doInput = true
+                    connection.connect()
+                    val input = connection.inputStream
+                    val bitmap = android.graphics.BitmapFactory.decodeStream(input)
+                    withContext(Dispatchers.Main) {
+                        if (bitmap != null) {
+                            imgFood.setImageBitmap(bitmap)
+                        } else {
+                            imgFood.setImageResource(R.drawable.sayuran)
+                        }
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    withContext(Dispatchers.Main) {
+                        imgFood.setImageResource(R.drawable.sayuran)
+                    }
+                }
+            }
+        } else {
+            imgFood.setImageResource(R.drawable.sayuran)
+        }
+
+        dialog.show()
     }
 
     private fun searchEdamamFood(query: String) {
