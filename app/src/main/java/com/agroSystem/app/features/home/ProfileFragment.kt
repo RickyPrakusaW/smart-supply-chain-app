@@ -91,10 +91,16 @@ class ProfileFragment : Fragment() {
         val btnTransactionHistory: Button = view.findViewById(R.id.btn_transaction_history)
         val btnManageProducts: Button = view.findViewById(R.id.btn_manage_products)
         val btnAdminPanel: Button = view.findViewById(R.id.btn_admin_panel)
+        val btnChatInbox: Button = view.findViewById(R.id.btn_chat_inbox)
 
         btnTransactionHistory.setOnClickListener {
             val navController = parentFragment?.findNavController()
             navController?.navigate(R.id.action_homeFragment_to_transactionHistoryFragment)
+        }
+
+        btnChatInbox.setOnClickListener {
+            val navController = parentFragment?.findNavController()
+            navController?.navigate(R.id.action_homeFragment_to_chatRoomsFragment)
         }
 
         btnManageProducts.setOnClickListener {

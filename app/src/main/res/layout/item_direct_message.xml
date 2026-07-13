@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingVertical="4dp">
+
+    <!-- Sent Message Layout -->
+    <LinearLayout
+        android:id="@+id/layout_sent"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end"
+        android:orientation="vertical"
+        android:gravity="end"
+        android:visibility="gone">
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="0dp"
+            app:strokeWidth="0dp"
+            app:cardBackgroundColor="@color/color_primary_green"
+            android:layout_marginLeft="64dp">
+
+            <TextView
+                android:id="@+id/text_sent_body"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Pesan terkirim..."
+                android:textColor="@color/white"
+                android:textSize="13sp"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="8dp" />
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <TextView
+            android:id="@+id/text_sent_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="10:30"
+            android:textColor="@color/color_text_muted"
+            android:textSize="10sp"
+            android:layout_marginTop="2dp"
+            android:layout_marginRight="4dp" />
+
+    </LinearLayout>
+
+    <!-- Received Message Layout -->
+    <LinearLayout
+        android:id="@+id/layout_received"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="start"
+        android:orientation="vertical"
+        android:gravity="start"
+        android:visibility="visible">
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="0dp"
+            app:strokeWidth="0dp"
+            app:cardBackgroundColor="#F1F1F1"
+            android:layout_marginRight="64dp">
+
+            <TextView
+                android:id="@+id/text_received_body"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Pesan diterima..."
+                android:textColor="@color/color_text_dark"
+                android:textSize="13sp"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="8dp" />
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <TextView
+            android:id="@+id/text_received_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="10:31"
+            android:textColor="@color/color_text_muted"
+            android:textSize="10sp"
+            android:layout_marginTop="2dp"
+            android:layout_marginLeft="4dp" />
+
+    </LinearLayout>
+
+</LinearLayout>

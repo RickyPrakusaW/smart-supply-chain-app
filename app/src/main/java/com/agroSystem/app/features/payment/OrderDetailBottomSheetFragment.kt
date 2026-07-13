@@ -59,6 +59,13 @@ class OrderDetailBottomSheetFragment : BottomSheetDialogFragment() {
         val btnPayNow: MaterialButton = view.findViewById(R.id.btn_pay_now)
         val btnConfirmReceive: MaterialButton = view.findViewById(R.id.btn_confirm_receive)
 
+        // Dispute views
+        val cardDisputeInfo: View = view.findViewById(R.id.card_dispute_info)
+        val textDisputeReason: TextView = view.findViewById(R.id.text_dispute_reason)
+        val layoutSellerDisputeActions: View = view.findViewById(R.id.layout_seller_dispute_actions)
+        val btnRejectDispute: MaterialButton = view.findViewById(R.id.btn_reject_dispute)
+        val btnAcceptDispute: MaterialButton = view.findViewById(R.id.btn_accept_dispute)
+
         // Bind basic details
         textOrderId.text = order.orderId
         textOrderDate.text = formatTimestamp(order.createdAt)
@@ -80,6 +87,16 @@ class OrderDetailBottomSheetFragment : BottomSheetDialogFragment() {
                 textStatus.text = "SELESAI"
                 textStatus.setTextColor(Color.parseColor("#2E7D32"))
                 cardStatusBadge.setCardBackgroundColor(ColorStateList.valueOf(Color.parseColor("#E8F5E9")))
+            }
+            "dispute" -> {
+                textStatus.text = "KOMPLAIN"
+                textStatus.setTextColor(Color.parseColor("#E65100"))
+                cardStatusBadge.setCardBackgroundColor(ColorStateList.valueOf(Color.parseColor("#FFF3E0")))
+            }
+            "refunded" -> {
+                textStatus.text = "KOMPLAIN DISETUJUI"
+                textStatus.setTextColor(Color.parseColor("#C62828"))
+                cardStatusBadge.setCardBackgroundColor(ColorStateList.valueOf(Color.parseColor("#FFEBEE")))
             }
             "failed", "deny", "cancel", "expire" -> {
                 textStatus.text = "GAGAL"
@@ -115,6 +132,15 @@ class OrderDetailBottomSheetFragment : BottomSheetDialogFragment() {
         // Check if the current user is the buyer of this order
         val currentUser = authViewModel.currentUser.value
         val isBuyer = currentUser != null && currentUser.id == order.userId
+        val isSeller = currentUser != null && currentUser.role == "Petani"
+
+        // Render Dispute text if exists
+        if (!order.disputeReason.isNullOrEmpty()) {
+            cardDisputeInfo.visibility = View.VISIBLE
+            textDisputeReason.text = order.disputeReason
+        } else {
+            cardDisputeInfo.visibility = View.GONE
+        }
 
         // Payment continuation (if status is pending and redirect URL is provided)
         val redirectUrl = order.payment?.redirect_url
@@ -151,6 +177,49 @@ class OrderDetailBottomSheetFragment : BottomSheetDialogFragment() {
             }
         } else {
             btnConfirmReceive.visibility = View.GONE
+        }
+
+        // Seller Dispute Actions Handling
+        if (normalizedStatus == "dispute" && isSeller) {
+            layoutSellerDisputeActions.visibility = View.VISIBLE
+            
+            btnAcceptDispute.setOnClickListener {
+                AlertDialog.Builder(requireContext())
+                    .setTitle("Terima Komplain")
+                    .setMessage("Apakah Anda yakin ingin menyetujui komplain ini dan memproses pengembalian dana?")
+                    .setPositiveButton("Terima") { _, _ ->
+                        sharedViewModel.updateOrderStatus(order.orderId, "refunded") { success ->
+                            if (success) {
+                                Toast.makeText(requireContext(), "Komplain diterima, status dana dikembalikan.", Toast.LENGTH_SHORT).show()
+                                dismiss()
+                            } else {
+                                Toast.makeText(requireContext(), "Gagal memproses persetujuan.", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    }
+                    .setNegativeButton("Batal", null)
+                    .show()
+            }
+
+            btnRejectDispute.setOnClickListener {
+                AlertDialog.Builder(requireContext())
+                    .setTitle("Tolak Komplain")
+                    .setMessage("Apakah Anda yakin ingin menolak komplain ini dan mengembalikan status ke selesai?")
+                    .setPositiveButton("Tolak Komplain") { _, _ ->
+                        sharedViewModel.updateOrderStatus(order.orderId, "completed") { success ->
+                            if (success) {
+                                Toast.makeText(requireContext(), "Komplain ditolak, pesanan diselesaikan kembali.", Toast.LENGTH_SHORT).show()
+                                dismiss()
+                            } else {
+                                Toast.makeText(requireContext(), "Gagal menolak komplain.", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    }
+                    .setNegativeButton("Batal", null)
+                    .show()
+            }
+        } else {
+            layoutSellerDisputeActions.visibility = View.GONE
         }
 
         return view

@@ -250,6 +250,79 @@
 
         </LinearLayout>
 
+        <!-- Dispute details container (Visible when order is in dispute or refunded) -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/card_dispute_info"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="20dp"
+            android:visibility="gone"
+            app:cardCornerRadius="10dp"
+            app:cardElevation="0dp"
+            app:strokeWidth="1dp"
+            app:strokeColor="@color/color_red_error"
+            app:cardBackgroundColor="#FFF5F5">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Rincian Komplain Pembeli:"
+                    android:textColor="@color/color_red_error"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="4dp" />
+
+                <TextView
+                    android:id="@+id/text_dispute_reason"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Deskripsi komplain..."
+                    android:textColor="@color/color_text_dark"
+                    android:textSize="12sp" />
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Seller Dispute Action Buttons -->
+        <LinearLayout
+            android:id="@+id/layout_seller_dispute_actions"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="12dp"
+            android:visibility="gone">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_reject_dispute"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="50dp"
+                android:layout_weight="1"
+                android:text="Tolak"
+                android:textColor="@color/color_text_muted"
+                app:strokeColor="@color/color_border_grey"
+                android:layout_marginRight="8dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_accept_dispute"
+                android:layout_width="0dp"
+                android:layout_height="50dp"
+                android:layout_weight="1.2"
+                android:text="Terima &amp; Refund"
+                android:textColor="@color/white"
+                app:backgroundTint="@color/color_red_error"
+                app:cornerRadius="8dp" />
+
+        </LinearLayout>
+
         <!-- Call to Action button for pending orders -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_pay_now"

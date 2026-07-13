@@ -16,6 +16,7 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
 import com.agroSystem.app.data.remote.OrderItemResponse
 
@@ -77,10 +78,12 @@ class MainSharedViewModel(application: Application) : AndroidViewModel(applicati
 
     val productsList = MutableLiveData<List<Product>>(allProducts)
     val sellerOrders = MutableLiveData<List<OrderItemResponse>>(emptyList())
+    private var sellerOrdersListener: com.google.firebase.firestore.ListenerRegistration? = null
 
     init {
         loadCartFromPrefs()
         fetchProductsFromServer()
+        scheduleOfflineSync()
     }
 
     fun fetchProductsFromServer() {
@@ -168,26 +171,70 @@ class MainSharedViewModel(application: Application) : AndroidViewModel(applicati
     }
 
     fun createProduct(product: Product, onResult: (Boolean) -> Unit) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
+            val localDb = AppDatabase.getDatabase(getApplication())
+            val unsyncedProduct = product.copy(isSynced = false)
+            
+            // Save to Room immediately
+            localDb.productDao().insertProducts(listOf(unsyncedProduct.toEntity()))
+            
+            withContext(Dispatchers.Main) {
+                if (!allProducts.any { it.id == product.id }) {
+                    allProducts.add(unsyncedProduct)
+                    productsList.value = allProducts.toList()
+                }
+            }
+
             try {
                 val db = com.google.firebase.firestore.FirebaseFirestore.getInstance()
-                db.collection("products").document(product.id.toString()).set(product)
+                db.collection("products").document(product.id.toString()).set(product.copy(isSynced = true))
                     .addOnSuccessListener {
                         viewModelScope.launch(Dispatchers.IO) {
-                            val localDb = AppDatabase.getDatabase(getApplication())
-                            localDb.productDao().insertProducts(listOf(product.toEntity()))
+                            localDb.productDao().markProductAsSynced(product.id)
                         }
-                        allProducts.add(product)
-                        productsList.value = allProducts
+                        // Update in-memory state to show synced
+                        viewModelScope.launch(Dispatchers.Main) {
+                            val updatedList = allProducts.map { 
+                                if (it.id == product.id) it.copy(isSynced = true) else it
+                            }
+                            allProducts.clear()
+                            allProducts.addAll(updatedList)
+                            productsList.value = allProducts.toList()
+                        }
                         onResult(true)
                     }
-                    .addOnFailureListener {
-                        onResult(false)
+                    .addOnFailureListener { e ->
+                        Log.e("MainSharedViewModel", "Firestore direct save failed, scheduling WorkManager sync", e)
+                        scheduleOfflineSync()
+                        onResult(true) // Return true because it is safely cached in Room!
                     }
             } catch (e: Exception) {
-                e.printStackTrace()
-                onResult(false)
+                Log.e("MainSharedViewModel", "Firestore direct save exception, scheduling WorkManager sync", e)
+                scheduleOfflineSync()
+                onResult(true) // Return true because it is safely cached in Room!
             }
+        }
+    }
+
+    fun scheduleOfflineSync() {
+        try {
+            val constraints = androidx.work.Constraints.Builder()
+                .setRequiredNetworkType(androidx.work.NetworkType.CONNECTED)
+                .build()
+
+            val syncRequest = androidx.work.OneTimeWorkRequestBuilder<com.agroSystem.app.features.seller.OfflineSyncWorker>()
+                .setConstraints(constraints)
+                .build()
+
+            androidx.work.WorkManager.getInstance(getApplication())
+                .enqueueUniqueWork(
+                    "AgriMitraOfflineSync",
+                    androidx.work.ExistingWorkPolicy.KEEP,
+                    syncRequest
+                )
+            Log.d("MainSharedViewModel", "OfflineSyncWorker successfully scheduled via WorkManager.")
+        } catch (e: java.lang.Exception) {
+            e.printStackTrace()
         }
     }
 
@@ -243,48 +290,67 @@ class MainSharedViewModel(application: Application) : AndroidViewModel(applicati
     }
 
     fun fetchSellerOrders(sellerId: String) {
-        viewModelScope.launch {
-            try {
-                val db = com.google.firebase.firestore.FirebaseFirestore.getInstance()
-                db.collection("orders").get()
-                    .addOnSuccessListener { result ->
-                        val orders = result.map { doc ->
-                            val itemsRaw = doc.get("items") as? List<Map<String, Any>>
-                            val checkoutItems = itemsRaw?.map { itemMap ->
-                                com.agroSystem.app.data.remote.CheckoutItem(
-                                    id = (itemMap["id"] as? Number)?.toInt() ?: 0,
-                                    name = itemMap["name"] as? String ?: "",
-                                    price = (itemMap["price"] as? Number)?.toInt() ?: 0,
-                                    quantity = (itemMap["quantity"] as? Number)?.toInt() ?: 0,
-                                    ownerId = itemMap["ownerId"] as? String
-                                )
-                            }
-                            
-                            val createdAtRaw = doc.get("createdAt")
-                            val createdAt = when (createdAtRaw) {
-                                is com.google.firebase.Timestamp -> createdAtRaw.toDate().toString()
-                                is String -> createdAtRaw
-                                else -> createdAtRaw?.toString() ?: ""
-                            }
-
-                            com.agroSystem.app.data.remote.OrderItemResponse(
-                                orderId = doc.getString("orderId") ?: doc.id,
-                                userId = doc.getString("userId"),
-                                amount = (doc.get("amount") as? Number)?.toInt() ?: 0,
-                                status = doc.getString("status") ?: "pending",
-                                createdAt = createdAt,
-                                items = checkoutItems,
-                                payment = null
+        sellerOrdersListener?.remove()
+        try {
+            val db = com.google.firebase.firestore.FirebaseFirestore.getInstance()
+            sellerOrdersListener = db.collection("orders")
+                .addSnapshotListener { result, e ->
+                    if (e != null || result == null) return@addSnapshotListener
+                    
+                    val ordersList = result.map { doc ->
+                        val itemsRaw = doc.get("items") as? List<Map<String, Any>>
+                        val checkoutItems = itemsRaw?.map { itemMap ->
+                            com.agroSystem.app.data.remote.CheckoutItem(
+                                id = (itemMap["id"] as? Number)?.toInt() ?: 0,
+                                name = itemMap["name"] as? String ?: "",
+                                price = (itemMap["price"] as? Number)?.toInt() ?: 0,
+                                quantity = (itemMap["quantity"] as? Number)?.toInt() ?: 0,
+                                ownerId = itemMap["ownerId"] as? String
                             )
                         }
-                        val filteredOrders = orders.filter { order ->
-                            order.items?.any { it.ownerId == sellerId } == true
+                        
+                        val createdAtRaw = doc.get("createdAt")
+                        val createdAt = when (createdAtRaw) {
+                            is com.google.firebase.Timestamp -> createdAtRaw.toDate().toString()
+                            is String -> createdAtRaw
+                            else -> createdAtRaw?.toString() ?: ""
                         }
-                        sellerOrders.value = filteredOrders
+
+                        com.agroSystem.app.data.remote.OrderItemResponse(
+                            orderId = doc.getString("orderId") ?: doc.id,
+                            userId = doc.getString("userId"),
+                            amount = (doc.get("amount") as? Number)?.toInt() ?: 0,
+                            status = doc.getString("status") ?: "pending",
+                            createdAt = createdAt,
+                            items = checkoutItems,
+                            payment = null,
+                            disputeReason = doc.getString("disputeReason")
+                        )
                     }
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
+
+                    val filteredOrders = ordersList.filter { order ->
+                        order.items?.any { it.ownerId == sellerId } == true
+                    }
+
+                    val oldOrders = sellerOrders.value ?: emptyList()
+                    if (oldOrders.isNotEmpty() && filteredOrders.size > oldOrders.size) {
+                        val newOrders = filteredOrders.filter { newOrd ->
+                            !oldOrders.any { it.orderId == newOrd.orderId } &&
+                            (newOrd.status.lowercase() == "success" || newOrd.status.lowercase() == "settlement" || newOrd.status.lowercase() == "shipped" || newOrd.status.lowercase() == "completed")
+                        }
+                        newOrders.forEach { newOrd ->
+                            com.agroSystem.app.features.seller.NotificationHelper.showNotification(
+                                getApplication() as android.content.Context,
+                                "Pesanan Baru Masuk!",
+                                "Anda menerima pesanan baru ${newOrd.orderId} senilai Rp ${java.text.NumberFormat.getNumberInstance(java.util.Locale("id", "ID")).format(newOrd.amount)}!"
+                            )
+                        }
+                    }
+
+                    sellerOrders.value = filteredOrders
+                }
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 
@@ -293,6 +359,27 @@ class MainSharedViewModel(application: Application) : AndroidViewModel(applicati
             try {
                 val db = com.google.firebase.firestore.FirebaseFirestore.getInstance()
                 db.collection("orders").document(orderId).update("status", status)
+                    .addOnSuccessListener {
+                        onResult(true)
+                    }
+                    .addOnFailureListener {
+                        onResult(false)
+                    }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                onResult(false)
+            }
+        }
+    }
+
+    fun updateOrderStatusWithReason(orderId: String, status: String, reason: String, onResult: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val db = com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                db.collection("orders").document(orderId).update(
+                    "status", status,
+                    "disputeReason", reason
+                )
                     .addOnSuccessListener {
                         onResult(true)
                     }
@@ -458,5 +545,10 @@ class MainSharedViewModel(application: Application) : AndroidViewModel(applicati
             matchesSearch && matchesCategory && matchesDelivery && matchesEco && matchesDiscount &&
                     matchesDiet && matchesAllergen && matchesNutrient
         }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        sellerOrdersListener?.remove()
     }
 }

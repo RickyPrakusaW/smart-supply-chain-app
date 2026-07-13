@@ -15,6 +15,9 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.TimeZone
 
+import android.graphics.Color
+import android.content.res.ColorStateList
+
 class SellerOrdersAdapter(
     private var orders: List<OrderItemResponse>,
     private val onItemClick: (OrderItemResponse) -> Unit,
@@ -91,6 +94,18 @@ class SellerOrdersAdapter(
                     textStatus.text = "Selesai"
                     textStatus.setTextColor(ContextCompat.getColor(context, R.color.color_primary_green))
                     cardStatusBadge.setCardBackgroundColor(ContextCompat.getColor(context, R.color.color_olive_light))
+                    btnShipOrder.visibility = View.GONE
+                }
+                "dispute" -> {
+                    textStatus.text = "Komplain Diajukan"
+                    textStatus.setTextColor(Color.parseColor("#E65100"))
+                    cardStatusBadge.setCardBackgroundColor(ColorStateList.valueOf(Color.parseColor("#FFF3E0")))
+                    btnShipOrder.visibility = View.GONE
+                }
+                "refunded" -> {
+                    textStatus.text = "Komplain Disetujui"
+                    textStatus.setTextColor(ContextCompat.getColor(context, R.color.color_red_error))
+                    cardStatusBadge.setCardBackgroundColor(ColorStateList.valueOf(Color.parseColor("#FFEBEE")))
                     btnShipOrder.visibility = View.GONE
                 }
                 else -> {

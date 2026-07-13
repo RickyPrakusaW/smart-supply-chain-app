@@ -32,7 +32,8 @@ data class Product(
     val allergens: List<String> = emptyList(),
     val nutrients: List<String> = emptyList(),
     val ownerId: String? = null,
-    val imageBytes: String? = null
+    val imageBytes: String? = null,
+    val isSynced: Boolean = true
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

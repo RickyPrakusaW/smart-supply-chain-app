@@ -15,10 +15,15 @@ import com.agroSystem.app.features.shared.MainSharedViewModel
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
+import androidx.lifecycle.lifecycleScope
+import com.agroSystem.app.features.auth.AuthViewModel
+import com.agroSystem.app.features.seller.SellerProductsFragment
+import kotlinx.coroutines.launch
 
 class HomeFragment : Fragment() {
 
     private val sharedViewModel: MainSharedViewModel by activityViewModels()
+    private val authViewModel: AuthViewModel by activityViewModels()
 
     private lateinit var bottomNav: BottomNavigationView
     private lateinit var layoutCartOverlay: MaterialCardView
@@ -36,21 +41,32 @@ class HomeFragment : Fragment() {
         textCartInfo = view.findViewById(R.id.text_cart_info)
         btnCheckout = view.findViewById(R.id.btn_checkout)
 
-        // Restore and load the fragment matching the currently selected tab
-        val initialFragment = when (bottomNav.selectedItemId) {
-            R.id.menu_home -> DashboardFragment()
-            R.id.menu_catalog -> CatalogFragment()
-            R.id.menu_favorites -> FavoritesFragment()
-            R.id.menu_profile -> ProfileFragment()
-            else -> DashboardFragment()
+        // Observe currentUser to adjust menu layout dynamically
+        lifecycleScope.launch {
+            authViewModel.currentUser.collect { user ->
+                val menuRes = if (user?.role == "Petani") {
+                    R.menu.bottom_nav_seller
+                } else {
+                    R.menu.bottom_nav_buyer
+                }
+                
+                val currentMenuTag = bottomNav.getTag(R.id.bottom_navigation) as? Int
+                if (currentMenuTag != menuRes) {
+                    bottomNav.menu.clear()
+                    bottomNav.inflateMenu(menuRes)
+                    bottomNav.setTag(R.id.bottom_navigation, menuRes)
+                    bottomNav.selectedItemId = R.id.menu_home
+                    loadFragment(DashboardFragment())
+                }
+            }
         }
-        loadFragment(initialFragment)
 
         bottomNav.setOnItemSelectedListener { menuItem ->
             val fragment = when (menuItem.itemId) {
                 R.id.menu_home -> DashboardFragment()
                 R.id.menu_catalog -> CatalogFragment()
                 R.id.menu_favorites -> FavoritesFragment()
+                R.id.menu_panen -> SellerProductsFragment()
                 R.id.menu_profile -> ProfileFragment()
                 else -> DashboardFragment()
             }
@@ -66,6 +82,18 @@ class HomeFragment : Fragment() {
         // Initialize and bind AI Assistant Floating Action Button
         val fabAiAssistant: com.google.android.material.floatingactionbutton.FloatingActionButton = 
             view.findViewById(R.id.fab_ai_assistant)
+        
+        // Hide floating action button if Petani is logged in
+        lifecycleScope.launch {
+            authViewModel.currentUser.collect { user ->
+                if (user?.role == "Petani") {
+                    fabAiAssistant.visibility = View.GONE
+                } else {
+                    fabAiAssistant.visibility = View.VISIBLE
+                }
+            }
+        }
+
         fabAiAssistant.setOnClickListener {
             findNavController().navigate(R.id.action_homeFragment_to_chatAssistantFragment)
         }

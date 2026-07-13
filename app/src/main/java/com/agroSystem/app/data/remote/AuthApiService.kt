@@ -80,7 +80,8 @@ data class OrderItemResponse(
     val status: String,
     val createdAt: String,
     val items: List<CheckoutItem>?,
-    val payment: OrderPaymentInfo?
+    val payment: OrderPaymentInfo?,
+    val disputeReason: String? = null
 )
 
 data class OrderPaymentInfo(

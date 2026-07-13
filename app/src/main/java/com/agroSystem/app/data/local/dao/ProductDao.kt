@@ -22,4 +22,10 @@ interface ProductDao {
 
     @Query("DELETE FROM products WHERE id = :id")
     fun deleteProductById(id: Int): Int
+
+    @Query("SELECT * FROM products WHERE isSynced = 0")
+    fun getUnsyncedProducts(): List<ProductEntity>
+
+    @Query("UPDATE products SET isSynced = 1 WHERE id = :id")
+    fun markProductAsSynced(id: Int): Int
 }

@@ -793,6 +793,27 @@
 
             </LinearLayout>
 
+            <!-- Chat button -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/btn_chat_seller"
+                android:layout_width="54dp"
+                android:layout_height="54dp"
+                android:layout_marginEnd="8dp"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="0dp"
+                app:strokeWidth="1.5dp"
+                app:strokeColor="@color/color_primary_green"
+                app:cardBackgroundColor="@color/color_surface_warm">
+
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_gravity="center"
+                    android:src="@android:drawable/stat_notify_chat"
+                    app:tint="@color/color_primary_green" />
+
+            </com.google.android.material.card.MaterialCardView>
+
             <!-- Add to Cart or Stepper layout -->
             <FrameLayout
                 android:layout_width="wrap_content"

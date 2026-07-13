@@ -114,6 +114,28 @@
 
         </LinearLayout>
 
+        <!-- Complaint/Dispute action -->
+        <LinearLayout
+            android:id="@+id/layout_dispute"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="end"
+            android:layout_marginTop="8dp"
+            android:visibility="gone">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_raise_dispute"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Ajukan Komplain"
+                android:textColor="@color/color_accent_terracotta"
+                app:icon="@android:drawable/ic_dialog_alert"
+                app:iconTint="@color/color_accent_terracotta" />
+
+        </LinearLayout>
+
     </LinearLayout>
 
 </com.google.android.material.card.MaterialCardView>

@@ -15,12 +15,14 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.agroSystem.app.R
 import com.agroSystem.app.features.auth.AuthViewModel
+import com.agroSystem.app.features.shared.MainSharedViewModel
 import com.google.android.material.card.MaterialCardView
 import kotlinx.coroutines.launch
 
 class TransactionHistoryFragment : Fragment() {
 
     private val authViewModel: AuthViewModel by activityViewModels()
+    private val sharedViewModel: MainSharedViewModel by activityViewModels()
 
     private lateinit var btnBack: MaterialCardView
     private lateinit var progressLoader: ProgressBar
@@ -51,10 +53,16 @@ class TransactionHistoryFragment : Fragment() {
     }
 
     private fun setupRecyclerView() {
-        transactionAdapter = TransactionHistoryAdapter(emptyList()) { order ->
-            val bottomSheet = OrderDetailBottomSheetFragment.newInstance(order)
-            bottomSheet.show(childFragmentManager, "OrderDetailSheet")
-        }
+        transactionAdapter = TransactionHistoryAdapter(
+            orders = emptyList(),
+            onItemClick = { order ->
+                val bottomSheet = OrderDetailBottomSheetFragment.newInstance(order)
+                bottomSheet.show(childFragmentManager, "OrderDetailSheet")
+            },
+            onDisputeClick = { order ->
+                showDisputeDialog(order)
+            }
+        )
         rvTransactions.layoutManager = LinearLayoutManager(requireContext())
         rvTransactions.adapter = transactionAdapter
     }
@@ -95,7 +103,8 @@ class TransactionHistoryFragment : Fragment() {
                             status = doc.getString("status") ?: "pending",
                             createdAt = doc.getString("createdAt") ?: doc.getTimestamp("createdAt")?.toDate()?.toString() ?: "",
                             items = checkoutItems,
-                            payment = null
+                            payment = null,
+                            disputeReason = doc.getString("disputeReason")
                         )
                     }
 
@@ -118,5 +127,53 @@ class TransactionHistoryFragment : Fragment() {
                 Log.e("TransactionHistory", "Error fetching orders list", e)
                 Toast.makeText(requireContext(), "Gagal menghubungkan ke database: ${e.message}", Toast.LENGTH_SHORT).show()
             }
+    }
+
+    private fun showDisputeDialog(order: com.agroSystem.app.data.remote.OrderItemResponse) {
+        val builder = androidx.appcompat.app.AlertDialog.Builder(requireContext())
+        builder.setTitle("Ajukan Komplain Transaksi")
+        
+        // Input message
+        val input = android.widget.EditText(requireContext()).apply {
+            hint = "Tuliskan kendala Anda (misal: barang rusak, kurang jumlah, dll.)"
+            minLines = 3
+            gravity = android.view.Gravity.TOP
+            setPadding(32, 32, 32, 32)
+        }
+        
+        val container = android.widget.FrameLayout(requireContext())
+        val params = android.widget.FrameLayout.LayoutParams(
+            android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+            android.view.ViewGroup.LayoutParams.WRAP_CONTENT
+        ).apply {
+            leftMargin = 48
+            rightMargin = 48
+            topMargin = 16
+            bottomMargin = 16
+        }
+        input.layoutParams = params
+        container.addView(input)
+        builder.setView(container)
+
+        builder.setPositiveButton("Kirim Komplain") { _, _ ->
+            val reason = input.text.toString().trim()
+            if (reason.isEmpty()) {
+                Toast.makeText(requireContext(), "Alasan komplain tidak boleh kosong!", Toast.LENGTH_SHORT).show()
+                return@setPositiveButton
+            }
+
+            progressLoader.visibility = View.VISIBLE
+            sharedViewModel.updateOrderStatusWithReason(order.orderId, "dispute", reason) { success ->
+                progressLoader.visibility = View.GONE
+                if (success) {
+                    Toast.makeText(requireContext(), "Komplain transaksi berhasil diajukan!", Toast.LENGTH_LONG).show()
+                    loadTransactionHistory() // Reload history list to update UI state
+                } else {
+                    Toast.makeText(requireContext(), "Gagal mengajukan komplain.", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+        builder.setNegativeButton("Batal", null)
+        builder.show()
     }
 }

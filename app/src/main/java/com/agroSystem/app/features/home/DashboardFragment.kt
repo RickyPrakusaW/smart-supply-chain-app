@@ -25,10 +25,14 @@ import com.agroSystem.app.features.catalog.ProductGridAdapter
 import com.agroSystem.app.features.shared.MainSharedViewModel
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.card.MaterialCardView
+import androidx.lifecycle.lifecycleScope
+import com.agroSystem.app.features.auth.AuthViewModel
+import kotlinx.coroutines.launch
 
 class DashboardFragment : Fragment() {
 
     private val sharedViewModel: MainSharedViewModel by activityViewModels()
+    private val authViewModel: AuthViewModel by activityViewModels()
 
     private lateinit var textAddress: TextView
     private lateinit var btnCart: MaterialCardView
@@ -84,10 +88,22 @@ class DashboardFragment : Fragment() {
             findNavController().navigate(R.id.action_homeFragment_to_cartFragment)
         }
 
+        // Show/hide cart button based on user role
+        lifecycleScope.launch {
+            authViewModel.currentUser.collect { user ->
+                if (user?.role == "Petani") {
+                    btnCart.visibility = View.GONE
+                } else {
+                    btnCart.visibility = View.VISIBLE
+                }
+            }
+        }
+
         // Observe cart items to update top-right cart badge count
         sharedViewModel.cartItems.observe(viewLifecycleOwner) { cartMap ->
             val totalItemCount = cartMap.values.sum()
-            if (totalItemCount > 0) {
+            val currentUser = authViewModel.currentUser.value
+            if (totalItemCount > 0 && currentUser?.role != "Petani") {
                 textCartBadge.visibility = View.VISIBLE
                 textCartBadge.text = totalItemCount.toString()
             } else {

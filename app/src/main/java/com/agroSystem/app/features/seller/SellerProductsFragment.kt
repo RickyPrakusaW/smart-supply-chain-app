@@ -23,6 +23,7 @@ import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.tabs.TabLayout
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.platform.ComposeView
 
 class SellerProductsFragment : Fragment() {
 
@@ -36,10 +37,11 @@ class SellerProductsFragment : Fragment() {
     private lateinit var layoutEmptySeller: View
     private lateinit var btnAddProduct: MaterialButton
     private lateinit var btnExportSales: MaterialButton
+    private lateinit var composeView: ComposeView
 
     private lateinit var sellerAdapter: SellerProductsAdapter
     private lateinit var ordersAdapter: SellerOrdersAdapter
-    private var currentTab = 0 // 0 for Products, 1 for Incoming Orders
+    private var currentTab = 0 // 0 for Products, 1 for Incoming Orders, 2 for Analytics
 
     private val exportSalesLauncher = registerForActivityResult(
         ActivityResultContracts.CreateDocument("text/csv")
@@ -62,6 +64,7 @@ class SellerProductsFragment : Fragment() {
         layoutEmptySeller = view.findViewById(R.id.layout_empty_seller)
         btnAddProduct = view.findViewById(R.id.btn_add_product)
         btnExportSales = view.findViewById(R.id.btn_export_sales)
+        composeView = view.findViewById(R.id.compose_view_analytics)
 
         setupRecyclerViews()
         setupTabListener()
@@ -113,18 +116,41 @@ class SellerProductsFragment : Fragment() {
         if (currentTab == 0) {
             btnAddProduct.visibility = View.VISIBLE
             btnExportSales.visibility = View.GONE
+            composeView.visibility = View.GONE
+            rvSellerProducts.visibility = View.VISIBLE
             rvSellerProducts.adapter = sellerAdapter
             // Force refresh products list mapping
             val prodsList = sharedViewModel.productsList.value ?: emptyList()
             val sellerProducts = prodsList.filter { it.ownerId == currentUser.id }
             toggleEmptyState(sellerProducts.isEmpty())
-        } else {
+        } else if (currentTab == 1) {
             btnAddProduct.visibility = View.GONE
             btnExportSales.visibility = View.VISIBLE
+            composeView.visibility = View.GONE
+            rvSellerProducts.visibility = View.VISIBLE
             rvSellerProducts.adapter = ordersAdapter
             // Fetch seller orders
             progressLoader.visibility = View.VISIBLE
             sharedViewModel.fetchSellerOrders(currentUser.id)
+        } else {
+            btnAddProduct.visibility = View.GONE
+            btnExportSales.visibility = View.GONE
+            rvSellerProducts.visibility = View.GONE
+            layoutEmptySeller.visibility = View.GONE
+            progressLoader.visibility = View.GONE
+            composeView.visibility = View.VISIBLE
+            
+            // Set compose content dynamically based on current data
+            val prodsList = sharedViewModel.productsList.value ?: emptyList()
+            val sellerProducts = prodsList.filter { it.ownerId == currentUser.id }
+            val sellerOrdersList = sharedViewModel.sellerOrders.value ?: emptyList()
+            
+            composeView.setContent {
+                SellerAnalyticsScreen(
+                    products = sellerProducts,
+                    orders = sellerOrdersList
+                )
+            }
         }
     }
 
@@ -142,6 +168,8 @@ class SellerProductsFragment : Fragment() {
                 val sellerProducts = prodsList.filter { it.ownerId == currentUser.id }
                 sellerAdapter.updateProducts(sellerProducts)
                 toggleEmptyState(sellerProducts.isEmpty())
+            } else if (currentTab == 2) {
+                updateUIForCurrentTab()
             }
         }
 
@@ -151,6 +179,8 @@ class SellerProductsFragment : Fragment() {
             if (currentTab == 1) {
                 ordersAdapter.updateOrders(orders)
                 toggleEmptyState(orders.isEmpty())
+            } else if (currentTab == 2) {
+                updateUIForCurrentTab()
             }
         }
     }

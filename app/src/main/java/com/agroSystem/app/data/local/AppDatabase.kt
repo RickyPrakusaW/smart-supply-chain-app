@@ -15,7 +15,7 @@ import com.agroSystem.app.data.local.entities.UserEntity
 import com.agroSystem.app.data.local.entities.EdamamFoodEntity
 import com.agroSystem.app.data.local.dao.EdamamFoodDao
 
-@Database(entities = [ProductEntity::class, FarmerEntity::class, UserEntity::class, EdamamFoodEntity::class], version = 5, exportSchema = false)
+@Database(entities = [ProductEntity::class, FarmerEntity::class, UserEntity::class, EdamamFoodEntity::class], version = 6, exportSchema = false)
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun productDao(): ProductDao

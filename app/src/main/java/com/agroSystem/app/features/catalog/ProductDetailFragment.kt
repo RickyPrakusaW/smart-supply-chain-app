@@ -28,10 +28,14 @@ import com.agroSystem.app.features.shared.MainSharedViewModel
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.tabs.TabLayout
+import androidx.lifecycle.lifecycleScope
+import com.agroSystem.app.features.auth.AuthViewModel
+import kotlinx.coroutines.launch
 
 class ProductDetailFragment : Fragment() {
 
     private val sharedViewModel: MainSharedViewModel by activityViewModels()
+    private val authViewModel: AuthViewModel by activityViewModels()
 
     private var productId: Int = 1
     private lateinit var product: Product
@@ -84,6 +88,7 @@ class ProductDetailFragment : Fragment() {
     private lateinit var btnBottomMinus: ImageView
     private lateinit var btnBottomPlus: ImageView
     private lateinit var textBottomStepperCount: TextView
+    private lateinit var btnChatSeller: View
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -154,6 +159,7 @@ class ProductDetailFragment : Fragment() {
         btnBottomMinus = view.findViewById(R.id.btn_bottom_minus)
         btnBottomPlus = view.findViewById(R.id.btn_bottom_plus)
         textBottomStepperCount = view.findViewById(R.id.text_bottom_stepper_count)
+        btnChatSeller = view.findViewById(R.id.btn_chat_seller)
     }
 
     private fun setupHeaderActions() {
@@ -337,6 +343,13 @@ class ProductDetailFragment : Fragment() {
     }
 
     private fun setupBottomBar() {
+        val layoutBottomBar: View? = view?.findViewById(R.id.layout_bottom_bar)
+        val currentUser = authViewModel.currentUser.value
+        if (currentUser?.role == "Petani") {
+            layoutBottomBar?.visibility = View.GONE
+            return
+        }
+
         // Observe cart items to update total price & bottom bar actions
         sharedViewModel.cartItems.observe(viewLifecycleOwner) { cartMap ->
             val qty = cartMap.entries.firstOrNull { it.key.id == product.id }?.value ?: 0
@@ -361,6 +374,45 @@ class ProductDetailFragment : Fragment() {
         }
         btnBottomMinus.setOnClickListener {
             sharedViewModel.removeProductFromCart(product)
+        }
+
+        btnChatSeller.setOnClickListener {
+            val user = authViewModel.currentUser.value
+            if (user == null) {
+                Toast.makeText(requireContext(), "Silakan login terlebih dahulu!", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            if (user.id == product.ownerId) {
+                Toast.makeText(requireContext(), "Ini adalah produk Anda sendiri!", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            val ownerId = product.ownerId ?: "unknown_seller"
+            val ownerName = product.farmer
+            val chatRoomId = if (user.id < ownerId) "${user.id}_$ownerId" else "${ownerId}_${user.id}"
+
+            val firestore = com.google.firebase.firestore.FirebaseFirestore.getInstance()
+            val roomData = hashMapOf(
+                "chatRoomId" to chatRoomId,
+                "buyerId" to user.id,
+                "buyerName" to user.name,
+                "sellerId" to ownerId,
+                "sellerName" to ownerName,
+                "lastMessage" to "Halo, saya tertarik dengan produk ${product.name}.",
+                "lastMessageTimestamp" to System.currentTimeMillis()
+            )
+
+            firestore.collection("chats").document(chatRoomId).set(roomData)
+                .addOnSuccessListener {
+                    val bundle = bundleOf(
+                        "chatRoomId" to chatRoomId,
+                        "otherUserName" to ownerName
+                    )
+                    findNavController().navigate(R.id.action_productDetailFragment_to_directChatFragment, bundle)
+                }
+                .addOnFailureListener {
+                    Toast.makeText(requireContext(), "Gagal membuat ruang obrolan.", Toast.LENGTH_SHORT).show()
+                }
         }
     }
 

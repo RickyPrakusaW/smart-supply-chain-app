@@ -125,7 +125,7 @@ class AdminDashboardFragment : Fragment() {
 
     private fun setupRecyclerViews() {
         // Transactions
-        transactionAdapter = TransactionHistoryAdapter(emptyList()) { }
+        transactionAdapter = TransactionHistoryAdapter(emptyList(), { }, { })
         rvTransactions.layoutManager = LinearLayoutManager(requireContext())
         rvTransactions.adapter = transactionAdapter
 

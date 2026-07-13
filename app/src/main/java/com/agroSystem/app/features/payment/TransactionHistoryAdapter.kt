@@ -17,7 +17,8 @@ import java.util.TimeZone
 
 class TransactionHistoryAdapter(
     private var orders: List<OrderItemResponse>,
-    private val onItemClick: (OrderItemResponse) -> Unit
+    private val onItemClick: (OrderItemResponse) -> Unit,
+    private val onDisputeClick: (OrderItemResponse) -> Unit
 ) : RecyclerView.Adapter<TransactionHistoryAdapter.ViewHolder>() {
 
     fun updateOrders(newOrders: List<OrderItemResponse>) {
@@ -34,7 +35,7 @@ class TransactionHistoryAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val order = orders[position]
-        holder.bind(order)
+        holder.bind(order, onDisputeClick)
         holder.itemView.setOnClickListener {
             onItemClick(order)
         }
@@ -49,8 +50,10 @@ class TransactionHistoryAdapter(
         private val textTotalPrice: TextView = itemView.findViewById(R.id.text_total_price)
         private val textStatus: TextView = itemView.findViewById(R.id.text_status)
         private val cardStatusBadge: MaterialCardView = itemView.findViewById(R.id.card_status_badge)
+        private val layoutDispute: View = itemView.findViewById(R.id.layout_dispute)
+        private val btnRaiseDispute: View = itemView.findViewById(R.id.btn_raise_dispute)
 
-        fun bind(order: OrderItemResponse) {
+        fun bind(order: OrderItemResponse, onDisputeClick: (OrderItemResponse) -> Unit) {
             textOrderId.text = order.orderId
             textTotalPrice.text = "Rp ${formatPrice(order.amount)}"
             textDate.text = formatTimestamp(order.createdAt)
@@ -65,27 +68,46 @@ class TransactionHistoryAdapter(
                     textStatus.text = "PERLU DIKIRIM"
                     textStatus.setTextColor(Color.parseColor("#2E7D32")) // Dark green text
                     cardStatusBadge.setCardBackgroundColor(ColorStateList.valueOf(Color.parseColor("#E8F5E9"))) // Light green card
+                    layoutDispute.visibility = View.GONE
                 }
                 "shipped" -> {
                     textStatus.text = "SEDANG DIKIRIM"
                     textStatus.setTextColor(Color.parseColor("#E65100")) // Dark orange text
                     cardStatusBadge.setCardBackgroundColor(ColorStateList.valueOf(Color.parseColor("#FFF3E0"))) // Light orange card
+                    layoutDispute.visibility = View.VISIBLE
+                    btnRaiseDispute.setOnClickListener { onDisputeClick(order) }
                 }
                 "completed" -> {
                     textStatus.text = "SELESAI"
                     textStatus.setTextColor(Color.parseColor("#2E7D32")) // Dark green text
                     cardStatusBadge.setCardBackgroundColor(ColorStateList.valueOf(Color.parseColor("#E8F5E9"))) // Light green card
+                    layoutDispute.visibility = View.VISIBLE
+                    btnRaiseDispute.setOnClickListener { onDisputeClick(order) }
+                }
+                "dispute", "complain", "komplain" -> {
+                    textStatus.text = "KOMPLAIN"
+                    textStatus.setTextColor(Color.parseColor("#E65100")) // Orange text
+                    cardStatusBadge.setCardBackgroundColor(ColorStateList.valueOf(Color.parseColor("#FFF3E0"))) // Light orange card
+                    layoutDispute.visibility = View.GONE
+                }
+                "refunded", "retur" -> {
+                    textStatus.text = "KOMPLAIN DISETUJUI"
+                    textStatus.setTextColor(Color.parseColor("#C62828")) // Dark red text
+                    cardStatusBadge.setCardBackgroundColor(ColorStateList.valueOf(Color.parseColor("#FFEBEE"))) // Light red card
+                    layoutDispute.visibility = View.GONE
                 }
                 "failed", "deny", "cancel", "expire" -> {
                     textStatus.text = "GAGAL"
                     textStatus.setTextColor(Color.parseColor("#C62828")) // Dark red text
                     cardStatusBadge.setCardBackgroundColor(ColorStateList.valueOf(Color.parseColor("#FFEBEE"))) // Light red card
+                    layoutDispute.visibility = View.GONE
                 }
                 else -> {
                     // Pending status
                     textStatus.text = "PENDING"
                     textStatus.setTextColor(Color.parseColor("#E65100")) // Dark orange text
                     cardStatusBadge.setCardBackgroundColor(ColorStateList.valueOf(Color.parseColor("#FFF3E0"))) // Light orange card
+                    layoutDispute.visibility = View.GONE
                 }
             }
         }

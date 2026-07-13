@@ -30,7 +30,8 @@ data class ProductEntity(
     val allergens: List<String>,
     val nutrients: List<String>,
     val ownerId: String?,
-    val imageBytes: String?
+    val imageBytes: String?,
+    val isSynced: Boolean = true
 ) {
     fun toDomain(): Product = Product(
         id = id,
@@ -57,7 +58,8 @@ data class ProductEntity(
         allergens = allergens,
         nutrients = nutrients,
         ownerId = ownerId,
-        imageBytes = imageBytes
+        imageBytes = imageBytes,
+        isSynced = isSynced
     )
 }
 
@@ -86,5 +88,6 @@ fun Product.toEntity(): ProductEntity = ProductEntity(
     allergens = allergens,
     nutrients = nutrients,
     ownerId = ownerId,
-    imageBytes = imageBytes
+    imageBytes = imageBytes,
+    isSynced = isSynced
 )

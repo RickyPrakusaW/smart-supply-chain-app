@@ -190,6 +190,41 @@ class CatalogFragment : Fragment() {
         navController?.navigate(R.id.action_homeFragment_to_farmerDetailFragment, bundleOf("farmerId" to farmer.id))
     }
 
+    private fun getEnglishEdamamQuery(inputText: String): String {
+        val query = inputText.lowercase().trim()
+        return when {
+            query == "buah" || query == "buah segar" || query == "buah-buahan" -> "fruit"
+            query == "sayur" || query == "sayuran" || query == "sayur segar" -> "vegetables"
+            query.contains("apel") -> "apple"
+            query.contains("pisang") -> "banana"
+            query.contains("mangga") -> "mango"
+            query.contains("jeruk") -> "orange"
+            query.contains("tomat") -> "tomato"
+            query.contains("kentang") -> "potato"
+            query.contains("alpukat") -> "avocado"
+            query.contains("stroberi") || query.contains("strawberry") -> "strawberry"
+            query.contains("anggur") -> "grape"
+            query.contains("pepaya") -> "papaya"
+            query.contains("semangka") -> "watermelon"
+            query.contains("melon") -> "melon"
+            query.contains("nanas") || query.contains("pineapple") -> "pineapple"
+            query.contains("susu") -> "milk"
+            query.contains("keju") -> "cheese"
+            query.contains("telur") -> "egg"
+            query.contains("beras") || query.contains("nasi") || query.contains("padi") -> "rice"
+            query.contains("bayam") -> "spinach"
+            query.contains("wortel") -> "carrot"
+            query.contains("bawang") -> "onion"
+            query.contains("cabai") || query.contains("cabe") -> "chili"
+            query.contains("daging sapi") || query == "sapi" -> "beef"
+            query.contains("daging ayam") || query == "ayam" -> "chicken"
+            query.contains("daging kambing") || query == "kambing" -> "goat"
+            query.contains("daging") -> "meat"
+            query.contains("madu") -> "honey"
+            else -> query
+        }
+    }
+
     private fun setupEdamamTab() {
         rvEdamam.layoutManager = LinearLayoutManager(requireContext())
         edamamAdapter = EdamamFoodAdapter(emptyList()) { hint ->
@@ -206,8 +241,8 @@ class CatalogFragment : Fragment() {
             searchEdamamFood(query)
         }
 
-        // Trigger default query: fresh vegetables to populate the food catalog on start
-        searchEdamamFood("fresh vegetables")
+        // Trigger default query in Indonesian: sayuran segar (will auto translate to fresh vegetables)
+        searchEdamamFood("sayuran segar")
     }
 
     private fun showEdamamDetailBottomSheet(hint: EdamamHint) {
@@ -229,7 +264,7 @@ class CatalogFragment : Fragment() {
         val rawCategoryForMapping = food.category?.lowercase() ?: ""
         val categoryMapped = when {
             rawCategoryForMapping.contains("dairy") || rawCategoryForMapping.contains("susu") -> "Susu"
-            rawCategoryForMapping.contains("vegetable") || rawCategoryForMapping.contains("sayuran") || rawCategoryForMapping.contains("bayam") || rawCategoryForMapping.contains("tomat") || rawCategoryForMapping.contains("kentang") -> "Sayuran"
+            rawCategoryForMapping.contains("vegetable") || rawCategoryForMapping.contains("sayuran") || rawCategoryForMapping.contains("bayam") || rawCategoryForMapping.contains("tomat") || rawCategoryForMapping.contains("kentang") || rawCategoryForMapping.contains("fruit") || rawCategoryForMapping.contains("buah") -> "Sayuran"
             rawCategoryForMapping.contains("meat") || rawCategoryForMapping.contains("daging") || rawCategoryForMapping.contains("chicken") || rawCategoryForMapping.contains("poultry") -> "Daging"
             rawCategoryForMapping.contains("egg") || rawCategoryForMapping.contains("telur") -> "Telur"
             else -> "Bahan Sup"
@@ -339,11 +374,13 @@ class CatalogFragment : Fragment() {
         textEmptyEdamam.visibility = View.GONE
         edamamAdapter.updateItems(emptyList())
 
+        val translatedQuery = getEnglishEdamamQuery(query)
+
         lifecycleScope.launch(Dispatchers.IO) {
             val localDb = AppDatabase.getDatabase(requireContext())
             try {
                 val client = okhttp3.OkHttpClient()
-                val url = "https://edamam-food-and-grocery-database.p.rapidapi.com/api/food-database/v2/parser?ingr=" + java.net.URLEncoder.encode(query, "UTF-8")
+                val url = "https://edamam-food-and-grocery-database.p.rapidapi.com/api/food-database/v2/parser?ingr=" + java.net.URLEncoder.encode(translatedQuery, "UTF-8")
                 
                 Log.d("CatalogFragment", "Searching Edamam food URL: $url")
                 
@@ -363,7 +400,7 @@ class CatalogFragment : Fragment() {
                     val edamamResponse = com.google.gson.Gson().fromJson(responseBody, EdamamResponse::class.java)
                     val hints = edamamResponse.hints ?: emptyList()
                     
-                    // Offline Cache Logic: Save successfully fetched foods into Room Cache
+                    // Offline Cache Logic: Save successfully fetched foods into Room Cache using original Indonesian query Term!
                     if (hints.isNotEmpty()) {
                         val entitiesToCache = hints.mapNotNull { hint ->
                             val food = hint.food ?: return@mapNotNull null
