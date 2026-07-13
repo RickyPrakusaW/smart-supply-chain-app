@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "183291450985-v9ounummubnccqg7bo7b8omaf5vsh595.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.agroSystem.app",
+            "certificate_hash": "5958186878226632441c415936b6a5995875ccbc"
+          }
+        },
+        {
           "client_id": "183291450985-lors5s3m8plfu2t5gqiucnphn4kl1epn.apps.googleusercontent.com",
           "client_type": 3
         }

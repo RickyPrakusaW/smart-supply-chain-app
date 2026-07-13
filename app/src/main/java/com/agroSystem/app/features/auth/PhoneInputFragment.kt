@@ -203,29 +203,35 @@ class PhoneInputFragment : Fragment() {
                     }
                 }
         } else {
-            // REGISTER MODE - Generate OTP and send via SMTP
+            // REGISTER MODE - Directly create user in Firebase Auth and login
             binding.btnContinue.isEnabled = false
-            Toast.makeText(requireContext(), "Mengirim kode OTP ke email Anda...", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), "Mendaftarkan akun...", Toast.LENGTH_SHORT).show()
             
-            val sentOtp = (100000..999999).random().toString()
-            
-            lifecycleScope.launch {
-                val success = com.agroSystem.app.data.util.SmtpMailer.sendOtpEmail(email, sentOtp)
-                binding.btnContinue.isEnabled = true
-                if (success) {
-                    val bundle = Bundle().apply {
-                        putString("email", email)
-                        putString("password", password)
-                        putString("name", name)
-                        putString("sentOtp", sentOtp)
-                        putString("mode", "email_register")
+            firebaseAuth.createUserWithEmailAndPassword(email, password)
+                .addOnCompleteListener { task ->
+                    binding.btnContinue.isEnabled = true
+                    if (task.isSuccessful) {
+                        val firebaseUser = task.result?.user
+                        
+                        // Set display name in Firebase Auth
+                        val profileUpdates = com.google.firebase.auth.UserProfileChangeRequest.Builder()
+                            .setDisplayName(name)
+                            .build()
+                        
+                        firebaseUser?.updateProfile(profileUpdates)?.addOnCompleteListener {
+                            firebaseAuth.signOut()
+                            Toast.makeText(requireContext(), "Pendaftaran berhasil! Silakan masuk dengan akun Anda.", Toast.LENGTH_LONG).show()
+                            binding.inputPassword.text?.clear()
+                            binding.inputName.text?.clear()
+                            if (!isLoginMode) {
+                                toggleMode()
+                            }
+                        }
+                    } else {
+                        Log.e("PhoneInputFragment", "Registration failed", task.exception)
+                        Toast.makeText(requireContext(), "Pendaftaran gagal: ${task.exception?.message}", Toast.LENGTH_LONG).show()
                     }
-                    Toast.makeText(requireContext(), "Kode OTP terkirim ke $email!", Toast.LENGTH_LONG).show()
-                    findNavController().navigate(R.id.action_phoneInputFragment_to_otpInputFragment, bundle)
-                } else {
-                    Toast.makeText(requireContext(), "Gagal mengirim email verifikasi. Silakan periksa koneksi Anda.", Toast.LENGTH_LONG).show()
                 }
-            }
         }
     }
 
@@ -277,16 +283,7 @@ class PhoneInputFragment : Fragment() {
                 }
             } catch (e: Exception) {
                 Log.e("PhoneInputFragment", "Credential Manager failed: ${e.message}", e)
-                Toast.makeText(requireContext(), "Google Auth gagal: ${e.message}. Masuk ke Mode Demo...", Toast.LENGTH_LONG).show()
-                
-                // Fallback demo mode mock login
-                authViewModel.loginWithGoogle(
-                    idToken = "mock_google_id_token",
-                    name = "Ricky Prakusa",
-                    email = "ricky.prakusa@gmail.com"
-                ) {
-                    findNavController().navigate(R.id.action_phoneInputFragment_to_homeFragment)
-                }
+                Toast.makeText(requireContext(), "Google Auth gagal: ${e.message}", Toast.LENGTH_LONG).show()
             }
         }
     }

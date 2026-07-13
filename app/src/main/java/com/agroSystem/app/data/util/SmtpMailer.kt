@@ -14,7 +14,7 @@ object SmtpMailer {
     private const val SMTP_HOST = "smtp.gmail.com"
     private const val SMTP_PORT = 465
     private const val SENDER_EMAIL = "ricky.prakusa@gmail.com"
-    private const val APP_PASSWORD = "sspovdxjtbzmhvpex" // Gmail SMTP App Password
+    private const val APP_PASSWORD = "iqgd qjsh cial yqak" // Gmail SMTP App Password
 
     suspend fun sendOtpEmail(recipientEmail: String, otpCode: String): Boolean = withContext(Dispatchers.IO) {
         val cleanPassword = APP_PASSWORD.replace(" ", "")

@@ -1,0 +1,175 @@
+=========================================================
+📝 JAWABAN KRITERIA PROYEK MAD DAN MDP 2026 - AGRIMITRA
+=========================================================
+
+Dokumen ini memetakan seluruh kriteria penilaian tugas besar Mobile Application Development (MAD) & Pemrograman Mobile (MDP) tahun 2026 pada proyek AgriMitra ke dalam file basis kode Anda.
+
+---------------------------------------------------------
+🌍 1. Tema UN SDG dan Indikator yang Dipilih
+---------------------------------------------------------
+* Tema SDG: SDG 2 (Zero Hunger) & SDG 12 (Responsible Consumption and Production).
+* Deskripsi Indikator: Menghubungkan B2B Pembeli (Restoran/Hotel) langsung dengan Petani lokal untuk memperpendek rantai pasok pangan, mengurangi sisa makanan (food waste) akibat logistik yang terlalu lama, serta mendukung transaksi pertanian berkelanjutan dengan transparansi harga.
+
+---------------------------------------------------------
+📋 2. RecyclerView atau Sejenisnya
+---------------------------------------------------------
+* Daftar Produk & Katalog Utama:
+  app/src/main/res/layout/fragment_catalog.xml
+  app/src/main/java/com/agroSystem/app/features/catalog/CatalogFragment.kt
+* Daftar Riwayat Transaksi:
+  app/src/main/res/layout/fragment_transaction_history.xml
+  app/src/main/java/com/agroSystem/app/features/payment/TransactionHistoryFragment.kt
+* Daftar Obrolan Aktif (Inbox):
+  app/src/main/res/layout/fragment_chat_rooms.xml
+  app/src/main/java/com/agroSystem/app/features/chat/ChatRoomsFragment.kt
+* Daftar Chat Pesan Real-time:
+  app/src/main/res/layout/fragment_direct_chat.xml
+  app/src/main/java/com/agroSystem/app/features/chat/DirectChatFragment.kt
+
+---------------------------------------------------------
+🏛️ 3. Layout, Activity & Fragment
+---------------------------------------------------------
+* Activity Utama:
+  app/src/main/java/com/agroSystem/app/MainActivity.kt
+* Fragment Utama:
+  - DashboardFragment.kt (Beranda utama & pencarian produk).
+  - ProductDetailFragment.kt (Rincian nutrisi produk & interaksi pembelian).
+  - DirectChatFragment.kt (Layar chat real-time dengan lawan bicara).
+
+---------------------------------------------------------
+✉️ 4. Komunikasi Antar Activity/Fragment (Menu/ Intent / NavArgs)
+---------------------------------------------------------
+* Navigasi Sentral:
+  app/src/main/res/navigation/nav_graph.xml (Jetpack Navigation Component).
+* Oper Argument (NavArgs):
+  - 'productId' dilewatkan ke ProductDetailFragment.kt.
+  - 'chatRoomId' dan 'otherUserName' dilewatkan ke DirectChatFragment.kt.
+  - 'order_json' dilewatkan ke OrderDetailBottomSheetFragment.kt.
+
+---------------------------------------------------------
+🌐 5. Call API External
+---------------------------------------------------------
+* File Kotlin yang memanggil:
+  app/src/main/java/com/agroSystem/app/features/chat/ChatAssistantFragment.kt
+* URL API Eksternal 1:
+  https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=$geminiApiKey
+  (Google Gemini AI API untuk asisten chat pintar)
+* URL API Eksternal 2:
+  https://edamam-food-and-grocery-database.p.rapidapi.com/api/food-database/v2/parser?ingr=$query
+  (Edamam Food Database API untuk informasi kandungan gizi sayur/buah)
+
+---------------------------------------------------------
+🔌 6. Call API Bikinan Sendiri
+---------------------------------------------------------
+* File Kotlin yang memanggil:
+  app/src/main/java/com/agroSystem/app/features/cart/CheckoutFragment.kt (pada baris 330)
+* File Backend yang dipanggil:
+  backend/server.js (Express.js pada Node.js, dideploy di Render.com)
+* URL API:
+  https://smart-supply-chain-app.onrender.com/api/v1/payment/checkout
+  (Endpoint untuk menghasilkan token Midtrans Snap)
+
+---------------------------------------------------------
+📷 7. Load dan Save Image
+---------------------------------------------------------
+* Load Image:
+  app/src/main/java/com/agroSystem/app/data/models/Product.kt
+  (Menggunakan fungsi ekstensi 'Product.bindImageTo' dengan HttpURLConnection untuk mendownload gambar asinkron dari URL web Edamam/Firestore dan merendernya ke ImageView).
+* Save Image:
+  app/src/main/java/com/agroSystem/app/features/seller/AddEditProductFragment.kt
+  (Mengonversi gambar pilihan galeri perangkat menjadi format Base64 untuk disimpan ke database Firestore).
+
+---------------------------------------------------------
+🔍 8. Fitur Search Data
+---------------------------------------------------------
+* Pencarian Beranda:
+  app/src/main/java/com/agroSystem/app/features/home/DashboardFragment.kt
+  (Pencarian cepat katalog lokal).
+* Pencarian Nutrisi Gizi:
+  app/src/main/java/com/agroSystem/app/features/catalog/CatalogFragment.kt
+  (Pencarian makanan terintegrasi API Edamam).
+
+---------------------------------------------------------
+💾 9. Local Storage (Database Room)
+---------------------------------------------------------
+* Konfigurasi Database:
+  app/src/main/java/com/agroSystem/app/data/local/AppDatabase.kt
+* Tabel/Entity:
+  - UserEntity.kt (Sesi login lokal).
+  - EdamamFoodEntity.kt (Cache data gizi makanan).
+* DAOs:
+  app/src/main/java/com/agroSystem/app/data/local/dao/UserDao.kt
+  app/src/main/java/com/agroSystem/app/data/local/dao/EdamamFoodDao.kt
+
+---------------------------------------------------------
+🔄 10. MVVM (ViewModel)
+---------------------------------------------------------
+* ViewModel Utama:
+  app/src/main/java/com/agroSystem/app/features/shared/MainSharedViewModel.kt
+  (Mengatur siklus hidup data keranjang belanja, status pesanan Firestore, filter nutrisi produk, dan data real-time).
+* ViewModel Otentikasi:
+  app/src/main/java/com/agroSystem/app/features/auth/AuthViewModel.kt
+  (Mengelola data profil aktif).
+
+---------------------------------------------------------
+🎨 11. Material Design Component & Jetpack Compose
+---------------------------------------------------------
+* Material Design Components:
+  MaterialCardView, MaterialButton, TextInputLayout (Input Form dengan ikon validasi visual).
+* Jetpack Compose:
+  app/src/main/java/com/agroSystem/app/features/seller/SellerAnalyticsComposeView.kt
+  (Visualisasi diagram batang omset bulanan dan grafik garis tren harga pangan interaktif menggunakan Canvas Jetpack Compose).
+
+---------------------------------------------------------
+🔗 12. Link Github & Hosting
+---------------------------------------------------------
+* Link Github Android:
+  https://github.com/RickyPrakusaW/smart-supply-chain-app
+* Link Github API buatan sendiri:
+  https://github.com/RickyPrakusaW/smart-supply-chain-app/tree/main/backend
+  (Kode server backend kustom Node.js berada di dalam folder '/backend' pada repositori yang sama).
+* Web Hosting API Server (Render):
+  https://smart-supply-chain-app.onrender.com
+  (Deploy live di Render terhubung ke cloud database).
+
+---------------------------------------------------------
+🏆 13. Checklist Kompleksitas Tambahan
+---------------------------------------------------------
+* Repository Pattern (Local + Cloud):
+  app/src/main/java/com/agroSystem/app/data/repository/AuthRepository.kt
+  (Menghubungkan DAO lokal Room dengan autentikasi online).
+* 2-Way Data Binding & LiveData:
+  Seluruh fragment reaktif mengamati objek LiveData (seperti productsList, cartItems, currentUser, sellerOrders) di dalam MainSharedViewModel.kt.
+* Fitur Kompleks Tambahan:
+  1. Integrasi Midtrans Payment Gateway (Snap Redirection):
+     Menggunakan WebView dalam aplikasi untuk memproses pembayaran digital secara aman (Sandbox)
+     (app/src/main/java/com/agroSystem/app/features/payment/PaymentWebViewFragment.kt).
+  2. Alur Dispute / Komplain Transaksi:
+     Mekanisme komplain Pembeli dan opsi Terima/Tolak oleh Petani
+     (app/src/main/java/com/agroSystem/app/features/payment/OrderDetailBottomSheetFragment.kt).
+  3. Notifikasi Transaksi Real-time:
+     Push notification lokal instan saat Pembeli sukses membayar & saat Petani menerima pesanan masuk
+     (app/src/main/java/com/agroSystem/app/features/seller/NotificationHelper.kt).
+  4. Offline Sync (WorkManager):
+     Sinkronisasi produk otomatis di latar belakang saat HP terhubung ke internet
+     (app/src/main/java/com/agroSystem/app/features/seller/OfflineSyncWorker.kt).
+  5. Real-time User-to-User Chat:
+     Obrolan langsung antar pembeli dan penjual secara instan via Firestore
+     (app/src/main/java/com/agroSystem/app/features/chat/DirectChatFragment.kt).
+
+---------------------------------------------------------
+🔌 14. Fitur-fitur lainnya yang tambahan
+---------------------------------------------------------
+* Library Eksternal & Elemen Visual:
+  - Retrofit & OkHttp3: Menangani request HTTP ke Edamam, Gemini API, dan server checkout Render.
+  - GSON: Serialisasi dan parsing data JSON respons server.
+  - OSMDroid (OpenStreetMap): Library peta eksternal untuk penandaan alamat koordinat GPS pengantaran.
+  - Progress Bar & Shimmer: Efek visual loading indikator pada saat memuat riwayat obrolan dan transaksi.
+  - CSV Writer: Ekspor laporan data penjualan petani/seller ke format Excel (CSV).
+
+---------------------------------------------------------
+🧪 15. Automated Testing
+---------------------------------------------------------
+* Unit Testing:
+  app/src/test/java/com/agroSystem/app/AuthRepositoryTest.kt
+  (Unit test otomatis untuk menguji penyimpanan session local Room & otentikasi pendaftaran/login user).
